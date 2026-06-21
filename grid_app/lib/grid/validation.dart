@@ -4,6 +4,18 @@ class LayoutViolation {
   final String cellId;
   final String reason;
   const LayoutViolation(this.cellId, this.reason);
+
+  @override
+  bool operator ==(Object other) =>
+      other is LayoutViolation &&
+      other.cellId == cellId &&
+      other.reason == reason;
+
+  @override
+  int get hashCode => Object.hash(cellId, reason);
+
+  @override
+  String toString() => 'LayoutViolation($cellId, $reason)';
 }
 
 /// Returns one violation per offending cell. Empty list means a valid layout:

@@ -38,4 +38,11 @@ void main() {
     expect(v.map((e) => e.cellId), contains('b'));
     expect(v.any((e) => e.reason.contains('overlap')), isTrue);
   });
+
+  test('LayoutViolation has value equality', () {
+    expect(const LayoutViolation('a', 'overlap'),
+        const LayoutViolation('a', 'overlap'));
+    expect(const LayoutViolation('a', 'overlap'),
+        isNot(const LayoutViolation('b', 'overlap')));
+  });
 }
