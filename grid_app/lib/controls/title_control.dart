@@ -25,4 +25,12 @@ class TitleControl extends ControlSpec {
       ),
     );
   }
+
+  @override
+  Widget previewWidget(Cell cell) => Center(
+        child: Text(
+          (cell.props['text'] as String?) ?? '',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+      );
 }
