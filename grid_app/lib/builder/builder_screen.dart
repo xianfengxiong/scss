@@ -133,10 +133,10 @@ class _BuilderScreenState extends State<BuilderScreen> {
                     updateCell(_t, selected.id, (c) => c.copyWith(props: props))),
                 onColSpanChanged: (span) => _commit(updateCell(
                     _t, selected.id, (c) => c.copyWith(colSpan: span))),
-                onDelete: () => setState(() {
-                  _t = removeCell(_t, selected.id);
-                  _selectedId = null;
-                }),
+                onDelete: () {
+                  _commit(removeCell(_t, selected.id));
+                  setState(() => _selectedId = null);
+                },
               ),
             ),
         ],
