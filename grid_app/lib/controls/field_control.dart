@@ -35,12 +35,15 @@ class FieldControl extends ControlSpec {
     final (labelCols, valueCols) = _labelValueSplit(cell);
 
     pw.Widget box(String t) => pw.Container(
-          padding: const pw.EdgeInsets.all(2),
+          padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          alignment: pw.Alignment.centerLeft,
           decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
           child: pw.Text(t, style: const pw.TextStyle(fontSize: 9)),
         );
 
-    return pw.Row(children: [
+    // stretch: both boxes fill the full cell height, so an empty value box does
+    // not shrink-wrap to a thin line and rows stay even.
+    return pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.stretch, children: [
       pw.Expanded(flex: labelCols, child: box(label)),
       pw.Expanded(flex: valueCols, child: box(value)),
     ]);
@@ -61,7 +64,7 @@ class FieldControl extends ControlSpec {
               style: TextStyle(
                   fontSize: 9, color: grey ? const Color(0xFF9A9A9A) : Colors.black)),
         );
-    return Row(children: [
+    return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Expanded(flex: labelCols, child: box(label)),
       Expanded(flex: valueCols, child: box('[$valueType]', grey: true)),
     ]);
