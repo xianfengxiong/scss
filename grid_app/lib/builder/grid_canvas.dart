@@ -4,6 +4,7 @@ import '../controls/registry.dart';
 import '../grid/geometry.dart';
 import '../model/cell.dart';
 import '../model/template.dart';
+import 'canvas_metrics.dart';
 
 /// Renders [template] as a white A4 page scaled to the available width.
 /// Cells are positioned by [cellRectMm] (the same geometry the PDF uses) and
@@ -33,7 +34,7 @@ class GridCanvas extends StatelessWidget {
     final page = template.page;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final scale = constraints.maxWidth / page.widthMm;
+        final scale = pageScale(constraints.maxWidth, page.widthMm);
         final grid = template.grid;
         return Container(
           width: page.widthMm * scale,
