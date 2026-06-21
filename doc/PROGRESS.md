@@ -1,9 +1,9 @@
 # 进度 — Smart City Survey System (Flutter Android)
 
-_最后更新:2026-06-21_
+_最后更新:2026-06-22_
 
 ## 现状一句话
-**greenfield 重写进行中。** A4 网格模版构建器。**Phase 1A(纯核心)+ 1B-i(持久化+只读外壳)+ 1B-ii-a(tap/按钮编辑器)均已 TDD 实现并合并 `main`,59/59 测试绿、analyze 0,模拟器手动验收通过。** 工程在 `grid_app/`(包名 `scss_grid`)。下一步:Phase 1B-ii-b(拖拽直接操作)。
+**greenfield 重写进行中。** A4 网格模版构建器。**Phase 1A + 1B-i + 1B-ii-a(tap 编辑器)+ 1B-ii-b(拖拽直接操作)均已 TDD 实现并合并 `main`,72/72 测试绿、analyze 0,模拟器手动验收通过(点选 / 拖移单元格 / 拖手柄改 colSpan-rowSpan / 拖网格线改行高列宽 均工作)。** 工程在 `grid_app/`(包名 `scss_grid`)。下一步:Phase 2(填写闭环)。
 
 ## ★ 2026-06-21 设计阶段成果(本次重点)
 - **定稿设计 spec**:`docs/superpowers/specs/2026-06-21-grid-template-builder-design.md`(旧 `2026-06-21-multifield-editing-design.md` 已标作废,被本设计取代)。
@@ -21,10 +21,20 @@ TDD(subagent 驱动,3 组 + 接线 + opus 终审 + 模拟器手动验收 5/5)。
 ## 已完成:Phase 1B-ii-a(tap/按钮编辑器,已合并 main)
 TDD(subagent,5 组 + opus 终审 + 模拟器验收)。`grid/hit_test.dart`(点→格)、`builder/editor_ops.dart`(纯编辑变换,过 validateLayout 守卫)、控件 `propEditor`、`GridCanvas` 选中高亮+未注册占位、`ControlPalette`、`CellInspector`、`BuilderScreen` 改成编辑器(点选/加控件/检视器/行列步进器)。另:`all()` 按名排序、PDF 未注册占位、GridCanvas golden。期间修了用户实测的两个视觉 bug(PDF 字段行高用 stretch 撑齐、画布加内部网格线+显示"列×行")。
 
-## 下一步:Phase 1B-ii-b(拖拽直接操作)
-1. **writing-plans** 出 1B-ii-b 计划:调色板拖控件吸附到格、拖手柄改 colSpan/rowSpan、拖网格线改行高列宽(用已有 `resizeBoundary`/`addTrack`/`removeTrack`)、拖移 cell。
-2. 终审建议:`BuilderScreen._canvasArea` 的 scale 与 `GridCanvas` 内部 scale 保持一致(抽共享 helper),拖拽换算靠它。延后 minor 见 `.superpowers/sdd/progress.md`。
-3. 后续分期(填写闭环 → 现场能力 → 完善控件 → 打磨)见 spec §12。
+## 已完成:Phase 1B-ii-b(拖拽直接操作,已合并 main)
+TDD(subagent 驱动,3 组 6 任务 + 组内评审 + 全分支终审 + 模拟器手动验收)。新增/改:
+- `builder/canvas_metrics.dart`(`pageScale`/`kCanvasPad`,渲染器与手势层共用同一 scale,GridCanvas 也改用)。
+- `builder/editor_ops.dart`:`moveCell`(**夹紧界内**:整宽单元格只改行不越界)、`setSpan`。
+- `grid/grid_resize.dart`:`resizeColBoundary`/`resizeRowBoundary`(委托已有 `resizeBoundary`,保框总尺寸)。
+- `builder/editable_canvas.dart`(`EditableCanvas`):包住 `GridCanvas` 的手势层——点选、**拖移单元格**、右/下蓝色手柄改 colSpan/rowSpan、框顶/左橙色手柄改列宽/行高;所有编辑回调过 `BuilderScreen._commit`→`isValid` 守卫。
+- `builder/builder_screen.dart`:`_canvasArea` 用 `EditableCanvas`;检视器改为**画布底部叠加层**(Stack,选中不缩画布)。
+- **手势层关键决策(模拟器验收时定稿)**:画布**等比铺满可用区(fit-both,无滚动视图)**——否则竖向 `SingleChildScrollView` 会吞掉"拖移"竖向手势。详见 spec/账本。
+现已可在模拟器上:点选高亮、拖单元格换行、拖手柄缩放跨度、拖网格线改行高列宽。72/72 测试绿。计划 `docs/superpowers/plans/2026-06-22-grid-builder-phase1b-ii-b-drag.md`。
+
+## 下一步:Phase 2(填写闭环)及之后
+1. **填写模式**:同一模型驱动填写(只填值不改结构),字段输入 → 持久化 → A4 PDF 导出(WYSIWYG)。
+2. 现场能力(GPS/相机/地图截图)→ 完善控件(deviceChecklist/image/multiImage)→ 内嵌 NotoSansSC 解决中文缺字。完整分期见 spec §12。
+3. 延后的 minor(本期未做):调色板**拖控件到格**放置(当前用 tap 加控件已可);拖移采用"左上角吸附指针"(无抓取偏移);`_colX`/`_rowY` 或可并入 geometry;取消选中/空白点选的负路径测试。
 
 ## 旧版(已被取代,仅作历史)
 第一阶段字段式 MVP、第二阶段表格式 TemplateRow 重构(`app/` 现有代码)均完成过并跑在模拟器上;因网格线不对齐、编辑器不通用,整体被本次 greenfield 网格设计取代。可复用的是底层服务(GPS、相机压缩、卫星图打钉+RepaintBoundary 截图、pdf 导出)与依赖钉版经验(`app/BUILD_NOTES.md`)。
