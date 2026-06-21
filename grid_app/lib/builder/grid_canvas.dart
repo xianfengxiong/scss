@@ -55,11 +55,7 @@ class GridCanvas extends StatelessWidget {
       top: r.topMm * scale,
       width: r.widthMm * scale,
       height: r.heightMm * scale,
-      child: Container(
-        decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFBDBDBD), width: 0.5)),
-        child: spec?.previewWidget(cell) ?? const SizedBox.shrink(),
-      ),
+      child: spec?.previewWidget(cell) ?? const SizedBox.shrink(),
     );
   }
 }

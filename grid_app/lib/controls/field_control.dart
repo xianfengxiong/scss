@@ -17,6 +17,9 @@ class FieldControl extends ControlSpec {
 
   /// Label/value column split, clamped so both flex values are >= 1 even on bad
   /// data. Shared by paintPdf and previewWidget so the canvas matches the PDF.
+  /// When colSpan=1, the clamp forces labelCols=1 and valueCols=1, producing a
+  /// 50/50 split — this is intentional as a defensive fallback and is consistent
+  /// between PDF and preview output.
   (int, int) _labelValueSplit(Cell cell) {
     final raw = (cell.props['labelCols'] as num?)?.toInt() ?? 1;
     final labelCols = raw.clamp(1, cell.colSpan > 1 ? cell.colSpan - 1 : 1);
