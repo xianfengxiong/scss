@@ -3,7 +3,7 @@
 _最后更新:2026-06-21_
 
 ## 现状一句话
-**方向调整:greenfield 重写。** 放弃旧的"线性行模型 + 逐行对话框编辑器",改为**所见即所得的 A4 网格模版构建器**;设计 spec 经多轮头脑风暴定稿并**已获用户复核通过**,下一步出第 1 期实现计划。**尚未开始编码。**
+**greenfield 重写进行中。** 放弃旧"线性行模型",改为所见即所得的 A4 网格模版构建器。**Phase 1A(纯核心:模型/几何/轨道/控件注册表/单页 PDF)已 TDD 实现并合并 `main`,28/28 测试绿、analyze 0。** 工程在 `grid_app/`(包名 `scss_grid`),已 git 化。下一步:Phase 1B(建模 UI + 持久化)。
 
 ## ★ 2026-06-21 设计阶段成果(本次重点)
 - **定稿设计 spec**:`docs/superpowers/specs/2026-06-21-grid-template-builder-design.md`(旧 `2026-06-21-multifield-editing-design.md` 已标作废,被本设计取代)。
@@ -12,9 +12,12 @@ _最后更新:2026-06-21_
 - **关键设计点**:填写期只填不改结构;设备表定义期固定行只打勾;`multiImage` 固定外框+内部按张数铺满(图少更大,min3/max6);图像类控件支持清除;建模式空模版 PDF 预览;**控件插件化(ControlSpec 接口+注册表,加控件=1文件+登记1行)**;复用 GPS/相机/地图截图/pdf 底层,新增内嵌 NotoSansSC;Drift greenfield 无迁移。
 - 头脑风暴的可视 mockup 留存在 `.superpowers/brainstorm/`。
 
-## 下一步(明天继续)
-1. **writing-plans**:针对 **spec §12 第 1 期(核心地基)** 出详细实现计划——数据模型 + 网格几何引擎 + ControlSpec 接口/注册表 + 单页 PDF 渲染器 + 建模式 PDF 预览(空模版)+ 最小建模画布(放/移/跨/拖线)。打通"建→存→预览 PDF"最小闭环。
-2. 按计划 **TDD 实现**第 1 期(几何/轨道数学/不变式做成纯函数重点单测)。
+## 已完成:Phase 1A(核心地基,已合并 main)
+TDD 实现(subagent 驱动,6 组 12 任务,组内+全分支评审+修复)。`grid_app/lib/`:`model/`(GridFrame/Cell/Template/RectMm + JSON)、`grid/`(cellRectMm 几何、validateLayout、resizeBoundary/addTrack/removeTrack 轨道数学)、`controls/`(ControlSpec + ControlRegistry + Title/Field 控件)、`pdf/template_pdf.dart`(单页 renderTemplate)、`sample/sample_template.dart`。计划 + SDD 账本见 `docs/superpowers/plans/` + `.superpowers/sdd/`。
+
+## 下一步:Phase 1B(建模 UI + 持久化)
+1. **writing-plans** 出 1B 计划:A4 画布(缩放/平移)、调色板拖控件吸附、拖手柄改 colSpan/rowSpan、拖网格线改行高列宽、点 cell 改 props、PDF 预览按钮(空模版)、Drift/SQLite 存取模版。
+2. 按计划 TDD 实现;注意终审延后项(见 `.superpowers/sdd/progress.md` 末)。
 3. 后续分期(填写闭环 → 现场能力 → 完善控件 → 打磨)见 spec §12。
 
 ## 旧版(已被取代,仅作历史)
