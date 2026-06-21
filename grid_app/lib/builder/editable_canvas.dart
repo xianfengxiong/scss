@@ -44,7 +44,7 @@ class _EditableCanvasState extends State<EditableCanvas> {
 
   ({int col, int row})? _coordAt(Offset globalPos) {
     final box = _key.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null || box.size.width == 0) return null;
+    if (box == null || !box.hasSize || box.size.width == 0) return null;
     final s = pageScale(box.size.width, widget.template.page.widthMm);
     final local = box.globalToLocal(globalPos);
     return cellCoordAtMm(widget.template.grid, local.dx / s, local.dy / s);
@@ -130,7 +130,7 @@ class _EditableCanvasState extends State<EditableCanvas> {
     final x = _colX(boundary) * scale;
     final yTop = widget.template.grid.yMm * scale;
     return Positioned(
-      left: x - 8,
+      left: (x - 8).clamp(0.0, double.infinity),
       top: (yTop - 14).clamp(0.0, double.infinity),
       width: 16,
       height: 16,
@@ -148,7 +148,7 @@ class _EditableCanvasState extends State<EditableCanvas> {
     final xLeft = widget.template.grid.xMm * scale;
     return Positioned(
       left: (xLeft - 14).clamp(0.0, double.infinity),
-      top: y - 8,
+      top: (y - 8).clamp(0.0, double.infinity),
       width: 16,
       height: 16,
       child: GestureDetector(

@@ -1,5 +1,4 @@
-/// Shared canvas geometry so the renderer and the gesture layer never drift.
-library;
+// Shared canvas geometry so the renderer and the gesture layer never drift.
 
 /// Padding around the A4 page inside the builder body.
 const double kCanvasPad = 12;
