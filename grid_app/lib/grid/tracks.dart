@@ -16,3 +16,21 @@ List<double> resizeBoundary(
   out[boundary] -= d;
   return out;
 }
+
+/// Append a new track of [newSizeMm]. [offsetMm] is the frame's x (for columns)
+/// or y (for rows); [pageLimitMm] is the page width or height. Returns null if
+/// the new track would push the frame past the page edge (A4 cap — no overflow).
+List<double>? addTrack(
+  List<double> sizes,
+  double newSizeMm,
+  double offsetMm,
+  double pageLimitMm,
+) {
+  final sum = sizes.fold(0.0, (a, b) => a + b);
+  if (offsetMm + sum + newSizeMm > pageLimitMm + 1e-9) return null;
+  return [...sizes, newSizeMm];
+}
+
+/// Remove the track at [index].
+List<double> removeTrack(List<double> sizes, int index) =>
+    [...sizes]..removeAt(index);
