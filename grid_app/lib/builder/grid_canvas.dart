@@ -110,14 +110,22 @@ class GridCanvas extends StatelessWidget {
       top: r.topMm * scale,
       width: r.widthMm * scale,
       height: r.heightMm * scale,
-      child: cell.id == selectedId
-          ? Container(
-              key: const ValueKey('cell-highlight'),
-              decoration: BoxDecoration(
-                  border: Border.all(color: Colors.blue, width: 2)),
-              child: content,
-            )
-          : content,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          content,
+          if (cell.id == selectedId)
+            IgnorePointer(
+              child: DecoratedBox(
+                key: const ValueKey('cell-highlight'),
+                position: DecorationPosition.foreground,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.blue, width: 2),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
