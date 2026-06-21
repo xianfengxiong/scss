@@ -76,3 +76,11 @@ Template? setRows(Template t, int rows) {
 
 /// True if [t] is a valid layout (no overlap, no out-of-bounds cells).
 bool isValid(Template t) => validateLayout(t).isEmpty;
+
+/// Move the cell [id] so its top-left is at grid coordinate (col,row).
+Template moveCell(Template t, String id, int col, int row) =>
+    updateCell(t, id, (c) => c.copyWith(col: col, row: row));
+
+/// Set the cell [id]'s column and row span.
+Template setSpan(Template t, String id, int colSpan, int rowSpan) =>
+    updateCell(t, id, (c) => c.copyWith(colSpan: colSpan, rowSpan: rowSpan));
