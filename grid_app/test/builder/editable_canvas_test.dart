@@ -88,4 +88,46 @@ void main() {
         find.byKey(const ValueKey('span-right')), const Offset(80, 0));
     expect(cs, 4);
   });
+
+  testWidgets('dragging the bottom span handle reports a larger rowSpan',
+      (tester) async {
+    int? rs;
+    await tester.pumpWidget(_host(EditableCanvas(
+      template: _tpl(const [
+        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'field',
+            props: {'label': 'L', 'key': 'k'}),
+      ]),
+      registry: buildDefaultRegistry(),
+      selectedId: 'a',
+      onSelect: (_) {},
+      onMove: (_, __, ___) {},
+      onSpan: (id, colSpan, rowSpan) => rs = rowSpan,
+      onResizeCol: (_, __) {},
+      onResizeRow: (_, __) {},
+    )));
+    // bottom handle at cell bottom (y~30). drag down to y~90 (row 3) -> rowSpan 4
+    await tester.drag(
+        find.byKey(const ValueKey('span-bottom')), const Offset(0, 60));
+    expect(rs, 4);
+  });
+
+  testWidgets('dragging a column edge handle reports an accumulated mm delta',
+      (tester) async {
+    int? boundary;
+    var total = 0.0;
+    await tester.pumpWidget(_host(EditableCanvas(
+      template: _tpl(const []),
+      registry: buildDefaultRegistry(),
+      selectedId: null,
+      onSelect: (_) {},
+      onMove: (_, __, ___) {},
+      onSpan: (_, __, ___) {},
+      onResizeCol: (b, d) { boundary = b; total += d; },
+      onResizeRow: (_, __) {},
+    )));
+    await tester.drag(
+        find.byKey(const ValueKey('col-handle-1')), const Offset(20, 0));
+    expect(boundary, 1);
+    expect(total, closeTo(20, 1));
+  });
 }
