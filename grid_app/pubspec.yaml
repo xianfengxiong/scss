@@ -35,6 +35,10 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   pdf: ^3.11.3
+  drift: 2.28.2 # pinned: newer drift_dev needs Dart >=3.10; we are on 3.6.1
+  sqlite3_flutter_libs: ^0.5.42
+  path_provider: ^2.1.5
+  printing: ^5.14.3
 
 dev_dependencies:
   flutter_test:
@@ -46,6 +50,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  drift_dev: 2.28.0 # pinned to match drift 2.28.x on Dart 3.6.1
+  build_runner: 2.4.15
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
