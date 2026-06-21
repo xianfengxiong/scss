@@ -1,19 +1,27 @@
 import 'package:flutter/material.dart';
 
-/// Phase 1A is the UI-free core (model, geometry, controls, PDF). The builder
-/// and fill UI arrive in Phase 1B; this is a placeholder entry point.
-void main() => runApp(const ScssGridApp());
+import 'controls/default_controls.dart';
+import 'controls/registry.dart';
+import 'data/app_database.dart';
+import 'data/template_store.dart';
+import 'builder/template_list_screen.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  final store = DriftTemplateStore(AppDatabase.open());
+  runApp(ScssGridApp(store: store, registry: buildDefaultRegistry()));
+}
 
 class ScssGridApp extends StatelessWidget {
-  const ScssGridApp({super.key});
+  final TemplateStore store;
+  final ControlRegistry registry;
+
+  const ScssGridApp({super.key, required this.store, required this.registry});
 
   @override
-  Widget build(BuildContext context) => const MaterialApp(
+  Widget build(BuildContext context) => MaterialApp(
         title: 'SCSS Grid Builder',
-        home: Scaffold(
-          body: Center(
-            child: Text('SCSS Grid Builder — core ready. UI in Phase 1B.'),
-          ),
-        ),
+        theme: ThemeData(useMaterial3: true),
+        home: TemplateListScreen(store: store, registry: registry),
       );
 }
