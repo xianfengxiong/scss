@@ -61,14 +61,14 @@ Expected: analyze reports `No issues found!`; test run reports `All tests passed
 
 - [ ] **Step 5: Commit**
 
+The repo root `/Users/xxf/Desktop/scss` is already a git repository on branch `feat/grid-builder-phase1a`. Commit the scaffold from the root:
 ```bash
-cd grid_app && git init -q 2>/dev/null; cd /Users/xxf/Desktop/scss
-git -C grid_app add -A 2>/dev/null || true
-# repo is not git-tracked at root; if grid_app has its own .git this commits there, otherwise skip
-git -C grid_app commit -q -m "chore: scaffold grid_app Flutter project with pdf dep" 2>/dev/null || echo "(no git; snapshot skipped)"
+cd /Users/xxf/Desktop/scss
+git add -A
+git commit -q -m "chore: scaffold grid_app Flutter project with pdf dep"
 ```
 
-> Note: the repo root is not a git repository. If you want version control, `git init` inside `grid_app/` (Step 5 attempts this). Otherwise commits are no-ops; proceed regardless.
+> `flutter create` generates a large tree; build artifacts (`build/`, `.dart_tool/`) are already covered by the root `.gitignore`, so they will not be staged.
 
 ---
 
