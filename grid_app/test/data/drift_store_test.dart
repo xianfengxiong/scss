@@ -6,6 +6,7 @@ import 'package:scss_grid/sample/sample_template.dart';
 void main() {
   test('drift store round-trips a template through SQLite (in-memory)', () async {
     final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
     final store = DriftTemplateStore(db);
 
     final t = sampleTemplate();
@@ -20,7 +21,5 @@ void main() {
     expect((await store.all()).length, 1);
     await store.delete(t.id);
     expect(await store.get(t.id), isNull);
-
-    await db.close();
   });
 }
