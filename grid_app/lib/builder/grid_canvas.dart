@@ -50,6 +50,7 @@ class GridCanvas extends StatelessWidget {
   Widget _cell(Cell cell, double scale) {
     final r = cellRectMm(template.grid, cell);
     final spec = registry.specFor(cell.type);
+    assert(spec != null, 'No control spec registered for type "${cell.type}"');
     return Positioned(
       left: r.leftMm * scale,
       top: r.topMm * scale,

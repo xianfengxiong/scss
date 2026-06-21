@@ -63,7 +63,7 @@ class FieldControl extends ControlSpec {
         );
     return Row(children: [
       Expanded(flex: labelCols, child: box(label)),
-      Expanded(flex: valueCols, child: box(valueType, grey: true)),
+      Expanded(flex: valueCols, child: box('[$valueType]', grey: true)),
     ]);
   }
 }

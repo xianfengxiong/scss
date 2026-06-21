@@ -12,6 +12,11 @@ void main() {
     await tester.pumpWidget(_host(TitleControl().previewWidget(
         const Cell(id: 't', col: 0, row: 0, type: 'title', props: {'text': 'My Title'}))));
     expect(find.text('My Title'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+          (w) => w is Text && w.style?.fontWeight == FontWeight.bold),
+      findsOneWidget,
+    );
   });
 
   testWidgets('FieldControl preview shows its label', (tester) async {
