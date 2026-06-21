@@ -13,7 +13,16 @@ class GridCanvas extends StatelessWidget {
   final Template template;
   final ControlRegistry registry;
 
-  const GridCanvas({super.key, required this.template, required this.registry});
+  /// Draw the faint interior column/row lines so the empty grid is visible
+  /// (the builder needs to see the lattice; the PDF, drawn separately, does not).
+  final bool showGridLines;
+
+  const GridCanvas({
+    super.key,
+    required this.template,
+    required this.registry,
+    this.showGridLines = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +37,7 @@ class GridCanvas extends StatelessWidget {
           color: Colors.white,
           child: Stack(
             children: [
+              if (showGridLines) ..._gridLines(scale),
               // grid frame border (the PDF output region)
               Positioned(
                 left: grid.xMm * scale,
@@ -45,6 +55,38 @@ class GridCanvas extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Faint interior lines between columns and rows (the frame border is drawn
+  /// separately). Count = (cols - 1) verticals + (rows - 1) horizontals.
+  List<Widget> _gridLines(double scale) {
+    final grid = template.grid;
+    final lines = <Widget>[];
+    // vertical lines at each interior column boundary
+    var x = grid.xMm;
+    for (var i = 0; i < grid.cols - 1; i++) {
+      x += grid.colWidthsMm[i];
+      lines.add(Positioned(
+        left: x * scale,
+        top: grid.yMm * scale,
+        width: 1,
+        height: grid.frameHeightMm * scale,
+        child: const ColoredBox(color: Color(0x33607D8B)),
+      ));
+    }
+    // horizontal lines at each interior row boundary
+    var y = grid.yMm;
+    for (var j = 0; j < grid.rows - 1; j++) {
+      y += grid.rowHeightsMm[j];
+      lines.add(Positioned(
+        left: grid.xMm * scale,
+        top: y * scale,
+        width: grid.frameWidthMm * scale,
+        height: 1,
+        child: const ColoredBox(color: Color(0x33607D8B)),
+      ));
+    }
+    return lines;
   }
 
   Widget _cell(Cell cell, double scale) {

@@ -40,4 +40,29 @@ void main() {
     expect(size.width, 210);
     expect(size.height, closeTo(297, 0.5));
   });
+
+  testWidgets('GridCanvas draws interior grid lines toggled by showGridLines',
+      (tester) async {
+    // sample grid is 12 cols x 16 rows -> (12-1) + (16-1) = 26 interior lines
+    Widget canvas(bool show) => MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 300,
+                child: GridCanvas(
+                  template: sampleTemplate(),
+                  registry: buildDefaultRegistry(),
+                  showGridLines: show,
+                ),
+              ),
+            ),
+          ),
+        );
+
+    await tester.pumpWidget(canvas(true));
+    final withLines = tester.widgetList(find.byType(ColoredBox)).length;
+    await tester.pumpWidget(canvas(false));
+    final withoutLines = tester.widgetList(find.byType(ColoredBox)).length;
+    expect(withLines - withoutLines, 26);
+  });
 }
