@@ -32,12 +32,12 @@ class AppDatabase extends _$AppDatabase {
 /// Drift-backed [TemplateStore]: (de)serializes [Template] to/from the `json`
 /// column. The rest of the app never sees Drift types.
 class DriftTemplateStore implements TemplateStore {
-  final AppDatabase db;
-  DriftTemplateStore(this.db);
+  final AppDatabase _db;
+  DriftTemplateStore(this._db);
 
   @override
   Future<void> upsert(Template t) =>
-      db.into(db.templateRows).insertOnConflictUpdate(
+      _db.into(_db.templateRows).insertOnConflictUpdate(
             TemplateRowsCompanion.insert(
               id: t.id,
               name: t.name,
@@ -47,7 +47,7 @@ class DriftTemplateStore implements TemplateStore {
 
   @override
   Future<Template?> get(String id) async {
-    final row = await (db.select(db.templateRows)
+    final row = await (_db.select(_db.templateRows)
           ..where((r) => r.id.equals(id)))
         .getSingleOrNull();
     if (row == null) return null;
@@ -56,7 +56,7 @@ class DriftTemplateStore implements TemplateStore {
 
   @override
   Future<List<Template>> all() async {
-    final rows = await db.select(db.templateRows).get();
+    final rows = await _db.select(_db.templateRows).get();
     return rows
         .map((r) => Template.fromJson(jsonDecode(r.json) as Map<String, dynamic>))
         .toList();
@@ -64,5 +64,5 @@ class DriftTemplateStore implements TemplateStore {
 
   @override
   Future<void> delete(String id) =>
-      (db.delete(db.templateRows)..where((r) => r.id.equals(id))).go();
+      (_db.delete(_db.templateRows)..where((r) => r.id.equals(id))).go();
 }
