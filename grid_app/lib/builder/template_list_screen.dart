@@ -44,6 +44,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
       name: 'New Template',
     );
     await widget.store.upsert(t);
+    if (!mounted) return;
     await _open(t);
   }
 
@@ -57,6 +58,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
 
   Future<void> _delete(Template t) async {
     await widget.store.delete(t.id);
+    if (!mounted) return;
     await _reload();
   }
 
