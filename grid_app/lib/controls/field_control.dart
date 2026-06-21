@@ -69,4 +69,30 @@ class FieldControl extends ControlSpec {
       Expanded(flex: valueCols, child: box('[$valueType]', grey: true)),
     ]);
   }
+
+  @override
+  Widget propEditor(
+      Cell cell, void Function(Map<String, dynamic> props) onChanged) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          initialValue: (cell.props['label'] as String?) ?? '',
+          decoration: const InputDecoration(labelText: 'Label'),
+          onChanged: (v) => onChanged({...cell.props, 'label': v}),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: (cell.props['valueType'] as String?) ?? 'text',
+          decoration: const InputDecoration(labelText: 'Value type'),
+          items: const ['text', 'number', 'coordinate', 'select', 'date']
+              .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+              .toList(),
+          onChanged: (v) =>
+              onChanged({...cell.props, 'valueType': v ?? 'text'}),
+        ),
+      ],
+    );
+  }
 }

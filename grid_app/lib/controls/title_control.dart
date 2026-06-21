@@ -33,4 +33,13 @@ class TitleControl extends ControlSpec {
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
       );
+
+  @override
+  Widget propEditor(
+          Cell cell, void Function(Map<String, dynamic> props) onChanged) =>
+      TextFormField(
+        initialValue: (cell.props['text'] as String?) ?? '',
+        decoration: const InputDecoration(labelText: 'Title text'),
+        onChanged: (v) => onChanged({...cell.props, 'text': v}),
+      );
 }
