@@ -17,4 +17,9 @@ void main() {
   test('removeTrack drops the indexed track', () {
     expect(removeTrack([10, 20, 30], 1), [10, 30]);
   });
+
+  test('addTrack allows an exact A4-boundary fit (no float rejection)', () {
+    // offset 0 + sum 287 + new 10 = 297 == pageLimit -> must NOT be rejected
+    expect(addTrack([287], 10, 0, 297), [287, 10]);
+  });
 }

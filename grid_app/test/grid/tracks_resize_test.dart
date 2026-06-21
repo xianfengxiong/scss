@@ -18,4 +18,9 @@ void main() {
     final out = resizeBoundary([20, 20, 20], 1, -100, minMm: 5);
     expect(out, [5, 35, 20]);
   });
+
+  test('resizeBoundary throws RangeError on an invalid boundary index', () {
+    expect(() => resizeBoundary([20, 20], 0, 5), throwsRangeError);
+    expect(() => resizeBoundary([20, 20], 2, 5), throwsRangeError);
+  });
 }

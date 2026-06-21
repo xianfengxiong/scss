@@ -7,10 +7,12 @@ List<double> resizeBoundary(
   double deltaMm, {
   double minMm = 5,
 }) {
-  assert(boundary >= 1 && boundary < sizes.length);
+  if (boundary < 1 || boundary >= sizes.length) {
+    throw RangeError.range(boundary, 1, sizes.length - 1, 'boundary');
+  }
   final out = List<double>.from(sizes);
-  final maxGrow = out[boundary] - minMm; // how much we can take from the right
-  final maxShrink = out[boundary - 1] - minMm; // how much we can take from left
+  final maxGrow = out[boundary] - minMm; // max positive delta: right/lower track's headroom
+  final maxShrink = out[boundary - 1] - minMm; // max negative delta magnitude: left/upper track's headroom
   final d = deltaMm.clamp(-maxShrink, maxGrow);
   out[boundary - 1] += d;
   out[boundary] -= d;
@@ -32,5 +34,9 @@ List<double>? addTrack(
 }
 
 /// Remove the track at [index].
-List<double> removeTrack(List<double> sizes, int index) =>
-    [...sizes]..removeAt(index);
+List<double> removeTrack(List<double> sizes, int index) {
+  if (index < 0 || index >= sizes.length) {
+    throw RangeError.index(index, sizes, 'index');
+  }
+  return [...sizes]..removeAt(index);
+}
