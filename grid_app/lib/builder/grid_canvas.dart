@@ -17,11 +17,15 @@ class GridCanvas extends StatelessWidget {
   /// (the builder needs to see the lattice; the PDF, drawn separately, does not).
   final bool showGridLines;
 
+  /// The cell to highlight as selected (Phase 1B-ii-a), or null.
+  final String? selectedId;
+
   const GridCanvas({
     super.key,
     required this.template,
     required this.registry,
     this.showGridLines = true,
+    this.selectedId,
   });
 
   @override
@@ -92,13 +96,28 @@ class GridCanvas extends StatelessWidget {
   Widget _cell(Cell cell, double scale) {
     final r = cellRectMm(template.grid, cell);
     final spec = registry.specFor(cell.type);
-    assert(spec != null, 'No control spec registered for type "${cell.type}"');
+    final Widget content = spec?.previewWidget(cell) ??
+        Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+              border: Border.all(color: Colors.red),
+              color: const Color(0x11FF0000)),
+          child: Text('?${cell.type}',
+              style: const TextStyle(fontSize: 9, color: Colors.red)),
+        );
     return Positioned(
       left: r.leftMm * scale,
       top: r.topMm * scale,
       width: r.widthMm * scale,
       height: r.heightMm * scale,
-      child: spec?.previewWidget(cell) ?? const SizedBox.shrink(),
+      child: cell.id == selectedId
+          ? Container(
+              key: const ValueKey('cell-highlight'),
+              decoration: BoxDecoration(
+                  border: Border.all(color: Colors.blue, width: 2)),
+              child: content,
+            )
+          : content,
     );
   }
 }
