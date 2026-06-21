@@ -45,7 +45,6 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
     );
     await widget.store.upsert(t);
     await _open(t);
-    await _reload();
   }
 
   Future<void> _open(Template t) async {
@@ -75,7 +74,8 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                       Dismissible(
                         key: ValueKey(t.id),
                         direction: DismissDirection.endToStart,
-                        background: Container(
+                        background: const SizedBox.shrink(),
+                        secondaryBackground: Container(
                           color: Colors.red,
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.only(right: 16),
