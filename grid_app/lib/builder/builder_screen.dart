@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import '../controls/control_spec.dart';
 import '../controls/registry.dart';
 import '../data/template_store.dart';
-import '../grid/hit_test.dart';
+import '../grid/grid_resize.dart';
 import '../model/cell.dart';
 import '../model/template.dart';
+import 'canvas_metrics.dart';
 import 'cell_inspector.dart';
 import 'control_palette.dart';
+import 'editable_canvas.dart';
 import 'editor_ops.dart';
-import 'grid_canvas.dart';
 import 'pdf_preview_screen.dart';
 
 /// Tap-based template editor (Phase 1B-ii-a): add controls from the palette,
@@ -61,14 +62,6 @@ class _BuilderScreenState extends State<BuilderScreen> {
         _selectedId = cell.id;
       });
     }
-  }
-
-  void _onCanvasTap(Offset localPos, double scale) {
-    final xMm = localPos.dx / scale;
-    final yMm = localPos.dy / scale;
-    final coord = cellCoordAtMm(_t.grid, xMm, yMm);
-    final hit = coord == null ? null : cellAtCoord(_t, coord.col, coord.row);
-    setState(() => _selectedId = hit?.id);
   }
 
   Cell? get _selected {
@@ -172,26 +165,22 @@ class _BuilderScreenState extends State<BuilderScreen> {
         ],
       );
 
-  Widget _canvasArea() => LayoutBuilder(
-        builder: (context, constraints) {
-          // The canvas width drives the scale; mirror GridCanvas's own math.
-          const pad = 12.0;
-          final canvasWidth = constraints.maxWidth - pad * 2;
-          final scale = canvasWidth / _t.page.widthMm;
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(pad),
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapUp: (d) => _onCanvasTap(d.localPosition, scale),
-                child: GridCanvas(
-                  template: _t,
-                  registry: widget.registry,
-                  selectedId: _selectedId,
-                ),
-              ),
-            ),
-          );
-        },
+  Widget _canvasArea() => SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(kCanvasPad),
+          child: EditableCanvas(
+            template: _t,
+            registry: widget.registry,
+            selectedId: _selectedId,
+            onSelect: (id) => setState(() => _selectedId = id),
+            onMove: (id, col, row) => _commit(moveCell(_t, id, col, row)),
+            onSpan: (id, colSpan, rowSpan) =>
+                _commit(setSpan(_t, id, colSpan, rowSpan)),
+            onResizeCol: (boundary, deltaMm) => _commit(
+                _t.copyWith(grid: resizeColBoundary(_t.grid, boundary, deltaMm))),
+            onResizeRow: (boundary, deltaMm) => _commit(
+                _t.copyWith(grid: resizeRowBoundary(_t.grid, boundary, deltaMm))),
+          ),
+        ),
       );
 }
