@@ -1,0 +1,27 @@
+# ── Dart / Flutter build artifacts (any subdir: app/, grid_app/, …) ──
+**/.dart_tool/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/.pub-cache/
+**/generated_plugin_registrant.dart
+**/GeneratedPluginRegistrant.*
+
+# ── Android / Gradle ──
+**/.gradle/
+**/local.properties
+**/*.keystore
+**/key.properties
+
+# ── iOS / macOS ──
+**/Pods/
+.DS_Store
+
+# ── IDE ──
+.idea/
+**/*.iml
+.vscode/
+
+# ── Superpowers scratch: SDD ledger/briefs/review packages + brainstorm mockups ──
+.superpowers/
