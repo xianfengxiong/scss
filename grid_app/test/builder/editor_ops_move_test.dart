@@ -31,4 +31,13 @@ void main() {
     final c = s.cells.single;
     expect([c.col, c.row, c.colSpan, c.rowSpan], [1, 1, 3, 2]);
   });
+
+  test('moveCell clamps so a wide cell stays inside the grid', () {
+    final t = _tpl(const [
+      Cell(id: 'a', col: 0, row: 0, colSpan: 6, type: 'field'), // full width
+    ]);
+    // try to put the top-left at col 3 — clamps to 0 (6 cols - 6 span); row -> 4
+    final c = moveCell(t, 'a', 3, 4).cells.single;
+    expect([c.col, c.row], [0, 4]);
+  });
 }

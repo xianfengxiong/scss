@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../controls/registry.dart';
@@ -58,37 +60,46 @@ class _EditableCanvasState extends State<EditableCanvas> {
         : _cellById(widget.selectedId!);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final scale = pageScale(constraints.maxWidth, t.page.widthMm);
+        // Fit the whole A4 page in the available box (width AND height) so it
+        // never needs a scroll view — a vertical scroll would steal the
+        // drag-to-move gesture. Degrades to width-fit if height is unbounded.
+        final scale = math.min(
+          pageScale(constraints.maxWidth, t.page.widthMm),
+          constraints.maxHeight.isFinite
+              ? pageScale(constraints.maxHeight, t.page.heightMm)
+              : double.infinity,
+        );
         return SizedBox(
           width: t.page.widthMm * scale,
           height: t.page.heightMm * scale,
           child: Stack(
             key: _key,
             children: [
-              // 1. render
-              GridCanvas(
-                  template: t, registry: widget.registry,
-                  selectedId: widget.selectedId),
-              // 2. tap-select + drag-move (full bleed, under the handles)
-              Positioned.fill(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTapUp: (d) {
-                    final c = _coordAt(d.globalPosition);
-                    final hit = c == null
-                        ? null
-                        : cellAtCoord(t, c.col, c.row);
-                    widget.onSelect(hit?.id);
-                  },
-                  onPanUpdate: (d) {
-                    final id = widget.selectedId;
-                    if (id == null) return;
-                    final c = _coordAt(d.globalPosition);
-                    if (c != null) widget.onMove(id, c.col, c.row);
-                  },
-                ),
+              // 1. render + tap-select + drag-move. The GestureDetector wraps
+              //    the canvas (opaque, has a child) — the reliable pattern; the
+              //    edge/span handles below are later Stack children, so they
+              //    paint on top and win their own drags.
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapUp: (d) {
+                  final c = cellCoordAtMm(t.grid,
+                      d.localPosition.dx / scale, d.localPosition.dy / scale);
+                  final hit =
+                      c == null ? null : cellAtCoord(t, c.col, c.row);
+                  widget.onSelect(hit?.id);
+                },
+                onPanUpdate: (d) {
+                  final id = widget.selectedId;
+                  if (id == null) return;
+                  final c = cellCoordAtMm(t.grid,
+                      d.localPosition.dx / scale, d.localPosition.dy / scale);
+                  if (c != null) widget.onMove(id, c.col, c.row);
+                },
+                child: GridCanvas(
+                    template: t, registry: widget.registry,
+                    selectedId: widget.selectedId),
               ),
-              // 3. column-boundary handles on the frame top edge
+              // 2. column-boundary handles on the frame top edge
               for (var i = 1; i < t.grid.cols; i++)
                 _colHandle(i, scale),
               // 4. row-boundary handles on the frame left edge

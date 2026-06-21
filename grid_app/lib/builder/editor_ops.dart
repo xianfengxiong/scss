@@ -77,9 +77,18 @@ Template? setRows(Template t, int rows) {
 /// True if [t] is a valid layout (no overlap, no out-of-bounds cells).
 bool isValid(Template t) => validateLayout(t).isEmpty;
 
-/// Move the cell [id] so its top-left is at grid coordinate (col,row).
+/// Move the cell [id] so its top-left is at grid coordinate (col,row), clamped
+/// so the cell (with its current span) stays inside the grid — e.g. a full-width
+/// cell can only change rows, never slide off the right edge.
 Template moveCell(Template t, String id, int col, int row) =>
-    updateCell(t, id, (c) => c.copyWith(col: col, row: row));
+    updateCell(t, id, (c) {
+      final maxCol = t.grid.cols - c.colSpan;
+      final maxRow = t.grid.rows - c.rowSpan;
+      return c.copyWith(
+        col: col.clamp(0, maxCol < 0 ? 0 : maxCol),
+        row: row.clamp(0, maxRow < 0 ? 0 : maxRow),
+      );
+    });
 
 /// Set the cell [id]'s column and row span.
 Template setSpan(Template t, String id, int colSpan, int rowSpan) =>

@@ -114,24 +114,38 @@ class _BuilderScreenState extends State<BuilderScreen> {
           _gridControls(),
           ControlPalette(registry: widget.registry, onPick: _addControl),
           const Divider(height: 1),
-          Expanded(child: _canvasArea()),
-          if (selected != null)
-            Material(
-              elevation: 8,
-              child: CellInspector(
-                cell: selected,
-                spec: widget.registry.specFor(selected.type)!,
-                maxColSpan: _t.grid.cols,
-                onPropsChanged: (props) => _commit(
-                    updateCell(_t, selected.id, (c) => c.copyWith(props: props))),
-                onColSpanChanged: (span) => _commit(updateCell(
-                    _t, selected.id, (c) => c.copyWith(colSpan: span))),
-                onDelete: () {
-                  _commit(removeCell(_t, selected.id));
-                  setState(() => _selectedId = null);
-                },
-              ),
+          // Canvas fills the remaining space; the inspector OVERLAYS its bottom
+          // (a Stack, not a Column row) so selecting a cell doesn't shrink the
+          // canvas and shift every drag coordinate.
+          Expanded(
+            child: Stack(
+              children: [
+                Positioned.fill(child: _canvasArea()),
+                if (selected != null)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Material(
+                      elevation: 8,
+                      child: CellInspector(
+                        cell: selected,
+                        spec: widget.registry.specFor(selected.type)!,
+                        maxColSpan: _t.grid.cols,
+                        onPropsChanged: (props) => _commit(updateCell(
+                            _t, selected.id, (c) => c.copyWith(props: props))),
+                        onColSpanChanged: (span) => _commit(updateCell(
+                            _t, selected.id, (c) => c.copyWith(colSpan: span))),
+                        onDelete: () {
+                          _commit(removeCell(_t, selected.id));
+                          setState(() => _selectedId = null);
+                        },
+                      ),
+                    ),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -165,9 +179,11 @@ class _BuilderScreenState extends State<BuilderScreen> {
         ],
       );
 
-  Widget _canvasArea() => SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(kCanvasPad),
+  // No scroll view: the canvas fits the available box (EditableCanvas scales to
+  // fit width AND height), so a vertical scroll can't steal the move gesture.
+  Widget _canvasArea() => Padding(
+        padding: const EdgeInsets.all(kCanvasPad),
+        child: Center(
           child: EditableCanvas(
             template: _t,
             registry: widget.registry,
