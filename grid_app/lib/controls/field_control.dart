@@ -20,7 +20,8 @@ class FieldControl extends ControlSpec {
     final label = (cell.props['label'] as String?) ?? '';
     final key = (cell.props['key'] as String?) ?? '';
     final value = (data[key] ?? '').toString();
-    final labelCols = (cell.props['labelCols'] as int?) ?? 1;
+    final rawLabelCols = (cell.props['labelCols'] as int?) ?? 1;
+    final labelCols = rawLabelCols.clamp(1, cell.colSpan > 1 ? cell.colSpan - 1 : 1);
     final valueCols = (cell.colSpan - labelCols).clamp(1, cell.colSpan);
 
     pw.Widget box(String t) => pw.Container(

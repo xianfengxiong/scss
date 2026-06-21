@@ -17,6 +17,7 @@ class TitleControl extends ControlSpec {
   @override
   pw.Widget paintPdf(Cell cell, Map<String, dynamic> data) {
     final text = (cell.props['text'] as String?) ?? '';
+    // TODO(Phase-1B): honour cell.props['align'] (left/center/right); 1A always centers.
     return pw.Center(
       child: pw.Text(
         text,
