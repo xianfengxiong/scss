@@ -31,7 +31,14 @@ pw.Document renderTemplate(
         for (final cell in t.cells) {
           final r = cellRectMm(t.grid, cell);
           final spec = registry.specFor(cell.type);
-          final content = spec?.paintPdf(cell, data) ?? pw.SizedBox();
+          final content = spec?.paintPdf(cell, data) ??
+              pw.Container(
+                alignment: pw.Alignment.center,
+                decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.red, width: 0.5)),
+                child: pw.Text('?${cell.type}',
+                    style: const pw.TextStyle(fontSize: 8, color: PdfColors.red)),
+              );
           children.add(
             pw.Positioned(
               left: r.leftMm * mmToPt,

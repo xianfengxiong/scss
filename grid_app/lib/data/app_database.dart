@@ -56,7 +56,9 @@ class DriftTemplateStore implements TemplateStore {
 
   @override
   Future<List<Template>> all() async {
-    final rows = await _db.select(_db.templateRows).get();
+    final query = _db.select(_db.templateRows)
+      ..orderBy([(r) => OrderingTerm(expression: r.name)]);
+    final rows = await query.get();
     return rows
         .map((r) => Template.fromJson(jsonDecode(r.json) as Map<String, dynamic>))
         .toList();
