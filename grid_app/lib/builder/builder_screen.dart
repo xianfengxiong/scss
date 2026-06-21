@@ -13,9 +13,9 @@ import 'editable_canvas.dart';
 import 'editor_ops.dart';
 import 'pdf_preview_screen.dart';
 
-/// Tap-based template editor (Phase 1B-ii-a): add controls from the palette,
-/// tap a cell to select, edit it in the inspector, change grid rows/cols.
-/// Drag manipulation arrives in Phase 1B-ii-b.
+/// Template editor: add controls from the palette, tap a cell to select,
+/// edit it in the inspector, change grid rows/cols, and drag cells/handles
+/// directly on the canvas (Phase 1B-ii-b).
 class BuilderScreen extends StatefulWidget {
   final Template template;
   final ControlRegistry registry;
