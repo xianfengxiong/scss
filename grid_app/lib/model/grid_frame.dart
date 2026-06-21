@@ -11,9 +11,11 @@ class GridFrame {
     required this.yMm,
     required this.cols,
     required this.rows,
-    required this.colWidthsMm,
-    required this.rowHeightsMm,
-  })  : assert(colWidthsMm.length == cols),
+    required List<double> colWidthsMm,
+    required List<double> rowHeightsMm,
+  })  : colWidthsMm = List<double>.unmodifiable(colWidthsMm),
+        rowHeightsMm = List<double>.unmodifiable(rowHeightsMm),
+        assert(colWidthsMm.length == cols),
         assert(rowHeightsMm.length == rows);
 
   factory GridFrame.uniform({
@@ -39,19 +41,20 @@ class GridFrame {
   GridFrame copyWith({
     double? xMm,
     double? yMm,
-    int? cols,
-    int? rows,
     List<double>? colWidthsMm,
     List<double>? rowHeightsMm,
-  }) =>
-      GridFrame(
-        xMm: xMm ?? this.xMm,
-        yMm: yMm ?? this.yMm,
-        cols: cols ?? this.cols,
-        rows: rows ?? this.rows,
-        colWidthsMm: colWidthsMm ?? this.colWidthsMm,
-        rowHeightsMm: rowHeightsMm ?? this.rowHeightsMm,
-      );
+  }) {
+    final newCols = colWidthsMm ?? this.colWidthsMm;
+    final newRows = rowHeightsMm ?? this.rowHeightsMm;
+    return GridFrame(
+      xMm: xMm ?? this.xMm,
+      yMm: yMm ?? this.yMm,
+      cols: newCols.length,
+      rows: newRows.length,
+      colWidthsMm: newCols,
+      rowHeightsMm: newRows,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'xMm': xMm,
