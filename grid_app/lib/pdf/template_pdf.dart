@@ -10,6 +10,10 @@ const double mmToPt = 72.0 / 25.4;
 
 /// Render [t] to a single A4 page. Each cell is absolutely positioned by its
 /// mm rectangle and drawn by its control's `paintPdf`. No pagination.
+///
+/// Precondition: [t] must be a valid layout — `validateLayout(t)` empty. An
+/// invalid layout (overlapping or out-of-bounds cells) has undefined output and
+/// may throw at render time; callers must validate first.
 pw.Document renderTemplate(
   Template t,
   Map<String, dynamic> data,

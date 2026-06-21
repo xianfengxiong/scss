@@ -24,4 +24,12 @@ void main() {
             props: {'label': 'L', 'key': 'k', 'labelCols': -1}), const {}),
         returnsNormally);
   });
+
+  test('FieldControl.paintPdf accepts a double-valued labelCols (JSON/Drift safe)', () {
+    final f = FieldControl();
+    expect(() => f.paintPdf(
+        const Cell(id: 'd', col: 0, row: 0, colSpan: 4, type: 'field',
+            props: {'label': 'L', 'key': 'k', 'labelCols': 2.0}), const {}),
+        returnsNormally);
+  });
 }
