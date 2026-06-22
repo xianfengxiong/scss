@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../controls/registry.dart';
+import '../grid/cell_borders.dart';
 import '../grid/geometry.dart';
 import '../model/cell.dart';
 import '../model/template.dart';
+import 'border_layer.dart';
 import 'canvas_metrics.dart';
 
 /// Renders [template] as a white A4 page scaled to the available width.
@@ -55,6 +57,7 @@ class GridCanvas extends StatelessWidget {
                 ),
               ),
               for (final cell in template.cells) _cell(cell, scale),
+              ...borderLineWidgets(controlOutlineEdges(template), scale),
             ],
           ),
         );
@@ -114,7 +117,7 @@ class GridCanvas extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          content,
+          ColoredBox(color: Colors.white, child: content),
           if (cell.id == selectedId)
             IgnorePointer(
               child: DecoratedBox(
