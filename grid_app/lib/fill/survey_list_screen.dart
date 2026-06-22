@@ -59,6 +59,7 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
         registry: widget.registry,
       ),
     ));
+    if (!mounted) return;
     await _reload();
   }
 
