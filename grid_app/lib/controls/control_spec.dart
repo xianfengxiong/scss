@@ -27,10 +27,16 @@ abstract class ControlSpec {
           Cell cell, void Function(Map<String, dynamic> props) onChanged) =>
       const SizedBox.shrink();
 
-  /// Real input shown in fill mode.
+  /// The data-map key this control reads/writes in fill mode, or null if it
+  /// holds no value (e.g. a title). Default: the control's `props['key']`.
+  String? dataKey(Cell cell) => cell.props['key'] as String?;
+
+  /// Real input shown in fill mode. Default: the read-only `previewWidget`, so
+  /// value-less controls (title/section/staticText) just show themselves.
+  /// Input controls override this.
   Widget fillWidget(
           Cell cell, Object? value, void Function(Object? value) onChanged) =>
-      const SizedBox.shrink();
+      previewWidget(cell);
 
   /// Fill-time validation rule (e.g. multiImage min/max). null = valid.
   String? validate(Cell cell, Object? value) => null;

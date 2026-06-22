@@ -71,6 +71,50 @@ class FieldControl extends ControlSpec {
   }
 
   @override
+  Widget fillWidget(
+      Cell cell, Object? value, void Function(Object? value) onChanged) {
+    final label = (cell.props['label'] as String?) ?? '';
+    final valueType = (cell.props['valueType'] as String?) ?? 'text';
+    final (labelCols, valueCols) = _labelValueSplit(cell);
+
+    final labelBox = Container(
+      padding: const EdgeInsets.all(2),
+      alignment: Alignment.centerLeft,
+      decoration: BoxDecoration(
+          border: Border.all(width: 0.5, color: const Color(0xFFBDBDBD))),
+      child: Text(label,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 9)),
+    );
+
+    final inputBox = Container(
+      decoration: BoxDecoration(
+          border: Border.all(width: 0.5, color: const Color(0xFFBDBDBD))),
+      child: TextFormField(
+        initialValue: value?.toString() ?? '',
+        keyboardType:
+            valueType == 'number' ? TextInputType.number : TextInputType.text,
+        // Fill the cell's height so the input matches the WYSIWYG row.
+        expands: true,
+        maxLines: null,
+        textAlignVertical: TextAlignVertical.center,
+        style: const TextStyle(fontSize: 9),
+        decoration: const InputDecoration(
+          isDense: true,
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        ),
+        onChanged: (v) => onChanged(v),
+      ),
+    );
+
+    return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Expanded(flex: labelCols, child: labelBox),
+      Expanded(flex: valueCols, child: inputBox),
+    ]);
+  }
+
+  @override
   Widget propEditor(
       Cell cell, void Function(Map<String, dynamic> props) onChanged) {
     return Column(
