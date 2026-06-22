@@ -34,28 +34,32 @@ abstract class LocationService {
 class GeolocatorLocationService implements LocationService {
   @override
   Future<CoordinateResult> getCoordinate() async {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return CoordinateResult.failure('Location services are disabled.');
-    }
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return CoordinateResult.failure('Location services are disabled.');
+      }
 
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.denied) {
-      return CoordinateResult.failure('Location permission denied.');
-    }
-    if (permission == LocationPermission.deniedForever) {
-      return CoordinateResult.failure(
-          'Location permission permanently denied.');
-    }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied) {
+        return CoordinateResult.failure('Location permission denied.');
+      }
+      if (permission == LocationPermission.deniedForever) {
+        return CoordinateResult.failure(
+            'Location permission permanently denied.');
+      }
 
-    final pos = await Geolocator.getCurrentPosition(
-      locationSettings:
-          const LocationSettings(accuracy: LocationAccuracy.high),
-    );
-    return CoordinateResult.success(pos.latitude, pos.longitude,
-        accuracy: pos.accuracy);
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      return CoordinateResult.success(pos.latitude, pos.longitude,
+          accuracy: pos.accuracy);
+    } catch (e) {
+      return CoordinateResult.failure('Failed to get location: $e');
+    }
   }
 }

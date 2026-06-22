@@ -11,6 +11,7 @@ class FieldControl extends ControlSpec {
   final LocationService? location;
 
   FieldControl({this.location});
+
   @override
   String get type => 'field';
   @override
@@ -188,6 +189,7 @@ class _CoordinateFieldState extends State<_CoordinateField> {
   Future<void> _capture() async {
     setState(() => _loading = true);
     final r = await widget.location.getCoordinate();
+    // widget gone during the GPS call — nothing to update (no rebuild can occur).
     if (!mounted) return;
     setState(() => _loading = false);
     if (r.ok) {

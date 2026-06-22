@@ -7,9 +7,9 @@ void main() {
   });
 
   test('CoordinateResult.success is ok and carries the coordinate', () {
-    final r = CoordinateResult.success(41.1, 20.2, accuracy: 8);
+    final r = CoordinateResult.success(41.1, 20.2, accuracy: 8.0);
     expect(r.ok, isTrue);
-    expect([r.lat, r.lon, r.accuracy], [41.1, 20.2, 8]);
+    expect([r.lat, r.lon, r.accuracy], [41.1, 20.2, 8.0]);
     expect(r.error, isNull);
   });
 
