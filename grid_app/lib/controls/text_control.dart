@@ -22,7 +22,6 @@ class TextControl extends ControlSpec {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       alignment: pw.Alignment.centerLeft,
-      decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
       child: pw.Text(value, style: const pw.TextStyle(fontSize: 9)),
     );
   }
@@ -31,8 +30,6 @@ class TextControl extends ControlSpec {
   Widget previewWidget(Cell cell) => Container(
         padding: const EdgeInsets.all(2),
         alignment: Alignment.centerLeft,
-        decoration: BoxDecoration(
-            border: Border.all(width: 0.5, color: const Color(0xFFBDBDBD))),
         child: const Text('[text]',
             style: TextStyle(fontSize: 9, color: Color(0xFF9A9A9A))),
       );
@@ -40,24 +37,20 @@ class TextControl extends ControlSpec {
   @override
   Widget fillWidget(
           Cell cell, Object? value, void Function(Object? value) onChanged) =>
-      Container(
-        decoration: BoxDecoration(
-            border: Border.all(width: 0.5, color: const Color(0xFFBDBDBD))),
-        child: TextFormField(
-          initialValue: value?.toString() ?? '',
-          expands: true,
-          maxLines: null,
-          textAlignVertical: TextAlignVertical.center,
-          style: const TextStyle(fontSize: 9),
-          decoration: InputDecoration(
-            isDense: true,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            hintText: cell.props['hint'] as String?,
-            hintStyle: const TextStyle(fontSize: 9, color: Color(0xFF9A9A9A)),
-          ),
-          onChanged: onChanged,
+      TextFormField(
+        initialValue: value?.toString() ?? '',
+        expands: true,
+        maxLines: null,
+        textAlignVertical: TextAlignVertical.center,
+        style: const TextStyle(fontSize: 9),
+        decoration: InputDecoration(
+          isDense: true,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          hintText: cell.props['hint'] as String?,
+          hintStyle: const TextStyle(fontSize: 9, color: Color(0xFF9A9A9A)),
         ),
+        onChanged: onChanged,
       );
 
   @override

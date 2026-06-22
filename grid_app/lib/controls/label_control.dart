@@ -48,7 +48,6 @@ class LabelControl extends ControlSpec {
   pw.Widget paintPdf(Cell cell, Map<String, dynamic> data) => pw.Container(
         padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         alignment: _pwAlign(cell),
-        decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
         child: pw.Text(_text(cell),
             style: pw.TextStyle(
                 fontSize: 9,
@@ -60,8 +59,6 @@ class LabelControl extends ControlSpec {
   Widget previewWidget(Cell cell) => Container(
         padding: const EdgeInsets.all(2),
         alignment: _align(cell),
-        decoration: BoxDecoration(
-            border: Border.all(width: 0.5, color: const Color(0xFFBDBDBD))),
         child: Text(_text(cell),
             overflow: TextOverflow.ellipsis,
             style: TextStyle(

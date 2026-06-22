@@ -30,7 +30,6 @@ class CoordinateControl extends ControlSpec {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       alignment: pw.Alignment.centerLeft,
-      decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5)),
       child: pw.Text(value, style: const pw.TextStyle(fontSize: 9)),
     );
   }
@@ -39,8 +38,6 @@ class CoordinateControl extends ControlSpec {
   Widget previewWidget(Cell cell) => Container(
         padding: const EdgeInsets.all(2),
         alignment: Alignment.centerLeft,
-        decoration: BoxDecoration(
-            border: Border.all(width: 0.5, color: const Color(0xFFBDBDBD))),
         child: const Text('[coordinate]',
             style: TextStyle(fontSize: 9, color: Color(0xFF9A9A9A))),
       );
@@ -49,22 +46,18 @@ class CoordinateControl extends ControlSpec {
   Widget fillWidget(
       Cell cell, Object? value, void Function(Object? value) onChanged) {
     if (location == null) {
-      return Container(
-        decoration: BoxDecoration(
-            border: Border.all(width: 0.5, color: const Color(0xFFBDBDBD))),
-        child: TextFormField(
-          initialValue: value?.toString() ?? '',
-          expands: true,
-          maxLines: null,
-          textAlignVertical: TextAlignVertical.center,
-          style: const TextStyle(fontSize: 9),
-          decoration: const InputDecoration(
-            isDense: true,
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          ),
-          onChanged: onChanged,
+      return TextFormField(
+        initialValue: value?.toString() ?? '',
+        expands: true,
+        maxLines: null,
+        textAlignVertical: TextAlignVertical.center,
+        style: const TextStyle(fontSize: 9),
+        decoration: const InputDecoration(
+          isDense: true,
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         ),
+        onChanged: onChanged,
       );
     }
     return _CoordinateField(
@@ -130,12 +123,9 @@ class _CoordinateFieldState extends State<_CoordinateField> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-          border: Border.all(width: 0.5, color: const Color(0xFFBDBDBD))),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
           Expanded(
             child: TextField(
               controller: _controller,
@@ -165,8 +155,7 @@ class _CoordinateFieldState extends State<_CoordinateField> {
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.my_location),
           ),
-        ],
-      ),
+      ],
     );
   }
 }
