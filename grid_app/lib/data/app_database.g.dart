@@ -228,15 +228,286 @@ class TemplateRowsCompanion extends UpdateCompanion<TemplateRow> {
   }
 }
 
+class $SurveyRowsTable extends SurveyRows
+    with TableInfo<$SurveyRowsTable, SurveyRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SurveyRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _templateIdMeta =
+      const VerificationMeta('templateId');
+  @override
+  late final GeneratedColumn<String> templateId = GeneratedColumn<String>(
+      'template_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _jsonMeta = const VerificationMeta('json');
+  @override
+  late final GeneratedColumn<String> json = GeneratedColumn<String>(
+      'json', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, templateId, name, json];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'survey_rows';
+  @override
+  VerificationContext validateIntegrity(Insertable<SurveyRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('template_id')) {
+      context.handle(
+          _templateIdMeta,
+          templateId.isAcceptableOrUnknown(
+              data['template_id']!, _templateIdMeta));
+    } else if (isInserting) {
+      context.missing(_templateIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('json')) {
+      context.handle(
+          _jsonMeta, json.isAcceptableOrUnknown(data['json']!, _jsonMeta));
+    } else if (isInserting) {
+      context.missing(_jsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SurveyRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SurveyRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      templateId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}template_id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      json: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}json'])!,
+    );
+  }
+
+  @override
+  $SurveyRowsTable createAlias(String alias) {
+    return $SurveyRowsTable(attachedDatabase, alias);
+  }
+}
+
+class SurveyRow extends DataClass implements Insertable<SurveyRow> {
+  final String id;
+  final String templateId;
+  final String name;
+  final String json;
+  const SurveyRow(
+      {required this.id,
+      required this.templateId,
+      required this.name,
+      required this.json});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['template_id'] = Variable<String>(templateId);
+    map['name'] = Variable<String>(name);
+    map['json'] = Variable<String>(json);
+    return map;
+  }
+
+  SurveyRowsCompanion toCompanion(bool nullToAbsent) {
+    return SurveyRowsCompanion(
+      id: Value(id),
+      templateId: Value(templateId),
+      name: Value(name),
+      json: Value(json),
+    );
+  }
+
+  factory SurveyRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SurveyRow(
+      id: serializer.fromJson<String>(json['id']),
+      templateId: serializer.fromJson<String>(json['templateId']),
+      name: serializer.fromJson<String>(json['name']),
+      json: serializer.fromJson<String>(json['json']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'templateId': serializer.toJson<String>(templateId),
+      'name': serializer.toJson<String>(name),
+      'json': serializer.toJson<String>(json),
+    };
+  }
+
+  SurveyRow copyWith(
+          {String? id, String? templateId, String? name, String? json}) =>
+      SurveyRow(
+        id: id ?? this.id,
+        templateId: templateId ?? this.templateId,
+        name: name ?? this.name,
+        json: json ?? this.json,
+      );
+  SurveyRow copyWithCompanion(SurveyRowsCompanion data) {
+    return SurveyRow(
+      id: data.id.present ? data.id.value : this.id,
+      templateId:
+          data.templateId.present ? data.templateId.value : this.templateId,
+      name: data.name.present ? data.name.value : this.name,
+      json: data.json.present ? data.json.value : this.json,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SurveyRow(')
+          ..write('id: $id, ')
+          ..write('templateId: $templateId, ')
+          ..write('name: $name, ')
+          ..write('json: $json')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, templateId, name, json);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SurveyRow &&
+          other.id == this.id &&
+          other.templateId == this.templateId &&
+          other.name == this.name &&
+          other.json == this.json);
+}
+
+class SurveyRowsCompanion extends UpdateCompanion<SurveyRow> {
+  final Value<String> id;
+  final Value<String> templateId;
+  final Value<String> name;
+  final Value<String> json;
+  final Value<int> rowid;
+  const SurveyRowsCompanion({
+    this.id = const Value.absent(),
+    this.templateId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.json = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SurveyRowsCompanion.insert({
+    required String id,
+    required String templateId,
+    required String name,
+    required String json,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        templateId = Value(templateId),
+        name = Value(name),
+        json = Value(json);
+  static Insertable<SurveyRow> custom({
+    Expression<String>? id,
+    Expression<String>? templateId,
+    Expression<String>? name,
+    Expression<String>? json,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (templateId != null) 'template_id': templateId,
+      if (name != null) 'name': name,
+      if (json != null) 'json': json,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SurveyRowsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? templateId,
+      Value<String>? name,
+      Value<String>? json,
+      Value<int>? rowid}) {
+    return SurveyRowsCompanion(
+      id: id ?? this.id,
+      templateId: templateId ?? this.templateId,
+      name: name ?? this.name,
+      json: json ?? this.json,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (templateId.present) {
+      map['template_id'] = Variable<String>(templateId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (json.present) {
+      map['json'] = Variable<String>(json.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SurveyRowsCompanion(')
+          ..write('id: $id, ')
+          ..write('templateId: $templateId, ')
+          ..write('name: $name, ')
+          ..write('json: $json, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TemplateRowsTable templateRows = $TemplateRowsTable(this);
+  late final $SurveyRowsTable surveyRows = $SurveyRowsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [templateRows];
+  List<DatabaseSchemaEntity> get allSchemaEntities =>
+      [templateRows, surveyRows];
 }
 
 typedef $$TemplateRowsTableCreateCompanionBuilder = TemplateRowsCompanion
@@ -382,10 +653,162 @@ typedef $$TemplateRowsTableProcessedTableManager = ProcessedTableManager<
     ),
     TemplateRow,
     PrefetchHooks Function()>;
+typedef $$SurveyRowsTableCreateCompanionBuilder = SurveyRowsCompanion Function({
+  required String id,
+  required String templateId,
+  required String name,
+  required String json,
+  Value<int> rowid,
+});
+typedef $$SurveyRowsTableUpdateCompanionBuilder = SurveyRowsCompanion Function({
+  Value<String> id,
+  Value<String> templateId,
+  Value<String> name,
+  Value<String> json,
+  Value<int> rowid,
+});
+
+class $$SurveyRowsTableFilterComposer
+    extends Composer<_$AppDatabase, $SurveyRowsTable> {
+  $$SurveyRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get templateId => $composableBuilder(
+      column: $table.templateId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get json => $composableBuilder(
+      column: $table.json, builder: (column) => ColumnFilters(column));
+}
+
+class $$SurveyRowsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SurveyRowsTable> {
+  $$SurveyRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get templateId => $composableBuilder(
+      column: $table.templateId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get json => $composableBuilder(
+      column: $table.json, builder: (column) => ColumnOrderings(column));
+}
+
+class $$SurveyRowsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SurveyRowsTable> {
+  $$SurveyRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get templateId => $composableBuilder(
+      column: $table.templateId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get json =>
+      $composableBuilder(column: $table.json, builder: (column) => column);
+}
+
+class $$SurveyRowsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $SurveyRowsTable,
+    SurveyRow,
+    $$SurveyRowsTableFilterComposer,
+    $$SurveyRowsTableOrderingComposer,
+    $$SurveyRowsTableAnnotationComposer,
+    $$SurveyRowsTableCreateCompanionBuilder,
+    $$SurveyRowsTableUpdateCompanionBuilder,
+    (SurveyRow, BaseReferences<_$AppDatabase, $SurveyRowsTable, SurveyRow>),
+    SurveyRow,
+    PrefetchHooks Function()> {
+  $$SurveyRowsTableTableManager(_$AppDatabase db, $SurveyRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SurveyRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SurveyRowsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SurveyRowsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> templateId = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> json = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SurveyRowsCompanion(
+            id: id,
+            templateId: templateId,
+            name: name,
+            json: json,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String templateId,
+            required String name,
+            required String json,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              SurveyRowsCompanion.insert(
+            id: id,
+            templateId: templateId,
+            name: name,
+            json: json,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$SurveyRowsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $SurveyRowsTable,
+    SurveyRow,
+    $$SurveyRowsTableFilterComposer,
+    $$SurveyRowsTableOrderingComposer,
+    $$SurveyRowsTableAnnotationComposer,
+    $$SurveyRowsTableCreateCompanionBuilder,
+    $$SurveyRowsTableUpdateCompanionBuilder,
+    (SurveyRow, BaseReferences<_$AppDatabase, $SurveyRowsTable, SurveyRow>),
+    SurveyRow,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
   $$TemplateRowsTableTableManager get templateRows =>
       $$TemplateRowsTableTableManager(_db, _db.templateRows);
+  $$SurveyRowsTableTableManager get surveyRows =>
+      $$SurveyRowsTableTableManager(_db, _db.surveyRows);
 }
