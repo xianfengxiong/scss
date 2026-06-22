@@ -2,6 +2,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../controls/registry.dart';
+import '../grid/cell_borders.dart';
 import '../grid/geometry.dart';
 import '../model/template.dart';
 
@@ -50,6 +51,34 @@ pw.Document renderTemplate(
               ),
             ),
           );
+        }
+        // Cell border layer: each control-cell edge as a thin line centered on
+        // its mm boundary (shared edges coincide → single width), matching the
+        // builder/fill canvases.
+        const borderPt = 0.7;
+        final borderColor = PdfColor.fromInt(0xFF455A64);
+        for (final e in controlOutlineEdges(t)) {
+          if (e.vertical) {
+            children.add(pw.Positioned(
+              left: e.atMm * mmToPt - borderPt / 2,
+              top: e.fromMm * mmToPt,
+              child: pw.Container(
+                width: borderPt,
+                height: (e.toMm - e.fromMm) * mmToPt,
+                color: borderColor,
+              ),
+            ));
+          } else {
+            children.add(pw.Positioned(
+              left: e.fromMm * mmToPt,
+              top: e.atMm * mmToPt - borderPt / 2,
+              child: pw.Container(
+                width: (e.toMm - e.fromMm) * mmToPt,
+                height: borderPt,
+                color: borderColor,
+              ),
+            ));
+          }
         }
         return pw.Stack(children: children);
       },
