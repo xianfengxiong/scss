@@ -51,11 +51,15 @@ class ImagePickerImageService implements ImageService {
   }
 
   /// Re-compress until the file is under 500 KB or the quality floor is hit.
+  /// Deletes each intermediate file (but never the original [path]).
   Future<String> _ensureUnder500kb(String path) async {
     var current = path;
     var quality = 68;
     while (await File(current).length() > 500 * 1024 && quality >= 30) {
-      final out = '$current.q$quality.jpg';
+      final out = p.join(
+        p.dirname(current),
+        '${p.basenameWithoutExtension(current)}_q$quality.jpg',
+      );
       final res = await FlutterImageCompress.compressAndGetFile(
         current,
         out,
@@ -64,9 +68,17 @@ class ImagePickerImageService implements ImageService {
         minHeight: 1280,
       );
       if (res == null) break;
+      if (current != path) await _safeDelete(current);
       current = res.path;
       quality -= 16;
     }
     return current;
+  }
+
+  Future<void> _safeDelete(String path) async {
+    try {
+      final f = File(path);
+      if (await f.exists()) await f.delete();
+    } catch (_) {}
   }
 }
