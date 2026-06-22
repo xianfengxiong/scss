@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../controls/registry.dart';
+import '../data/survey_store.dart';
 import '../data/template_store.dart';
+import '../fill/fill_screen.dart';
+import '../fill/survey_list_screen.dart';
+import '../model/survey.dart';
 import '../model/template.dart';
 import '../sample/sample_template.dart';
 import 'builder_screen.dart';
@@ -10,10 +14,14 @@ import 'builder_screen.dart';
 /// layout), open one to view/preview, or delete one.
 class TemplateListScreen extends StatefulWidget {
   final TemplateStore store;
+  final SurveyStore surveyStore;
   final ControlRegistry registry;
 
   const TemplateListScreen(
-      {super.key, required this.store, required this.registry});
+      {super.key,
+      required this.store,
+      required this.surveyStore,
+      required this.registry});
 
   @override
   State<TemplateListScreen> createState() => _TemplateListScreenState();
@@ -56,6 +64,34 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
     await _reload();
   }
 
+  Future<void> _fill(Template t) async {
+    final survey = Survey(
+      id: 'srv_${DateTime.now().millisecondsSinceEpoch}',
+      templateId: t.id,
+      name: t.name,
+    );
+    await widget.surveyStore.upsert(survey);
+    if (!mounted) return;
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => FillScreen(
+        template: t,
+        survey: survey,
+        store: widget.surveyStore,
+        registry: widget.registry,
+      ),
+    ));
+  }
+
+  void _openSurveys() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => SurveyListScreen(
+        surveyStore: widget.surveyStore,
+        templateStore: widget.store,
+        registry: widget.registry,
+      ),
+    ));
+  }
+
   Future<void> _delete(Template t) async {
     await widget.store.delete(t.id);
     if (!mounted) return;
@@ -65,7 +101,16 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('SCSS Templates')),
+      appBar: AppBar(
+        title: const Text('SCSS Templates'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.assignment_outlined),
+            tooltip: 'Surveys',
+            onPressed: _openSurveys,
+          ),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _templates.isEmpty
@@ -88,6 +133,12 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                           title: Text(t.name),
                           subtitle: Text(
                               '${t.grid.cols}×${t.grid.rows} · ${t.cells.length} cells'),
+                          trailing: IconButton(
+                            key: ValueKey('fill-${t.id}'),
+                            icon: const Icon(Icons.edit_note),
+                            tooltip: 'Fill',
+                            onPressed: () => _fill(t),
+                          ),
                           onTap: () => _open(t),
                         ),
                       ),
