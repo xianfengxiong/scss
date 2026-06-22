@@ -6,6 +6,7 @@ import 'data/app_database.dart';
 import 'data/survey_store.dart';
 import 'data/template_store.dart';
 import 'builder/template_list_screen.dart';
+import 'services/image_service.dart';
 import 'services/location_service.dart';
 
 void main() {
@@ -14,7 +15,10 @@ void main() {
   runApp(ScssGridApp(
     store: DriftTemplateStore(db),
     surveyStore: DriftSurveyStore(db),
-    registry: buildDefaultRegistry(location: GeolocatorLocationService()),
+    registry: buildDefaultRegistry(
+      location: GeolocatorLocationService(),
+      image: ImagePickerImageService(),
+    ),
   ));
 }
 
