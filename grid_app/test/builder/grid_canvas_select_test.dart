@@ -42,8 +42,8 @@ void main() {
           width: 300,
           child: GridCanvas(
             template: _tpl(const [
-              Cell(id: 'a', col: 0, row: 0, colSpan: 4, type: 'field',
-                  props: {'label': 'L', 'key': 'k'}),
+              Cell(id: 'a', col: 0, row: 0, colSpan: 4, type: 'text',
+                  props: {'key': 'k', 'hint': ''}),
             ]),
             registry: buildDefaultRegistry(),
             selectedId: 'a',

@@ -18,6 +18,13 @@ void main() {
     expect(uniqueKey(_tpl(const []), 'text'), 'text');
   });
 
+  test('suffixes _1 when only the base is taken', () {
+    final t = _tpl(const [
+      Cell(id: 'a', col: 0, row: 0, type: 'text', props: {'key': 'text'}),
+    ]);
+    expect(uniqueKey(t, 'text'), 'text_1');
+  });
+
   test('suffixes to avoid collisions', () {
     final t = _tpl(const [
       Cell(id: 'a', col: 0, row: 0, type: 'text', props: {'key': 'text'}),

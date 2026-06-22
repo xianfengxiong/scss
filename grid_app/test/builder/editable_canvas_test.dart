@@ -30,8 +30,8 @@ void main() {
     String? selected;
     await tester.pumpWidget(_host(EditableCanvas(
       template: _tpl(const [
-        Cell(id: 'a', col: 0, row: 0, colSpan: 2, type: 'field',
-            props: {'label': 'L', 'key': 'k'}),
+        Cell(id: 'a', col: 0, row: 0, colSpan: 2, type: 'text',
+            props: {'key': 'k', 'hint': ''}),
       ]),
       registry: buildDefaultRegistry(),
       selectedId: null,
@@ -51,8 +51,8 @@ void main() {
     int? mc, mr;
     await tester.pumpWidget(_host(EditableCanvas(
       template: _tpl(const [
-        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'field',
-            props: {'label': 'L', 'key': 'k'}),
+        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'text',
+            props: {'key': 'k', 'hint': ''}),
       ]),
       registry: buildDefaultRegistry(),
       selectedId: 'a',
@@ -72,8 +72,8 @@ void main() {
     int? cs;
     await tester.pumpWidget(_host(EditableCanvas(
       template: _tpl(const [
-        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'field',
-            props: {'label': 'L', 'key': 'k'}),
+        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'text',
+            props: {'key': 'k', 'hint': ''}),
       ]),
       registry: buildDefaultRegistry(),
       selectedId: 'a',
@@ -94,8 +94,8 @@ void main() {
     int? rs;
     await tester.pumpWidget(_host(EditableCanvas(
       template: _tpl(const [
-        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'field',
-            props: {'label': 'L', 'key': 'k'}),
+        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'text',
+            props: {'key': 'k', 'hint': ''}),
       ]),
       registry: buildDefaultRegistry(),
       selectedId: 'a',

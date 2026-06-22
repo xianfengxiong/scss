@@ -16,7 +16,7 @@ Template _tpl(List<Cell> cells) => Template(
 void main() {
   test('moveCell sets new col/row, leaving spans intact', () {
     final t = _tpl(const [
-      Cell(id: 'a', col: 0, row: 0, colSpan: 2, rowSpan: 1, type: 'field'),
+      Cell(id: 'a', col: 0, row: 0, colSpan: 2, rowSpan: 1, type: 'text'),
     ]);
     final m = moveCell(t, 'a', 3, 2);
     final c = m.cells.single;
@@ -25,7 +25,7 @@ void main() {
 
   test('setSpan sets colSpan/rowSpan, leaving position intact', () {
     final t = _tpl(const [
-      Cell(id: 'a', col: 1, row: 1, type: 'field'),
+      Cell(id: 'a', col: 1, row: 1, type: 'text'),
     ]);
     final s = setSpan(t, 'a', 3, 2);
     final c = s.cells.single;
@@ -34,7 +34,7 @@ void main() {
 
   test('moveCell clamps so a wide cell stays inside the grid', () {
     final t = _tpl(const [
-      Cell(id: 'a', col: 0, row: 0, colSpan: 6, type: 'field'), // full width
+      Cell(id: 'a', col: 0, row: 0, colSpan: 6, type: 'text'), // full width
     ]);
     // try to put the top-left at col 3 — clamps to 0 (6 cols - 6 span); row -> 4
     final c = moveCell(t, 'a', 3, 4).cells.single;

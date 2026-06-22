@@ -21,14 +21,14 @@ void main() {
   test('firstFreeCell skips occupied cells row-major', () {
     // A 3-wide cell on row 0 -> first free is (3,0).
     final t = _tpl(const [
-      Cell(id: 'a', col: 0, row: 0, colSpan: 3, type: 'field'),
+      Cell(id: 'a', col: 0, row: 0, colSpan: 3, type: 'text'),
     ]);
     expect(firstFreeCell(t), (col: 3, row: 0));
   });
 
   test('firstFreeCell returns null when the grid is full', () {
     final t = _tpl(const [
-      Cell(id: 'a', col: 0, row: 0, colSpan: 6, rowSpan: 4, type: 'field'),
+      Cell(id: 'a', col: 0, row: 0, colSpan: 6, rowSpan: 4, type: 'text'),
     ]);
     expect(firstFreeCell(t), isNull);
   });
@@ -36,7 +36,7 @@ void main() {
   test('freeRunWidth counts free columns to the right', () {
     // cols 0..2 occupied; from (3,0) there are 3 free cols (3,4,5).
     final t = _tpl(const [
-      Cell(id: 'a', col: 0, row: 0, colSpan: 3, type: 'field'),
+      Cell(id: 'a', col: 0, row: 0, colSpan: 3, type: 'text'),
     ]);
     expect(freeRunWidth(t, 3, 0), 3);
     expect(freeRunWidth(t, 0, 0), 0); // (0,0) is occupied
@@ -46,7 +46,7 @@ void main() {
   test('freeRunWidth stops at the next occupied cell', () {
     // col 0 free, cols 2..3 occupied -> from (0,0) only 2 free (0,1).
     final t = _tpl(const [
-      Cell(id: 'a', col: 2, row: 0, colSpan: 2, type: 'field'),
+      Cell(id: 'a', col: 2, row: 0, colSpan: 2, type: 'text'),
     ]);
     expect(freeRunWidth(t, 0, 0), 2);
   });

@@ -15,8 +15,8 @@ Template _one() => Template(
       grid: GridFrame.uniform(
           xMm: 0, yMm: 0, cols: 6, rows: 6, colWidthMm: 30, rowHeightMm: 30),
       cells: const [
-        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'field',
-            props: {'label': 'L', 'key': 'k'}),
+        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'text',
+            props: {'key': 'k', 'hint': ''}),
       ],
     );
 

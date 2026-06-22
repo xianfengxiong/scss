@@ -16,7 +16,7 @@ Template _tpl(List<Cell> cells, {int cols = 4, int rows = 4}) => Template(
 void main() {
   test('cellAtCoord finds the covering cell or null', () {
     final t = _tpl(const [
-      Cell(id: 'a', col: 0, row: 0, colSpan: 2, rowSpan: 2, type: 'field'),
+      Cell(id: 'a', col: 0, row: 0, colSpan: 2, rowSpan: 2, type: 'text'),
     ]);
     expect(cellAtCoord(t, 1, 1)!.id, 'a');
     expect(cellAtCoord(t, 3, 3), isNull);
@@ -24,7 +24,7 @@ void main() {
 
   test('firstFreeRow returns the first row with no cells', () {
     final t = _tpl(const [
-      Cell(id: 'a', col: 0, row: 0, colSpan: 4, type: 'field'),
+      Cell(id: 'a', col: 0, row: 0, colSpan: 4, type: 'text'),
     ]);
     expect(firstFreeRow(t), 1);
   });
@@ -55,10 +55,10 @@ void main() {
   });
 
   test('isValid reflects validateLayout', () {
-    final ok = _tpl(const [Cell(id: 'a', col: 0, row: 0, type: 'field')]);
+    final ok = _tpl(const [Cell(id: 'a', col: 0, row: 0, type: 'text')]);
     final bad = _tpl(const [
-      Cell(id: 'a', col: 0, row: 0, colSpan: 2, type: 'field'),
-      Cell(id: 'b', col: 1, row: 0, colSpan: 2, type: 'field'),
+      Cell(id: 'a', col: 0, row: 0, colSpan: 2, type: 'text'),
+      Cell(id: 'b', col: 1, row: 0, colSpan: 2, type: 'text'),
     ]);
     expect(isValid(ok), isTrue);
     expect(isValid(bad), isFalse);
