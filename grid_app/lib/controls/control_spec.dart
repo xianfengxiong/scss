@@ -31,6 +31,12 @@ abstract class ControlSpec {
   /// holds no value (e.g. a title). Default: the control's `props['key']`.
   String? dataKey(Cell cell) => cell.props['key'] as String?;
 
+  /// Transform this control's fill value into the value its `paintPdf` expects,
+  /// async, before PDF rendering. Default: identity (text/number/coordinate
+  /// print their string as-is). `image` overrides this to read its file into
+  /// bytes, since `paintPdf` is synchronous and cannot do file IO.
+  Future<Object?> resolvePdfValue(Cell cell, Object? value) async => value;
+
   /// Real input shown in fill mode. Default: the read-only `previewWidget`, so
   /// value-less controls (title/section/staticText) just show themselves.
   /// Input controls override this.
