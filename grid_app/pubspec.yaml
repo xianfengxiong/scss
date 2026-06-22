@@ -39,6 +39,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.42
   path_provider: ^2.1.5
   printing: ^5.14.3
+  geolocator: ^13.0.0 # pinned: 14.x's geolocator_android calls Color.toARGB32() (absent in Flutter 3.27)
 
 dev_dependencies:
   flutter_test:
