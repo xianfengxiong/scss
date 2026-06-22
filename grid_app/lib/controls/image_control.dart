@@ -42,7 +42,8 @@ class ImageControl extends ControlSpec {
     if (v is Uint8List) {
       try {
         return pw.Image(pw.MemoryImage(v), fit: pw.BoxFit.contain);
-      } catch (_) {
+      } catch (e) {
+        debugPrint('[ImageControl] paintPdf: corrupt image bytes — $e');
         return pw.SizedBox();
       }
     }
@@ -59,7 +60,7 @@ class ImageControl extends ControlSpec {
   @override
   Widget fillWidget(
           Cell cell, Object? value, void Function(Object? value) onChanged) =>
-      _ImageField(image: image, value: value as String?, onChanged: onChanged);
+      _ImageField(image: image, value: value is String ? value : null, onChanged: onChanged);
 }
 
 class _ImageField extends StatelessWidget {
