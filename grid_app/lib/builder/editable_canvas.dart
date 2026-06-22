@@ -61,67 +61,65 @@ class _EditableCanvasState extends State<EditableCanvas> {
   @override
   Widget build(BuildContext context) {
     final t = widget.template;
-    final selected = widget.selectedId == null
-        ? null
-        : _cellById(widget.selectedId!);
+    final selected =
+        widget.selectedId == null ? null : _cellById(widget.selectedId!);
     return DragTarget<ControlSpec>(
+      onWillAcceptWithDetails: (d) => _coordAt(d.offset) != null,
       onAcceptWithDetails: (d) {
         final c = _coordAt(d.offset);
         if (c != null) widget.onDropControl?.call(d.data, c.col, c.row);
       },
       builder: (context, candidate, rejected) => LayoutBuilder(
-      builder: (context, constraints) {
-        // Fit the whole A4 page in the available box (width AND height) so it
-        // never needs a scroll view — a vertical scroll would steal the
-        // drag-to-move gesture. Degrades to width-fit if height is unbounded.
-        final scale = math.min(
-          pageScale(constraints.maxWidth, t.page.widthMm),
-          constraints.maxHeight.isFinite
-              ? pageScale(constraints.maxHeight, t.page.heightMm)
-              : double.infinity,
-        );
-        return SizedBox(
-          width: t.page.widthMm * scale,
-          height: t.page.heightMm * scale,
-          child: Stack(
-            key: _key,
-            children: [
-              // 1. render + tap-select + drag-move. The GestureDetector wraps
-              //    the canvas (opaque, has a child) — the reliable pattern; the
-              //    edge/span handles below are later Stack children, so they
-              //    paint on top and win their own drags.
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapUp: (d) {
-                  final c = cellCoordAtMm(t.grid,
-                      d.localPosition.dx / scale, d.localPosition.dy / scale);
-                  final hit =
-                      c == null ? null : cellAtCoord(t, c.col, c.row);
-                  widget.onSelect(hit?.id);
-                },
-                onPanUpdate: (d) {
-                  final id = widget.selectedId;
-                  if (id == null) return;
-                  final c = cellCoordAtMm(t.grid,
-                      d.localPosition.dx / scale, d.localPosition.dy / scale);
-                  if (c != null) widget.onMove(id, c.col, c.row);
-                },
-                child: GridCanvas(
-                    template: t, registry: widget.registry,
-                    selectedId: widget.selectedId),
-              ),
-              // 2. column-boundary handles on the frame top edge
-              for (var i = 1; i < t.grid.cols; i++)
-                _colHandle(i, scale),
-              // 4. row-boundary handles on the frame left edge
-              for (var j = 1; j < t.grid.rows; j++)
-                _rowHandle(j, scale),
-              // 5. span handles on the selected cell
-              if (selected != null) ..._spanHandles(selected, scale),
-            ],
-          ),
-        );
-      },
+        builder: (context, constraints) {
+          // Fit the whole A4 page in the available box (width AND height) so it
+          // never needs a scroll view — a vertical scroll would steal the
+          // drag-to-move gesture. Degrades to width-fit if height is unbounded.
+          final scale = math.min(
+            pageScale(constraints.maxWidth, t.page.widthMm),
+            constraints.maxHeight.isFinite
+                ? pageScale(constraints.maxHeight, t.page.heightMm)
+                : double.infinity,
+          );
+          return SizedBox(
+            width: t.page.widthMm * scale,
+            height: t.page.heightMm * scale,
+            child: Stack(
+              key: _key,
+              children: [
+                // 1. render + tap-select + drag-move. The GestureDetector wraps
+                //    the canvas (opaque, has a child) — the reliable pattern; the
+                //    edge/span handles below are later Stack children, so they
+                //    paint on top and win their own drags.
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapUp: (d) {
+                    final c = cellCoordAtMm(t.grid, d.localPosition.dx / scale,
+                        d.localPosition.dy / scale);
+                    final hit = c == null ? null : cellAtCoord(t, c.col, c.row);
+                    widget.onSelect(hit?.id);
+                  },
+                  onPanUpdate: (d) {
+                    final id = widget.selectedId;
+                    if (id == null) return;
+                    final c = cellCoordAtMm(t.grid, d.localPosition.dx / scale,
+                        d.localPosition.dy / scale);
+                    if (c != null) widget.onMove(id, c.col, c.row);
+                  },
+                  child: GridCanvas(
+                      template: t,
+                      registry: widget.registry,
+                      selectedId: widget.selectedId),
+                ),
+                // 2. column-boundary handles on the frame top edge
+                for (var i = 1; i < t.grid.cols; i++) _colHandle(i, scale),
+                // 4. row-boundary handles on the frame left edge
+                for (var j = 1; j < t.grid.rows; j++) _rowHandle(j, scale),
+                // 5. span handles on the selected cell
+                if (selected != null) ..._spanHandles(selected, scale),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -201,7 +199,8 @@ class _EditableCanvasState extends State<EditableCanvas> {
           onPanUpdate: (d) {
             final c = _coordAt(d.globalPosition);
             if (c == null) return;
-            final span = (c.col - cell.col + 1).clamp(1, widget.template.grid.cols);
+            final span =
+                (c.col - cell.col + 1).clamp(1, widget.template.grid.cols);
             widget.onSpan(cell.id, span, cell.rowSpan);
           },
           child: const _Knob(color: Colors.blue),
@@ -218,7 +217,8 @@ class _EditableCanvasState extends State<EditableCanvas> {
           onPanUpdate: (d) {
             final c = _coordAt(d.globalPosition);
             if (c == null) return;
-            final span = (c.row - cell.row + 1).clamp(1, widget.template.grid.rows);
+            final span =
+                (c.row - cell.row + 1).clamp(1, widget.template.grid.rows);
             widget.onSpan(cell.id, cell.colSpan, span);
           },
           child: const _Knob(color: Colors.blue),
