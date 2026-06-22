@@ -114,3 +114,19 @@ Template moveCell(Template t, String id, int col, int row) =>
 /// Set the cell [id]'s column and row span.
 Template setSpan(Template t, String id, int colSpan, int rowSpan) =>
     updateCell(t, id, (c) => c.copyWith(colSpan: colSpan, rowSpan: rowSpan));
+
+/// A data key not already used by any cell in [t]. Returns [base] if free, else
+/// the first free `${base}_$n` (n from 1). Used when placing a value control so
+/// keys never collide in the survey data map.
+String uniqueKey(Template t, String base) {
+  final used = t.cells
+      .map((c) => c.props['key'])
+      .whereType<String>()
+      .toSet();
+  if (!used.contains(base)) return base;
+  var n = 1;
+  while (used.contains('${base}_$n')) {
+    n++;
+  }
+  return '${base}_$n';
+}
