@@ -40,6 +40,10 @@ dependencies:
   path_provider: ^2.1.5
   printing: ^5.14.3
   geolocator: ^13.0.0 # pinned: 14.x's geolocator_android calls Color.toARGB32() (absent in Flutter 3.27)
+  image_picker: ^1.2.0
+  flutter_image_compress: ^2.4.0
+  uuid: ^4.5.3
+  path: ^1.9.0
 
 dev_dependencies:
   flutter_test:
