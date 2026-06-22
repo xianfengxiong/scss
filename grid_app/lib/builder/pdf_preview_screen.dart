@@ -11,16 +11,21 @@ class PdfPreviewScreen extends StatelessWidget {
   final Template template;
   final ControlRegistry registry;
 
+  /// Answers to render into the PDF. Empty = blank-template preview (builder).
+  final Map<String, dynamic> data;
+
   const PdfPreviewScreen(
-      {super.key, required this.template, required this.registry});
+      {super.key,
+      required this.template,
+      required this.registry,
+      this.data = const {}});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Preview')),
       body: PdfPreview(
-        build: (format) =>
-            renderTemplate(template, const {}, registry).save(),
+        build: (format) => renderTemplate(template, data, registry).save(),
         canChangePageFormat: false,
         canChangeOrientation: false,
       ),
