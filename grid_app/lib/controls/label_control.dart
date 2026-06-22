@@ -72,8 +72,7 @@ class LabelControl extends ControlSpec {
   @override
   Widget propEditor(
       Cell cell, void Function(Map<String, dynamic> props) onChanged) {
-    return SingleChildScrollView(
-      child: Column(
+    return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -98,6 +97,6 @@ class LabelControl extends ControlSpec {
           onChanged: (v) => onChanged({...cell.props, 'bold': v}),
         ),
       ],
-    ));
+    );
   }
 }

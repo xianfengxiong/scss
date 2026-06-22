@@ -191,3 +191,15 @@ WYSIWYG 由"三处共用 cell 矩形计算 + 共用渲染语义"保证。
 - 单网格框(不支持一页多框)。
 - 持久化用 Drift/SQLite、greenfield 无迁移。
 - A4 纵向、仅单页。
+
+## 15. 设计修订 2026-06-22 — 网格原生控件模型(取代 §6 的 `field` 模型)
+
+用户复核建模器后定稿的控件模型调整(替代原 §6 里"一个 `field` 内含 label+value 的 flex 分界 + valueType 下拉"):
+
+- **控件 = 网格原生 + 工具箱化**:定位/尺寸全用网格(`col/row/colSpan/rowSpan`),控件填满所占格、随网格线缩放。调色板像 VB 工具箱,**每种类型一个独立 `ControlSpec`**(插件式,1 文件 + 注册 1 行)。
+- **废弃 `field` + valueType 下拉**,拆为独立控件:`label`(只读文本,props: text/align/bold)、`text`(输入,props: key/hint)、`number`(输入,props: key/unit)、`coordinate`(GPS 输入,props: key;搬 Phase 3a 的 `_CoordinateField`+`LocationService`)。`title`(居中加粗)保留。label 与 value **不再绑定**,一行"标签 │ 值"= 一个 label 格 + 一个 value 格,**对齐由网格保证**(根除原 labelCols flex 分界的错位)。
+- **检视器 = VB 属性面板**:每控件自己的 `propEditor` 属性集(label 有 align/bold;value 控件有 key 等)。属性存 `cell.props` 自由 map(加属性零数据库/模型改动)。
+- **输入控件 `key` 自动唯一**(`text_1`…,加入时扫描现有 key)**+ 可改**。
+- **边框合并(P2b)**:控件只画内容,另起"边框层"把**占用格**的轮廓画成**以网格边界线为中心的线** → 相邻共享边重合 = 始终单倍粗;canvas 与 PDF 共用同一几何。建模画布另:① 每个控件(含 Title、不只选中的)画实线轮廓框住占用范围;② 淡网格线只在**空白格**画,控件占的格内不画。
+- **放置(已在"自由放置"期完成)**:从工具箱**拖控件到目标格**、默认占该行剩余宽度;tap 落第一个空格;移动/手柄调整到任意空位,`isValid` 守卫。
+- 落地分期:**P1 自由放置(已合并)→ P2a 工具箱拆分 → P2b 边框合并+网格渲染**。

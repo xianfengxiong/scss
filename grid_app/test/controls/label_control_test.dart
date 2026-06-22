@@ -7,7 +7,7 @@ const _cell = Cell(id: 'l', col: 0, row: 0, colSpan: 3, type: 'label',
     props: {'text': 'Site Name', 'align': 'left', 'bold': true});
 
 Widget _host(Widget child) =>
-    MaterialApp(home: Scaffold(body: SizedBox(width: 200, height: 40, child: child)));
+    MaterialApp(home: Scaffold(body: SizedBox(width: 200, height: 300, child: child)));
 
 void main() {
   test('type, defaultProps, and dataKey (no data key for a label)', () {
