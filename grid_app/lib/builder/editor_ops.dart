@@ -77,6 +77,27 @@ Template? setRows(Template t, int rows) {
 /// True if [t] is a valid layout (no overlap, no out-of-bounds cells).
 bool isValid(Template t) => validateLayout(t).isEmpty;
 
+/// The first empty grid cell in row-major order, or null if the grid is full.
+({int col, int row})? firstFreeCell(Template t) {
+  for (var row = 0; row < t.grid.rows; row++) {
+    for (var col = 0; col < t.grid.cols; col++) {
+      if (cellAtCoord(t, col, row) == null) return (col: col, row: row);
+    }
+  }
+  return null;
+}
+
+/// Number of consecutive empty columns starting at (col,row), going right until
+/// an occupied cell or the grid's right edge. 0 if (col,row) itself is occupied.
+int freeRunWidth(Template t, int col, int row) {
+  var w = 0;
+  for (var c = col; c < t.grid.cols; c++) {
+    if (cellAtCoord(t, c, row) != null) break;
+    w++;
+  }
+  return w;
+}
+
 /// Move the cell [id] so its top-left is at grid coordinate (col,row), clamped
 /// so the cell (with its current span) stays inside the grid — e.g. a full-width
 /// cell can only change rows, never slide off the right edge.
