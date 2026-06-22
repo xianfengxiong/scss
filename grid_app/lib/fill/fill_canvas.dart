@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../builder/border_layer.dart';
 import '../builder/canvas_metrics.dart';
 import '../controls/registry.dart';
+import '../grid/cell_borders.dart';
 import '../grid/geometry.dart';
 import '../model/cell.dart';
 import '../model/template.dart';
@@ -53,6 +55,7 @@ class FillCanvas extends StatelessWidget {
                 ),
               ),
               for (final cell in template.cells) _cell(cell, scale),
+              ...borderLineWidgets(controlOutlineEdges(template), scale),
             ],
           ),
         );
