@@ -6,6 +6,7 @@ import 'data/app_database.dart';
 import 'data/survey_store.dart';
 import 'data/template_store.dart';
 import 'builder/template_list_screen.dart';
+import 'services/location_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +14,7 @@ void main() {
   runApp(ScssGridApp(
     store: DriftTemplateStore(db),
     surveyStore: DriftSurveyStore(db),
-    registry: buildDefaultRegistry(),
+    registry: buildDefaultRegistry(location: GeolocatorLocationService()),
   ));
 }
 

@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../model/cell.dart';
+import '../services/location_service.dart';
 import 'control_spec.dart';
 
 class FieldControl extends ControlSpec {
+  /// Injected by the registry so a `coordinate` field can capture GPS in fill
+  /// mode. Null in tests / non-device contexts → coordinate fields stay text.
+  final LocationService? location;
+
+  FieldControl({this.location});
   @override
   String get type => 'field';
   @override
@@ -87,26 +93,35 @@ class FieldControl extends ControlSpec {
           style: const TextStyle(fontSize: 9)),
     );
 
-    final inputBox = Container(
-      decoration: BoxDecoration(
-          border: Border.all(width: 0.5, color: const Color(0xFFBDBDBD))),
-      child: TextFormField(
+    final Widget inputBox;
+    if (valueType == 'coordinate' && location != null) {
+      inputBox = _CoordinateField(
+        location: location!,
         initialValue: value?.toString() ?? '',
-        keyboardType:
-            valueType == 'number' ? TextInputType.number : TextInputType.text,
-        // Fill the cell's height so the input matches the WYSIWYG row.
-        expands: true,
-        maxLines: null,
-        textAlignVertical: TextAlignVertical.center,
-        style: const TextStyle(fontSize: 9),
-        decoration: const InputDecoration(
-          isDense: true,
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        ),
         onChanged: onChanged,
-      ),
-    );
+      );
+    } else {
+      inputBox = Container(
+        decoration: BoxDecoration(
+            border: Border.all(width: 0.5, color: const Color(0xFFBDBDBD))),
+        child: TextFormField(
+          initialValue: value?.toString() ?? '',
+          keyboardType:
+              valueType == 'number' ? TextInputType.number : TextInputType.text,
+          // Fill the cell's height so the input matches the WYSIWYG row.
+          expands: true,
+          maxLines: null,
+          textAlignVertical: TextAlignVertical.center,
+          style: const TextStyle(fontSize: 9),
+          decoration: const InputDecoration(
+            isDense: true,
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          ),
+          onChanged: onChanged,
+        ),
+      );
+    }
 
     return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Expanded(flex: labelCols, child: labelBox),
@@ -137,6 +152,92 @@ class FieldControl extends ControlSpec {
               onChanged({...cell.props, 'valueType': v ?? 'text'}),
         ),
       ],
+    );
+  }
+}
+
+/// Fill-mode value box for a `coordinate` field: a text input plus a GPS button
+/// that reads the device position and fills "lat, lon". Manual edits still flow
+/// through [onChanged].
+class _CoordinateField extends StatefulWidget {
+  final LocationService location;
+  final String initialValue;
+  final void Function(Object? value) onChanged;
+
+  const _CoordinateField({
+    required this.location,
+    required this.initialValue,
+    required this.onChanged,
+  });
+
+  @override
+  State<_CoordinateField> createState() => _CoordinateFieldState();
+}
+
+class _CoordinateFieldState extends State<_CoordinateField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initialValue);
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _capture() async {
+    setState(() => _loading = true);
+    final r = await widget.location.getCoordinate();
+    if (!mounted) return;
+    setState(() => _loading = false);
+    if (r.ok) {
+      _controller.text = formatCoordinate(r.lat!, r.lon!);
+      widget.onChanged(_controller.text);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(r.error ?? 'GPS capture failed.')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+          border: Border.all(width: 0.5, color: const Color(0xFFBDBDBD))),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              expands: true,
+              maxLines: null,
+              textAlignVertical: TextAlignVertical.center,
+              style: const TextStyle(fontSize: 9),
+              decoration: const InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              ),
+              onChanged: widget.onChanged,
+            ),
+          ),
+          IconButton(
+            key: const ValueKey('gps-capture'),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            iconSize: 16,
+            tooltip: 'Capture GPS',
+            onPressed: _loading ? null : _capture,
+            icon: _loading
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.my_location),
+          ),
+        ],
+      ),
     );
   }
 }
