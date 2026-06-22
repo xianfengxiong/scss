@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../controls/control_spec.dart';
 import '../controls/registry.dart';
 import '../grid/geometry.dart';
 import '../grid/hit_test.dart';
@@ -25,6 +26,10 @@ class EditableCanvas extends StatefulWidget {
   final void Function(int boundary, double deltaMm) onResizeCol;
   final void Function(int boundary, double deltaMm) onResizeRow;
 
+  /// A control was dropped (long-press-dragged from the palette) onto grid
+  /// cell (col,row). Null disables drop placement.
+  final void Function(ControlSpec spec, int col, int row)? onDropControl;
+
   const EditableCanvas({
     super.key,
     required this.template,
@@ -35,6 +40,7 @@ class EditableCanvas extends StatefulWidget {
     required this.onSpan,
     required this.onResizeCol,
     required this.onResizeRow,
+    this.onDropControl,
   });
 
   @override
@@ -58,7 +64,12 @@ class _EditableCanvasState extends State<EditableCanvas> {
     final selected = widget.selectedId == null
         ? null
         : _cellById(widget.selectedId!);
-    return LayoutBuilder(
+    return DragTarget<ControlSpec>(
+      onAcceptWithDetails: (d) {
+        final c = _coordAt(d.offset);
+        if (c != null) widget.onDropControl?.call(d.data, c.col, c.row);
+      },
+      builder: (context, candidate, rejected) => LayoutBuilder(
       builder: (context, constraints) {
         // Fit the whole A4 page in the available box (width AND height) so it
         // never needs a scroll view — a vertical scroll would steal the
@@ -111,6 +122,7 @@ class _EditableCanvasState extends State<EditableCanvas> {
           ),
         );
       },
+      ),
     );
   }
 

@@ -23,24 +23,35 @@ class ControlPalette extends StatelessWidget {
           for (final spec in registry.all)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: InkWell(
-                onTap: () => onPick(spec),
-                child: Container(
-                  width: 84,
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFCFD8DC)),
-                    borderRadius: BorderRadius.circular(8),
+              child: LongPressDraggable<ControlSpec>(
+                data: spec,
+                dragAnchorStrategy: pointerDragAnchorStrategy,
+                feedback: Material(
+                  color: Colors.transparent,
+                  child: Chip(
+                    avatar: Icon(spec.icon, size: 18),
+                    label: Text(spec.label),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(spec.icon, size: 22),
-                      const SizedBox(height: 2),
-                      Text(spec.label,
-                          style: const TextStyle(fontSize: 11),
-                          overflow: TextOverflow.ellipsis),
-                    ],
+                ),
+                child: InkWell(
+                  onTap: () => onPick(spec),
+                  child: Container(
+                    width: 84,
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFCFD8DC)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(spec.icon, size: 22),
+                        const SizedBox(height: 2),
+                        Text(spec.label,
+                            style: const TextStyle(fontSize: 11),
+                            overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
                   ),
                 ),
               ),

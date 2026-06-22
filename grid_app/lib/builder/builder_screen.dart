@@ -66,6 +66,27 @@ class _BuilderScreenState extends State<BuilderScreen> {
     }
   }
 
+  void _placeDropped(ControlSpec spec, int col, int row) {
+    if (cellAtCoord(_t, col, row) != null) return; // occupied
+    final span = freeRunWidth(_t, col, row);
+    if (span < 1) return;
+    final cell = Cell(
+      id: _newId(spec.type),
+      col: col,
+      row: row,
+      colSpan: span,
+      type: spec.type,
+      props: spec.defaultProps(),
+    );
+    final candidate = addCell(_t, cell);
+    if (isValid(candidate)) {
+      setState(() {
+        _t = candidate;
+        _selectedId = cell.id;
+      });
+    }
+  }
+
   Cell? get _selected {
     for (final c in _t.cells) {
       if (c.id == _selectedId) return c;
@@ -198,6 +219,7 @@ class _BuilderScreenState extends State<BuilderScreen> {
                 _t.copyWith(grid: resizeColBoundary(_t.grid, boundary, deltaMm))),
             onResizeRow: (boundary, deltaMm) => _commit(
                 _t.copyWith(grid: resizeRowBoundary(_t.grid, boundary, deltaMm))),
+            onDropControl: _placeDropped,
           ),
         ),
       );
