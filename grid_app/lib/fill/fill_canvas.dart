@@ -70,9 +70,7 @@ class FillCanvas extends StatelessWidget {
     if (spec == null) {
       content = Container(
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-            border: Border.all(color: Colors.red),
-            color: const Color(0x11FF0000)),
+        decoration: const BoxDecoration(color: Color(0x11FF0000)),
         child: Text('?${cell.type}',
             style: const TextStyle(fontSize: 9, color: Colors.red)),
       );

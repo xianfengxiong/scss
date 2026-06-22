@@ -35,8 +35,6 @@ pw.Document renderTemplate(
           final content = spec?.paintPdf(cell, data) ??
               pw.Container(
                 alignment: pw.Alignment.center,
-                decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.red, width: 0.5)),
                 child: pw.Text('?${cell.type}',
                     style: const pw.TextStyle(fontSize: 8, color: PdfColors.red)),
               );
@@ -55,7 +53,7 @@ pw.Document renderTemplate(
         // Cell border layer: each control-cell edge as a thin line centered on
         // its mm boundary (shared edges coincide → single width), matching the
         // builder/fill canvases.
-        const borderPt = 0.7;
+        const borderPt = 0.7; // 0.7pt ≈ the 1.0 device-px canvas line (kCellBorderPx); thinner reads right in print.
         final borderColor = PdfColor.fromInt(0xFF455A64);
         for (final e in controlOutlineEdges(t)) {
           if (e.vertical) {

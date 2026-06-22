@@ -126,35 +126,35 @@ class _CoordinateFieldState extends State<_CoordinateField> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              expands: true,
-              maxLines: null,
-              textAlignVertical: TextAlignVertical.center,
-              style: const TextStyle(fontSize: 9),
-              decoration: const InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              ),
-              onChanged: widget.onChanged,
+        Expanded(
+          child: TextField(
+            controller: _controller,
+            expands: true,
+            maxLines: null,
+            textAlignVertical: TextAlignVertical.center,
+            style: const TextStyle(fontSize: 9),
+            decoration: const InputDecoration(
+              isDense: true,
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             ),
+            onChanged: widget.onChanged,
           ),
-          IconButton(
-            key: const ValueKey('gps-capture'),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-            iconSize: 16,
-            tooltip: 'Capture GPS',
-            onPressed: _loading ? null : _capture,
-            icon: _loading
-                ? const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.my_location),
-          ),
+        ),
+        IconButton(
+          key: const ValueKey('gps-capture'),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+          iconSize: 16,
+          tooltip: 'Capture GPS',
+          onPressed: _loading ? null : _capture,
+          icon: _loading
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2))
+              : const Icon(Icons.my_location),
+        ),
       ],
     );
   }
