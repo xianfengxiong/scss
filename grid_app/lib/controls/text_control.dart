@@ -49,10 +49,12 @@ class TextControl extends ControlSpec {
           maxLines: null,
           textAlignVertical: TextAlignVertical.center,
           style: const TextStyle(fontSize: 9),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             isDense: true,
             border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            hintText: cell.props['hint'] as String?,
+            hintStyle: const TextStyle(fontSize: 9, color: Color(0xFF9A9A9A)),
           ),
           onChanged: onChanged,
         ),
@@ -61,9 +63,21 @@ class TextControl extends ControlSpec {
   @override
   Widget propEditor(
           Cell cell, void Function(Map<String, dynamic> props) onChanged) =>
-      TextFormField(
-        initialValue: (cell.props['key'] as String?) ?? '',
-        decoration: const InputDecoration(labelText: 'Key'),
-        onChanged: (v) => onChanged({...cell.props, 'key': v}),
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            initialValue: (cell.props['key'] as String?) ?? '',
+            decoration: const InputDecoration(labelText: 'Key'),
+            onChanged: (v) => onChanged({...cell.props, 'key': v}),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            initialValue: (cell.props['hint'] as String?) ?? '',
+            decoration: const InputDecoration(labelText: 'Hint'),
+            onChanged: (v) => onChanged({...cell.props, 'hint': v}),
+          ),
+        ],
       );
 }

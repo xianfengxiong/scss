@@ -12,6 +12,9 @@ const _numCell = Cell(id: 'n', col: 0, row: 0, colSpan: 4, type: 'number',
 Widget _host(Widget child) =>
     MaterialApp(home: Scaffold(body: SizedBox(width: 240, height: 40, child: child)));
 
+Widget _tallHost(Widget child) =>
+    MaterialApp(home: Scaffold(body: SizedBox(width: 240, height: 300, child: child)));
+
 void main() {
   test('TextControl: type, defaultProps, dataKey', () {
     final c = TextControl();
@@ -44,5 +47,47 @@ void main() {
     ));
     final field = tester.widget<TextField>(find.byType(TextField));
     expect(field.keyboardType, TextInputType.number);
+  });
+
+  testWidgets('TextControl propEditor: Key field updates props[key]',
+      (tester) async {
+    Map<String, dynamic>? captured;
+    await tester.pumpWidget(_tallHost(
+      TextControl().propEditor(_textCell, (p) => captured = p),
+    ));
+    expect(find.byType(TextFormField), findsNWidgets(2));
+    await tester.enterText(find.byType(TextFormField).at(0), 'new_key');
+    expect(captured?['key'], 'new_key');
+  });
+
+  testWidgets('TextControl propEditor: Hint field updates props[hint]',
+      (tester) async {
+    Map<String, dynamic>? captured;
+    await tester.pumpWidget(_tallHost(
+      TextControl().propEditor(_textCell, (p) => captured = p),
+    ));
+    await tester.enterText(find.byType(TextFormField).at(1), 'Enter value');
+    expect(captured?['hint'], 'Enter value');
+  });
+
+  testWidgets('NumberControl propEditor: Key field updates props[key]',
+      (tester) async {
+    Map<String, dynamic>? captured;
+    await tester.pumpWidget(_tallHost(
+      NumberControl().propEditor(_numCell, (p) => captured = p),
+    ));
+    expect(find.byType(TextFormField), findsNWidgets(2));
+    await tester.enterText(find.byType(TextFormField).at(0), 'qty');
+    expect(captured?['key'], 'qty');
+  });
+
+  testWidgets('NumberControl propEditor: Unit field updates props[unit]',
+      (tester) async {
+    Map<String, dynamic>? captured;
+    await tester.pumpWidget(_tallHost(
+      NumberControl().propEditor(_numCell, (p) => captured = p),
+    ));
+    await tester.enterText(find.byType(TextFormField).at(1), 'kg');
+    expect(captured?['unit'], 'kg');
   });
 }
