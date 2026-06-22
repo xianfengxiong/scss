@@ -45,13 +45,15 @@ class _BuilderScreenState extends State<BuilderScreen> {
   }
 
   void _addControl(ControlSpec spec) {
-    final row = firstFreeRow(_t);
-    if (row == null) return; // grid full
+    final pos = firstFreeCell(_t);
+    if (pos == null) return; // grid full
+    final span = freeRunWidth(_t, pos.col, pos.row);
+    if (span < 1) return;
     final cell = Cell(
       id: _newId(spec.type),
-      col: 0,
-      row: row,
-      colSpan: _t.grid.cols,
+      col: pos.col,
+      row: pos.row,
+      colSpan: span,
       type: spec.type,
       props: spec.defaultProps(),
     );
