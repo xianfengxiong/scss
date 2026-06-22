@@ -45,7 +45,13 @@ class CellInspector extends StatelessWidget {
               ),
             ],
           ),
-          spec.propEditor(cell, onPropsChanged),
+          // Key by cell id so selecting a different control rebuilds the editor
+          // subtree fresh — otherwise a TextFormField keeps its stale text
+          // (initialValue only seeds the controller once).
+          KeyedSubtree(
+            key: ValueKey('propeditor-${cell.id}'),
+            child: spec.propEditor(cell, onPropsChanged),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
