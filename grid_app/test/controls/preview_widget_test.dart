@@ -25,4 +25,16 @@ void main() {
             props: {'text': 'Site Name', 'align': 'left', 'bold': false}))));
     expect(find.text('Site Name'), findsOneWidget);
   });
+
+  testWidgets('TitleControl fillWidget is read-only and dataKey is null',
+      (tester) async {
+    const titleCell = Cell(
+        id: 't2', col: 0, row: 0, type: 'title', props: {'text': 'Form Title'});
+    await tester.pumpWidget(_host(
+        TitleControl().fillWidget(titleCell, null, (_) {})));
+    expect(find.text('Form Title'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(TextFormField), findsNothing);
+    expect(TitleControl().dataKey(titleCell), isNull);
+  });
 }
