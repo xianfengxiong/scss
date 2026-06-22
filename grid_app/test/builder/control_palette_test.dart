@@ -15,8 +15,8 @@ void main() {
       ),
     ));
     expect(find.text('Title'), findsOneWidget);
-    expect(find.text('Field'), findsOneWidget);
-    await tester.tap(find.text('Field'));
-    expect(picked!.type, 'field');
+    expect(find.text('Text'), findsOneWidget);
+    await tester.tap(find.text('Text'));
+    expect(picked!.type, 'text');
   });
 }

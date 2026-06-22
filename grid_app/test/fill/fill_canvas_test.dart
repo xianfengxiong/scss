@@ -15,8 +15,10 @@ Template _tpl() => Template(
       cells: const [
         Cell(id: 'title', col: 0, row: 0, colSpan: 12, type: 'title',
             props: {'text': 'Form'}),
-        Cell(id: 'name', col: 0, row: 1, colSpan: 12, type: 'field',
-            props: {'label': 'Site', 'key': 'site_name', 'labelCols': 3}),
+        Cell(id: 'name_l', col: 0, row: 1, colSpan: 3, type: 'label',
+            props: {'text': 'Site', 'align': 'left', 'bold': false}),
+        Cell(id: 'name_v', col: 3, row: 1, colSpan: 9, type: 'text',
+            props: {'key': 'site_name', 'hint': ''}),
       ],
     );
 
@@ -39,7 +41,7 @@ void main() {
       onChanged: (_, __) {},
     )));
     expect(find.text('Form'), findsOneWidget); // read-only title
-    expect(find.text('Site'), findsOneWidget); // field label
+    expect(find.text('Site'), findsOneWidget); // label cell
     expect(find.text('Gjirokaster'), findsOneWidget); // prefilled value
   });
 

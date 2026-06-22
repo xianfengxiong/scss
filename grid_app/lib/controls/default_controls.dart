@@ -1,14 +1,20 @@
 import '../services/location_service.dart';
-import 'field_control.dart';
+import 'coordinate_control.dart';
+import 'label_control.dart';
+import 'number_control.dart';
 import 'registry.dart';
+import 'text_control.dart';
 import 'title_control.dart';
 
-/// The app's starting control set. Add new controls by registering them here.
-/// [location] is injected so a `coordinate` field can capture GPS; tests that
-/// omit it get text-only coordinate fields.
+/// The app's VB-toolbox control set. Add a new control by registering it here
+/// (spec §10.1, §15). [location] is injected so a `coordinate` control can
+/// capture GPS; tests that omit it get a text-only coordinate input.
 ControlRegistry buildDefaultRegistry({LocationService? location}) {
   final r = ControlRegistry();
   r.register(TitleControl());
-  r.register(FieldControl(location: location));
+  r.register(LabelControl());
+  r.register(TextControl());
+  r.register(NumberControl());
+  r.register(CoordinateControl(location: location));
   return r;
 }

@@ -1,35 +1,31 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scss_grid/controls/default_controls.dart';
-import 'package:scss_grid/controls/field_control.dart';
-import 'package:scss_grid/model/cell.dart';
 
 void main() {
-  test('default registry has title and field', () {
+  test('default registry has title, label, text, number, coordinate', () {
     final r = buildDefaultRegistry();
     expect(r.specFor('title'), isNotNull);
-    expect(r.specFor('field'), isNotNull);
-    expect(r.specFor('title')!.defaultProps()['text'], 'Title');
-    expect(r.specFor('field')!.defaultProps()['valueType'], 'text');
+    expect(r.specFor('label'), isNotNull);
+    expect(r.specFor('text'), isNotNull);
+    expect(r.specFor('number'), isNotNull);
+    expect(r.specFor('coordinate'), isNotNull);
+    expect(r.specFor('field'), isNull);
   });
 
-  test('FieldControl.paintPdf does not crash on bad labelCols (0/negative)', () {
-    final f = FieldControl();
-    // labelCols 0 and -1 must not produce a flex <= 0 (would throw at render).
-    expect(() => f.paintPdf(
-        const Cell(id: 'x', col: 0, row: 0, colSpan: 4, type: 'field',
-            props: {'label': 'L', 'key': 'k', 'labelCols': 0}), const {}),
-        returnsNormally);
-    expect(() => f.paintPdf(
-        const Cell(id: 'y', col: 0, row: 0, colSpan: 4, type: 'field',
-            props: {'label': 'L', 'key': 'k', 'labelCols': -1}), const {}),
-        returnsNormally);
+  test('registry control types match expected set', () {
+    final r = buildDefaultRegistry();
+    final types = r.all.map((s) => s.type).toSet();
+    expect(types, {'title', 'label', 'text', 'number', 'coordinate'});
   });
 
-  test('FieldControl.paintPdf accepts a double-valued labelCols (JSON/Drift safe)', () {
-    final f = FieldControl();
-    expect(() => f.paintPdf(
-        const Cell(id: 'd', col: 0, row: 0, colSpan: 4, type: 'field',
-            props: {'label': 'L', 'key': 'k', 'labelCols': 2.0}), const {}),
-        returnsNormally);
+  test('text defaultProps has key and hint', () {
+    final r = buildDefaultRegistry();
+    expect(r.specFor('text')!.defaultProps()['key'], 'text');
+    expect(r.specFor('text')!.defaultProps()['hint'], '');
+  });
+
+  test('coordinate defaultProps has key', () {
+    final r = buildDefaultRegistry();
+    expect(r.specFor('coordinate')!.defaultProps()['key'], 'coordinate');
   });
 }

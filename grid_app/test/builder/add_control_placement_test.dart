@@ -7,8 +7,9 @@ import 'package:scss_grid/model/cell.dart';
 import 'package:scss_grid/model/grid_frame.dart';
 import 'package:scss_grid/model/template.dart';
 
-// A template with row 0 half-occupied (cols 0..5 by a field), so a newly added
-// control should land at (6,0) spanning the remaining 6 columns — NOT on row 1.
+// A template with row 0 half-occupied (cols 0..5 by a text cell), so a newly
+// added control should land at (6,0) spanning the remaining 6 columns — NOT
+// on row 1.
 Template _partial() => Template(
       id: 'p',
       name: 'Partial',
@@ -16,8 +17,8 @@ Template _partial() => Template(
       grid: GridFrame.uniform(
           xMm: 10, yMm: 10, cols: 12, rows: 16, colWidthMm: 15, rowHeightMm: 8),
       cells: const [
-        Cell(id: 'a', col: 0, row: 0, colSpan: 6, type: 'field',
-            props: {'label': 'L', 'key': 'k', 'valueType': 'text'}),
+        Cell(id: 'a', col: 0, row: 0, colSpan: 6, type: 'text',
+            props: {'key': 'k', 'hint': ''}),
       ],
     );
 
@@ -31,7 +32,7 @@ void main() {
           registry: buildDefaultRegistry(),
           store: store),
     ));
-    await tester.tap(find.text('Field')); // palette item
+    await tester.tap(find.text('Text')); // palette item
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Save'));
     await tester.pump();

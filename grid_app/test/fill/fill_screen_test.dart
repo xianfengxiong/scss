@@ -16,8 +16,10 @@ Template _tpl() => Template(
       grid: GridFrame.uniform(
           xMm: 0, yMm: 0, cols: 12, rows: 4, colWidthMm: 15, rowHeightMm: 20),
       cells: const [
-        Cell(id: 'name', col: 0, row: 0, colSpan: 12, type: 'field',
-            props: {'label': 'Site', 'key': 'site_name', 'labelCols': 3}),
+        Cell(id: 'name_l', col: 0, row: 0, colSpan: 3, type: 'label',
+            props: {'text': 'Site', 'align': 'left', 'bold': false}),
+        Cell(id: 'name_v', col: 3, row: 0, colSpan: 9, type: 'text',
+            props: {'key': 'site_name', 'hint': ''}),
       ],
     );
 

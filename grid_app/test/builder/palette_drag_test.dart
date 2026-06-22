@@ -24,7 +24,7 @@ void main() {
           registry: buildDefaultRegistry(),
           store: InMemoryTemplateStore()),
     ));
-    // one LongPressDraggable per registered control (Title, Field).
+    // one LongPressDraggable per registered control (Title, Label, Text, Number, Coordinate).
     expect(find.byType(LongPressDraggable<ControlSpec>),
         findsNWidgets(buildDefaultRegistry().all.length));
   });
@@ -40,8 +40,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    final fieldItem = find.text('Field');
-    final start = tester.getCenter(fieldItem);
+    final textItem = find.text('Text');
+    final start = tester.getCenter(textItem);
     // Target a point inside the canvas, below the title band, in the grid area.
     final canvasCenter = tester.getCenter(find.byType(BuilderScreen));
 

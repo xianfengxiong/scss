@@ -19,9 +19,13 @@ Template sampleTemplate() => Template(
       cells: const [
         Cell(id: 'title', col: 0, row: 0, colSpan: 12, type: 'title',
             props: {'text': 'Site Survey Form', 'align': 'center'}),
-        Cell(id: 'name', col: 0, row: 1, colSpan: 12, type: 'field',
-            props: {'label': 'Site Name', 'key': 'site_name', 'labelCols': 3}),
-        Cell(id: 'city', col: 0, row: 2, colSpan: 12, type: 'field',
-            props: {'label': 'Site City', 'key': 'site_city', 'labelCols': 3}),
+        Cell(id: 'name_l', col: 0, row: 1, colSpan: 3, type: 'label',
+            props: {'text': 'Site Name', 'align': 'left', 'bold': false}),
+        Cell(id: 'name_v', col: 3, row: 1, colSpan: 9, type: 'text',
+            props: {'key': 'site_name', 'hint': ''}),
+        Cell(id: 'city_l', col: 0, row: 2, colSpan: 3, type: 'label',
+            props: {'text': 'Site City', 'align': 'left', 'bold': false}),
+        Cell(id: 'city_v', col: 3, row: 2, colSpan: 9, type: 'text',
+            props: {'key': 'site_city', 'hint': ''}),
       ],
     );

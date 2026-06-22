@@ -39,6 +39,13 @@ class _BuilderScreenState extends State<BuilderScreen> {
 
   String _newId(String type) => '${type}_${DateTime.now().microsecondsSinceEpoch}_${_seq++}';
 
+  // Give a value control a key that doesn't collide with existing cells.
+  Cell _withUniqueKey(Cell c) {
+    final key = c.props['key'];
+    if (key is! String) return c;
+    return c.copyWith(props: {...c.props, 'key': uniqueKey(_t, key)});
+  }
+
   void _commit(Template? candidate) {
     if (candidate == null || !isValid(candidate)) return;
     setState(() => _t = candidate);
@@ -49,14 +56,14 @@ class _BuilderScreenState extends State<BuilderScreen> {
     if (pos == null) return; // grid full
     final span = freeRunWidth(_t, pos.col, pos.row);
     if (span < 1) return;
-    final cell = Cell(
+    final cell = _withUniqueKey(Cell(
       id: _newId(spec.type),
       col: pos.col,
       row: pos.row,
       colSpan: span,
       type: spec.type,
       props: spec.defaultProps(),
-    );
+    ));
     final candidate = addCell(_t, cell);
     if (isValid(candidate)) {
       setState(() {
@@ -70,14 +77,14 @@ class _BuilderScreenState extends State<BuilderScreen> {
     if (cellAtCoord(_t, col, row) != null) return; // occupied
     final span = freeRunWidth(_t, col, row);
     if (span < 1) return;
-    final cell = Cell(
+    final cell = _withUniqueKey(Cell(
       id: _newId(spec.type),
       col: col,
       row: row,
       colSpan: span,
       type: spec.type,
       props: spec.defaultProps(),
-    );
+    ));
     final candidate = addCell(_t, cell);
     if (isValid(candidate)) {
       setState(() {

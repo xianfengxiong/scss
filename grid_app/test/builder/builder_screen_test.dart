@@ -41,13 +41,13 @@ void main() {
       home: BuilderScreen(
           template: _empty(), registry: buildDefaultRegistry(), store: store),
     ));
-    await tester.tap(find.text('Field')); // palette item
+    await tester.tap(find.text('Text')); // palette item
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Save'));
     await tester.pump();
     final saved = await store.get('e');
     expect(saved!.cells.length, 1);
-    expect(saved.cells.single.type, 'field');
+    expect(saved.cells.single.type, 'text');
   });
 
   testWidgets('adding then deleting a control leaves the template empty',
@@ -57,7 +57,7 @@ void main() {
       home: BuilderScreen(
           template: _empty(), registry: buildDefaultRegistry(), store: store),
     ));
-    await tester.tap(find.text('Field')); // palette add -> auto-selects, inspector shows
+    await tester.tap(find.text('Text')); // palette add -> auto-selects, inspector shows
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('cell-delete')));
     await tester.pumpAndSettle();
