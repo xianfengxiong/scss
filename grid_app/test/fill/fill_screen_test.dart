@@ -38,7 +38,7 @@ void main() {
 
     await tester.enterText(find.byType(TextFormField), 'Gjirokaster');
     await tester.tap(find.byTooltip('Save'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     final saved = await store.get('s1');
     expect(saved!.data['site_name'], 'Gjirokaster');

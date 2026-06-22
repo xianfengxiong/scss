@@ -104,7 +104,7 @@ class FieldControl extends ControlSpec {
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         ),
-        onChanged: (v) => onChanged(v),
+        onChanged: onChanged,
       ),
     );
 

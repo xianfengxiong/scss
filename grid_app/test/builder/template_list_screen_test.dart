@@ -45,6 +45,14 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('fill-a')));
     await tester.pumpAndSettle();
     expect(find.byType(FillScreen), findsOneWidget);
-    expect((await surveyStore.all()).length, 1); // a survey was created
+    expect(await surveyStore.all(), isEmpty); // not persisted until Save
+
+    await tester.tap(find.byTooltip('Save'));
+    await tester.pumpAndSettle();
+
+    final saved = await surveyStore.all();
+    expect(saved.length, 1);
+    expect(saved.single.templateId, 'a');
+    expect(saved.single.name, 'Alpha');
   });
 }

@@ -70,8 +70,6 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
       templateId: t.id,
       name: t.name,
     );
-    await widget.surveyStore.upsert(survey);
-    if (!mounted) return;
     await Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => FillScreen(
         template: t,
@@ -82,8 +80,8 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
     ));
   }
 
-  void _openSurveys() {
-    Navigator.of(context).push(MaterialPageRoute(
+  Future<void> _openSurveys() async {
+    await Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => SurveyListScreen(
         surveyStore: widget.surveyStore,
         templateStore: widget.store,
