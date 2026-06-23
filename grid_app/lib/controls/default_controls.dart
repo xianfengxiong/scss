@@ -3,6 +3,7 @@ import '../services/location_service.dart';
 import 'coordinate_control.dart';
 import 'image_control.dart';
 import 'label_control.dart';
+import 'multi_image_control.dart';
 import 'number_control.dart';
 import 'registry.dart';
 import 'text_control.dart';
@@ -22,5 +23,6 @@ ControlRegistry buildDefaultRegistry(
   r.register(NumberControl());
   r.register(CoordinateControl(location: location));
   r.register(ImageControl(image: image));
+  r.register(MultiImageControl(image: image));
   return r;
 }
