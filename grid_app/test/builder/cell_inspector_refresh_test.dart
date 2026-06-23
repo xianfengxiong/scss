@@ -49,6 +49,9 @@ void main() {
   testWidgets('property editor shows the newly selected cell\'s label',
       (tester) async {
     await tester.pumpWidget(const _Host());
+    // Docked inspector starts collapsed; expand to see the property editor.
+    await tester.tap(find.byKey(const ValueKey('inspector-toggle')));
+    await tester.pump();
     // Inspector shows cell A's text in the editable field.
     expect(find.widgetWithText(TextFormField, 'Site Name'), findsOneWidget);
 

@@ -76,6 +76,8 @@ class MultiImageControl extends ControlSpec {
     final cols = _cols(cell);
     final rowCount = rowsForCount(bytes.length, cols);
     return pw.Column(
+      // pdf 包默认不拉伸横轴 → 不加这行 Row 会缩成图片自然总宽、靠左留白。
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
         for (var r = 0; r < rowCount; r++)
           pw.Expanded(
@@ -93,7 +95,11 @@ class MultiImageControl extends ControlSpec {
   pw.Widget _pdfCell(List<Uint8List> bytes, int i) {
     if (i >= bytes.length) return pw.SizedBox(); // 末行不满 → 留白
     try {
-      return pw.Image(pw.MemoryImage(bytes[i]), fit: pw.BoxFit.contain);
+      // 内边距 → 相邻图之间有 gutter（两侧各 3pt 合成 6pt 间隙），更美观。
+      return pw.Padding(
+        padding: const pw.EdgeInsets.all(3),
+        child: pw.Image(pw.MemoryImage(bytes[i]), fit: pw.BoxFit.contain),
+      );
     } catch (e) {
       debugPrint('[MultiImageControl] paintPdf: corrupt image bytes — $e');
       return pw.SizedBox();
@@ -140,11 +146,15 @@ class MultiImageControl extends ControlSpec {
           onChanged: (v) => onChanged({...cell.props, 'key': v}),
         ),
         const SizedBox(height: 8),
-        intField('Rows', 'rows', 2),
-        const SizedBox(height: 8),
-        intField('Cols', 'cols', 3),
-        const SizedBox(height: 8),
-        intField('Min', 'min', 3),
+        Row(
+          children: [
+            Expanded(child: intField('Rows', 'rows', 2)),
+            const SizedBox(width: 8),
+            Expanded(child: intField('Cols', 'cols', 3)),
+            const SizedBox(width: 8),
+            Expanded(child: intField('Min', 'min', 3)),
+          ],
+        ),
       ],
     );
   }
