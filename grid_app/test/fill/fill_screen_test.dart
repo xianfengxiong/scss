@@ -45,4 +45,21 @@ void main() {
     final saved = await store.get('s1');
     expect(saved!.data['site_name'], 'Gjirokaster');
   });
+
+  testWidgets('fill canvas is wrapped in a zoomable InteractiveViewer; '
+      'keyboard does not resize the page', (tester) async {
+    final store = InMemorySurveyStore();
+    final survey = Survey(id: 's1', templateId: 't1', name: 'S1');
+    await tester.pumpWidget(MaterialApp(
+      home: FillScreen(
+        template: _tpl(),
+        survey: survey,
+        store: store,
+        registry: buildDefaultRegistry(),
+      ),
+    ));
+    expect(find.byType(InteractiveViewer), findsOneWidget);
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    expect(scaffold.resizeToAvoidBottomInset, isFalse);
+  });
 }
