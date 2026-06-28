@@ -2,6 +2,10 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- INTERNET: flutter_map fetches Esri satellite tiles over HTTPS (Phase 3d
+         satelliteDiagram). Only the debug/profile manifests get it auto-added;
+         release needs it here or tiles silently fail in production. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="scss_grid"
         android:name="${applicationName}"
