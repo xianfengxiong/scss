@@ -223,12 +223,12 @@ class _SatelliteField extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // Tap the thumbnail to reopen the map and edit the existing pins
-          // (center/zoom/pins are passed back in via _openMap). cover (not
-          // contain) so the capture fills the cell instead of being letterboxed;
-          // the PDF still uses contain so nothing is cropped in the document.
+          // (center/zoom/pins are passed back in via _openMap). contain (matching
+          // the PDF) so every pin stays visible even when the capture's aspect
+          // ratio differs from the cell — may letterbox, but never crops a pin.
           GestureDetector(
             onTap: () => _openMap(context),
-            child: Image.file(File(p), fit: BoxFit.cover,
+            child: Image.file(File(p), fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) =>
                     const Center(child: Icon(Icons.broken_image, size: 16))),
           ),
