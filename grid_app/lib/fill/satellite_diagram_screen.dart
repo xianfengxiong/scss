@@ -166,14 +166,21 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                           point: LatLng(_pins[i].lat, _pins[i].lon),
                           width: 120,
                           height: 60,
+                          // Anchor the geographic point at the box's bottom edge;
+                          // push content down (icon last) so the pin's TIP sits on
+                          // the point. The 36px icon in a 60px box was top-aligned
+                          // before, leaving the tip ~24px above the tapped
+                          // coordinate — the offset seen on device.
                           alignment: Alignment.topCenter,
                           child: GestureDetector(
+                            // Opaque: the whole marker box is tappable and the tap
+                            // is consumed, so selecting a pin can't also drop a new
+                            // one on the map below.
+                            behavior: HitTestBehavior.opaque,
                             onTap: () => _editPin(i),
                             child: Column(
-                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                const Icon(Icons.location_on,
-                                    color: Colors.red, size: 36),
                                 if (_pins[i].label.isNotEmpty)
                                   Container(
                                     padding: const EdgeInsets.symmetric(
@@ -182,6 +189,8 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                                     child: Text(_pins[i].label,
                                         style: const TextStyle(fontSize: 10)),
                                   ),
+                                const Icon(Icons.location_on,
+                                    color: Colors.red, size: 36),
                               ],
                             ),
                           ),
