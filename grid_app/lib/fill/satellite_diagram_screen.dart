@@ -54,6 +54,14 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
     if (widget.initialCenter == null) _seedFromGps();
   }
 
+  @override
+  void dispose() {
+    // We own this MapController (passed to FlutterMap), so we dispose it — the
+    // map only disposes controllers it created internally.
+    _mapController.dispose();
+    super.dispose();
+  }
+
   /// First-fill only: recenter on the device's current position once available.
   Future<void> _seedFromGps() async {
     final svc = widget.location;
