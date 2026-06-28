@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,6 +14,10 @@ abstract class ImageService {
   /// Pick from [source], compress, store; returns the saved file path, or null
   /// if the user cancelled.
   Future<String?> capture(ImageSource source);
+
+  /// Persist raw [bytes] (e.g. a map screenshot) into shared storage and return
+  /// the absolute file path. [ext] is the file extension without the dot.
+  Future<String> saveBytes(Uint8List bytes, {String ext = 'png'});
 }
 
 // NOTE: ImagePickerImageService is device-only — it invokes platform channels
@@ -79,5 +84,13 @@ class ImagePickerImageService implements ImageService {
       final f = File(path);
       if (await f.exists()) await f.delete();
     } catch (_) {}
+  }
+
+  @override
+  Future<String> saveBytes(Uint8List bytes, {String ext = 'png'}) async {
+    final dir = await _dir();
+    final target = p.join(dir.path, '${_uuid.v4()}.$ext');
+    await File(target).writeAsBytes(bytes, flush: true);
+    return target;
   }
 }

@@ -23,6 +23,9 @@ class _FakeImage implements ImageService {
   _FakeImage(this.path);
   @override
   Future<String?> capture(ImageSource source) async => path;
+  @override
+  Future<String> saveBytes(Uint8List bytes, {String ext = 'png'}) async =>
+      '/tmp/fake.$ext';
 }
 
 Widget _host(Widget child) => MaterialApp(

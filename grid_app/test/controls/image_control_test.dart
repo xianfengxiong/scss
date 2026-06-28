@@ -11,6 +11,10 @@ class _FakeImage implements ImageService {
   _FakeImage(this.path);
   @override
   Future<String?> capture(ImageSource source) async => path;
+
+  @override
+  Future<String> saveBytes(Uint8List bytes, {String ext = 'png'}) async =>
+      '/tmp/fake.$ext';
 }
 
 const _cell = Cell(id: 'i', col: 0, row: 0, colSpan: 4, rowSpan: 3, type: 'image',

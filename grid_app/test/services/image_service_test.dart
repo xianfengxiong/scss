@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:scss_grid/services/image_service.dart';
@@ -11,6 +13,10 @@ class _FakeImageService implements ImageService {
     lastSource = source;
     return next;
   }
+
+  @override
+  Future<String> saveBytes(Uint8List bytes, {String ext = 'png'}) async =>
+      '/tmp/fake.$ext';
 }
 
 void main() {
