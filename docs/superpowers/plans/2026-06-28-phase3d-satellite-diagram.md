@@ -68,11 +68,25 @@ Expected: `Got dependencies!`（无 version solving 失败）。若报与 geoloc
 Run: `flutter analyze`
 Expected: `No issues found!`（依赖加入不应引入告警）。
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 4: de-risk Android 构建（关键）**
+
+`analyze` 不跑 Android Gradle 构建;`flutter_map`/`screenshot` 的原生侧问题(Kotlin 版本 / minSdk / androidx.core)只在真正 apk 构建时暴露。沿用 Phase 3b Task 1 先例提前 de-risk:
+
+Run: `flutter build apk --debug`
+Expected: `✓ Built build/app/outputs/flutter-apk/app-debug.apk`。
+
+若构建失败,按 `app/BUILD_NOTES.md` 的**最小**改动修(只针对实际报错):
+- Kotlin 报元数据版本不兼容 → `android/settings.gradle` 的 Kotlin Gradle plugin 升到 `2.2.0`。
+- `androidx.core` 版本被某插件拉高、要求更高 AGP → `android/app/build.gradle` 加 `configurations.all { resolutionStrategy.force 'androidx.core:core:1.13.1' }`。
+- minSdk 过低 → 升到 23。
+- **注意**:本期**不引** `connectivity_plus` / `share_plus`,BUILD_NOTES 里因这两个包而来的钉版**多半用不上**——只改实际报错项,不照搬全部。
+- 任何 Android 配置改动后重跑本步,直到 `BUILD SUCCESSFUL`。
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add pubspec.yaml pubspec.lock
-git commit -m "build(phase3d): add flutter_map/latlong2/screenshot deps"
+git add pubspec.yaml pubspec.lock android/
+git commit -m "build(phase3d): add flutter_map/latlong2/screenshot deps + de-risk apk build"
 ```
 
 ---
