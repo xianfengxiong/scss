@@ -6,6 +6,7 @@ import 'label_control.dart';
 import 'multi_image_control.dart';
 import 'number_control.dart';
 import 'registry.dart';
+import 'satellite_diagram_control.dart';
 import 'text_control.dart';
 import 'title_control.dart';
 
@@ -24,5 +25,6 @@ ControlRegistry buildDefaultRegistry(
   r.register(CoordinateControl(location: location));
   r.register(ImageControl(image: image));
   r.register(MultiImageControl(image: image));
+  r.register(SatelliteDiagramControl(location: location, image: image));
   return r;
 }

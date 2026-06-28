@@ -12,6 +12,7 @@ void main() {
     expect(r.specFor('coordinate'), isNotNull);
     expect(r.specFor('image'), isNotNull);
     expect(r.specFor('multiImage'), isNotNull);
+    expect(r.specFor('satelliteDiagram'), isNotNull);
     expect(r.specFor('field'), isNull);
   });
 
@@ -25,7 +26,8 @@ void main() {
       'number',
       'coordinate',
       'image',
-      'multiImage'
+      'multiImage',
+      'satelliteDiagram',
     });
   });
 
@@ -47,5 +49,12 @@ void main() {
     expect(p['rows'], 2);
     expect(p['cols'], 3);
     expect(p['min'], 3);
+  });
+
+  test('satelliteDiagram defaultProps has key/caption', () {
+    final r = buildDefaultRegistry();
+    final p = r.specFor('satelliteDiagram')!.defaultProps();
+    expect(p['key'], 'diagram');
+    expect(p['caption'], '');
   });
 }
