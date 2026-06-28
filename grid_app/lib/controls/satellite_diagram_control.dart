@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../fill/satellite_diagram_screen.dart';
 import '../model/cell.dart';
 import '../model/pin.dart';
 import '../services/image_service.dart';
@@ -130,4 +131,124 @@ class SatelliteDiagramControl extends ControlSpec {
         child: const Text('[satellite]',
             style: TextStyle(fontSize: 9, color: Color(0xFF9A9A9A))),
       );
+
+  @override
+  Widget propEditor(
+      Cell cell, void Function(Map<String, dynamic> props) onChanged) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          key: const ValueKey('satellite-key'),
+          initialValue: (cell.props['key'] as String?) ?? '',
+          decoration: const InputDecoration(labelText: 'Key'),
+          onChanged: (v) => onChanged({...cell.props, 'key': v}),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          key: const ValueKey('satellite-caption'),
+          initialValue: (cell.props['caption'] as String?) ?? '',
+          decoration: const InputDecoration(labelText: 'Caption'),
+          onChanged: (v) => onChanged({...cell.props, 'caption': v}),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget fillWidget(
+          Cell cell, Object? value, void Function(Object? value) onChanged) =>
+      _SatelliteField(
+        location: location,
+        image: image,
+        path: diagramPath(value),
+        pins: diagramPins(value),
+        center: diagramCenter(value),
+        zoom: diagramZoom(value),
+        onChanged: onChanged,
+      );
+}
+
+/// Fill-mode widget: a screenshot thumbnail with a clear button, or an
+/// open-map button when empty. Opening pushes [SatelliteDiagramScreen] and
+/// stores its result as the diagram value Map.
+class _SatelliteField extends StatelessWidget {
+  final LocationService? location;
+  final ImageService? image;
+  final String? path;
+  final List<Pin> pins;
+  final LatLng? center;
+  final double zoom;
+  final void Function(Object? value) onChanged;
+
+  const _SatelliteField({
+    required this.location,
+    required this.image,
+    required this.path,
+    required this.pins,
+    required this.center,
+    required this.zoom,
+    required this.onChanged,
+  });
+
+  Future<void> _openMap(BuildContext context) async {
+    final svc = image;
+    if (svc == null) return; // tests / non-device no-op
+    final result = await Navigator.of(context).push<SatelliteResult>(
+      MaterialPageRoute(
+        builder: (_) => SatelliteDiagramScreen(
+          initialPins: pins,
+          initialCenter: center,
+          initialZoom: zoom,
+          location: location,
+          saveBytes: (bytes) => svc.saveBytes(bytes),
+        ),
+      ),
+    );
+    if (result == null) return;
+    onChanged({
+      'path': result.path,
+      'pins': [for (final p in result.pins) p.toJson()],
+      'center': {'lat': result.center.latitude, 'lon': result.center.longitude},
+      'zoom': result.zoom,
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = path;
+    if (p != null && p.isNotEmpty) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.file(File(p), fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) =>
+                  const Center(child: Icon(Icons.broken_image, size: 16))),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: IconButton(
+              key: const ValueKey('satellite-clear'),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              iconSize: 16,
+              tooltip: 'Clear',
+              icon: const Icon(Icons.close),
+              onPressed: () => onChanged(null),
+            ),
+          ),
+        ],
+      );
+    }
+    return Center(
+      child: IconButton(
+        key: const ValueKey('satellite-open'),
+        iconSize: 20,
+        tooltip: 'Open map',
+        icon: const Icon(Icons.add_location_alt_outlined),
+        onPressed: () => _openMap(context),
+      ),
+    );
+  }
 }

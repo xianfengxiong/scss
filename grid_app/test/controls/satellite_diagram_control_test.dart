@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:scss_grid/controls/satellite_diagram_control.dart';
@@ -111,5 +112,41 @@ void main() {
           type: 'satelliteDiagram', props: {'key': 'diagram', 'caption': ''});
       expect(() => c.paintPdf(noCap, {'diagram': bytes}), returnsNormally);
     });
+  });
+
+  Widget host(Widget child) => MaterialApp(
+      home: Scaffold(
+          body: SizedBox(width: 200, height: 200, child: child)));
+
+  testWidgets('fillWidget: no value → shows open-map button, no clear',
+      (tester) async {
+    await tester.pumpWidget(host(
+        SatelliteDiagramControl().fillWidget(_cell, null, (_) {})));
+    expect(find.byKey(const ValueKey('satellite-open')), findsOneWidget);
+    expect(find.byKey(const ValueKey('satellite-clear')), findsNothing);
+  });
+
+  testWidgets('fillWidget: with value → shows thumbnail + clear that clears',
+      (tester) async {
+    Object? captured = 'unset';
+    await tester.pumpWidget(host(SatelliteDiagramControl()
+        .fillWidget(_cell, {'path': '/nonexistent.png'}, (v) => captured = v)));
+    expect(find.byKey(const ValueKey('satellite-clear')), findsOneWidget);
+    expect(find.byKey(const ValueKey('satellite-open')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('satellite-clear')));
+    await tester.pump();
+    expect(captured, isNull);
+  });
+
+  testWidgets('propEditor edits key and caption', (tester) async {
+    Map<String, dynamic>? props;
+    await tester.pumpWidget(host(
+        SatelliteDiagramControl().propEditor(_cell, (p) => props = p)));
+    await tester.enterText(
+        find.byKey(const ValueKey('satellite-key')), 'diag2');
+    expect(props!['key'], 'diag2');
+    await tester.enterText(
+        find.byKey(const ValueKey('satellite-caption')), 'Pole row');
+    expect(props!['caption'], 'Pole row');
   });
 }
