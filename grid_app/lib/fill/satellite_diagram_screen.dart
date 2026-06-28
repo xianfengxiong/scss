@@ -8,6 +8,7 @@ import 'package:screenshot/screenshot.dart';
 import '../controls/satellite_diagram_control.dart';
 import '../model/pin.dart';
 import '../services/location_service.dart';
+import 'pin_label_dialog.dart';
 
 /// Esri World Imagery — free satellite tiles, no API key (attribution required).
 const String _esriUrl =
@@ -67,32 +68,12 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
   }
 
   Future<void> _editPin(int index) async {
-    final ctrl = TextEditingController(text: _pins[index].label);
-    final action = await showDialog<String>(
+    final result = await showDialog<(String, String)>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Pin'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Label (optional)'),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, 'delete'),
-              child: const Text('Delete', style: TextStyle(color: Colors.red))),
-          TextButton(
-              onPressed: () => Navigator.pop(context, 'cancel'),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, 'ok'),
-              child: const Text('OK')),
-        ],
-      ),
+      builder: (_) => PinLabelDialog(initialLabel: _pins[index].label),
     );
-    final label = ctrl.text.trim(); // read before dispose
-    ctrl.dispose();
-    if (!mounted) return;
+    if (result == null || !mounted) return;
+    final (action, label) = result;
     if (action == 'delete') {
       setState(() => _pins = [..._pins]..removeAt(index));
     } else if (action == 'ok') {
