@@ -1,9 +1,11 @@
 # 进度 — Smart City Survey System (Flutter Android)
 
-_最后更新:2026-06-22_
+_最后更新:2026-06-28_
 
 ## 现状一句话
-**greenfield 重写进行中。** A4 网格模版构建器。**Phase 1A + 1B-i + 1B-ii-a(tap 编辑器)+ 1B-ii-b(拖拽直接操作)均已 TDD 实现并合并 `main`,72/72 测试绿、analyze 0,模拟器手动验收通过(点选 / 拖移单元格 / 拖手柄改 colSpan-rowSpan / 拖网格线改行高列宽 均工作)。** 工程在 `grid_app/`(包名 `scss_grid`)。下一步:Phase 2(填写闭环)。
+**greenfield 重写进行中,现场能力(Phase 3)基本收官。** A4 网格模版构建器。建模(网格/拖拽/VB 工具箱/边框合并)+ 填写闭环 + PDF 导出(WYSIWYG)均已合并 `main`;控件已覆盖 title / label / text / number / coordinate(GPS) / image / multiImage / **satelliteDiagram(卫星图打钉截图)**。**最新:Phase 3d satelliteDiagram 已 TDD 实现、真机 SM-A528B 验收过、合并 main @ `f1daeb4`,173 测试绿、analyze 0。** 工程在 `grid_app/`(包名 `scss_grid`)。**下一步:Phase 4 完善控件(deviceChecklist / select / date / checkbox)。**
+
+> 注:本文件的逐阶段细节维护在 memory `scss-project-status.md`(更全更新);Phase 2 之后各阶段的完整设计/计划见 `docs/superpowers/specs/` 与 `docs/superpowers/plans/`,实现细节见 git 历史。下方为滚动汇总。
 
 ## ★ 2026-06-21 设计阶段成果(本次重点)
 - **定稿设计 spec**:`docs/superpowers/specs/2026-06-21-grid-template-builder-design.md`(旧 `2026-06-21-multifield-editing-design.md` 已标作废,被本设计取代)。
@@ -31,10 +33,20 @@ TDD(subagent 驱动,3 组 6 任务 + 组内评审 + 全分支终审 + 模拟器�
 - **手势层关键决策(模拟器验收时定稿)**:画布**等比铺满可用区(fit-both,无滚动视图)**——否则竖向 `SingleChildScrollView` 会吞掉"拖移"竖向手势。详见 spec/账本。
 现已可在模拟器上:点选高亮、拖单元格换行、拖手柄缩放跨度、拖网格线改行高列宽。72/72 测试绿。计划 `docs/superpowers/plans/2026-06-22-grid-builder-phase1b-ii-b-drag.md`。
 
-## 下一步:Phase 2(填写闭环)及之后
-1. **填写模式**:同一模型驱动填写(只填值不改结构),字段输入 → 持久化 → A4 PDF 导出(WYSIWYG)。
-2. 现场能力(GPS/相机/地图截图)→ 完善控件(deviceChecklist/image/multiImage)→ 内嵌 NotoSansSC 解决中文缺字。完整分期见 spec §12。
-3. 延后的 minor(本期未做):调色板**拖控件到格**放置(当前用 tap 加控件已可);拖移采用"左上角吸附指针"(无抓取偏移);`_colX`/`_rowY` 或可并入 geometry;取消选中/空白点选的负路径测试。
+## 已完成:Phase 2 → 3d(均 TDD + 评审 + 真机验收 + 合并 main)
+滚动汇总(细节见 memory / specs / plans / git):
+- **Phase 2 填写闭环**:`Survey`(templateId+data map)+ `SurveyStore`/Drift 表 + v1→v2 迁移;`FillCanvas`/`FillScreen`/`SurveyListScreen`;一份 `data` map(按控件 `props['key']`)同驱动填写与 PDF。
+- **Phase 3a coordinate(GPS)**:`geolocator ^13`(钉版)+ 定位权限;`LocationService` 抽象 + 注入控件;坐标即 `data[key]` 字符串。
+- **控件模型重构 P1/P2a/P2b**:自由放置(拖控件到格)、VB 工具箱(label/text/number/coordinate 拆为独立控件,删 field)、边框合并(控件只画内容 + `controlOutlineEdges` 三处渲染器共用 → 单倍共享边、WYSIWYG)。
+- **Phase 3b image 单图**:`image_picker`+压缩+`resolvePdfValue` 异步嵌图;值存路径;CAMERA 权限。
+- **Phase 3c multiImage 多图** + dock 折叠属性面板 + 填写画布缩放(InteractiveViewer):值=`List<String>`;列恒定行高均分铺满;末行留白;单张清除。
+- **Phase 3d satelliteDiagram 卫星图打钉截图**(@`f1daeb4`):`flutter_map`+`latlong2`+`screenshot`(**无需 connectivity_plus/Kotlin/AGP 改动**,仅 main manifest 加 `INTERNET`);值=Map`{path,pins,center,zoom}`;`PinLabelDialog` 自持控制器;Esri 瓦片 + 打钉/标签 + GPS 定心 + screenshot;PDF `pw.Center` 居中。真机迭代修 4 bug(删钉崩溃 / 落钉偏差 / 缩略图 contain+点开重开 / PDF 左对齐)。
+
+## 下一步:Phase 4(完善控件)及之后
+1. **Phase 4**:`deviceChecklist`(定义期固定行、填写只打勾+填列值)、`select` / `date` / `checkbox`、staticText 样式、调色板补全。完整分期见 spec §12。
+2. **Phase 5 打磨**:内嵌 NotoSansSC 解决中文缺字、release 构建;填写画布缩放/平移已提前做。
+3. 已知待办:6 张图在"又宽又矮"的 multiImage 控件里 PDF contain 仍显参差(用户选不裁,改善杠杆=控件做高/加 rowSpan)。
+4. 延后的 minor:拖移"左上角吸附指针"(无抓取偏移);`_colX`/`_rowY` 或可并入 geometry;取消选中/空白点选的负路径测试。
 
 ## 旧版(已被取代,仅作历史)
 第一阶段字段式 MVP、第二阶段表格式 TemplateRow 重构(`app/` 现有代码)均完成过并跑在模拟器上;因网格线不对齐、编辑器不通用,整体被本次 greenfield 网格设计取代。可复用的是底层服务(GPS、相机压缩、卫星图打钉+RepaintBoundary 截图、pdf 导出)与依赖钉版经验(`app/BUILD_NOTES.md`)。
