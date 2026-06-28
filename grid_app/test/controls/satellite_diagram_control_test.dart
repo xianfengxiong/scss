@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:scss_grid/controls/satellite_diagram_control.dart';
 import 'package:scss_grid/model/cell.dart';
 import 'package:scss_grid/model/pin.dart';
@@ -10,6 +11,20 @@ import 'package:scss_grid/model/pin.dart';
 const _cell = Cell(
     id: 's', col: 0, row: 0, colSpan: 4, rowSpan: 3, type: 'satelliteDiagram',
     props: {'key': 'diagram', 'caption': 'Junction A'});
+
+/// A minimal valid 1×1 PNG, so `pw.MemoryImage` decodes (and paintPdf builds the
+/// real Center/Column) instead of throwing on garbage bytes.
+final _validPng = Uint8List.fromList(const [
+  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, //
+  0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52, //
+  0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, //
+  0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, //
+  0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41, //
+  0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00, //
+  0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, //
+  0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, //
+  0x42, 0x60, 0x82, //
+]);
 
 void main() {
   group('value parsing helpers', () {
@@ -111,6 +126,22 @@ void main() {
           id: 's2', col: 0, row: 0, colSpan: 4, rowSpan: 3,
           type: 'satelliteDiagram', props: {'key': 'diagram', 'caption': ''});
       expect(() => c.paintPdf(noCap, {'diagram': bytes}), returnsNormally);
+    });
+
+    test('no caption → image centered in the cell (pw.Center)', () {
+      // Guards WYSIWYG: pw.Image sizes to the fitted image and the cell SizedBox
+      // would otherwise pin it top-left; pw.Center keeps it centered like fill.
+      final c = SatelliteDiagramControl();
+      const noCap = Cell(
+          id: 's2', col: 0, row: 0, colSpan: 4, rowSpan: 3,
+          type: 'satelliteDiagram', props: {'key': 'diagram', 'caption': ''});
+      expect(c.paintPdf(noCap, {'diagram': _validPng}), isA<pw.Center>());
+    });
+
+    test('with caption → Column(image, caption)', () {
+      final c = SatelliteDiagramControl();
+      // _cell has caption 'Junction A'.
+      expect(c.paintPdf(_cell, {'diagram': _validPng}), isA<pw.Column>());
     });
   });
 

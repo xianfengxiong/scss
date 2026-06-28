@@ -107,7 +107,12 @@ class SatelliteDiagramControl extends ControlSpec {
     if (v is! Uint8List) return pw.SizedBox();
     pw.Widget img;
     try {
-      img = pw.Image(pw.MemoryImage(v), fit: pw.BoxFit.contain);
+      // pw.Image sizes its own box to the FITTED image (contain → narrow for a
+      // portrait capture in a wide cell); the parent SizedBox then pins that box
+      // top-left. Wrap in pw.Center so the image centers in the cell, matching
+      // the fill thumbnail (Flutter's BoxFit.contain centers by default).
+      img = pw.Center(
+          child: pw.Image(pw.MemoryImage(v), fit: pw.BoxFit.contain));
     } catch (e) {
       debugPrint('[SatelliteDiagramControl] paintPdf: corrupt image bytes — $e');
       return pw.SizedBox();
