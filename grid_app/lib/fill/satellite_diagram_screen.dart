@@ -90,12 +90,15 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
         ],
       ),
     );
+    final label = ctrl.text.trim(); // read before dispose
+    ctrl.dispose();
+    if (!mounted) return;
     if (action == 'delete') {
       setState(() => _pins = [..._pins]..removeAt(index));
     } else if (action == 'ok') {
       setState(() {
         final list = [..._pins];
-        list[index] = list[index].copyWith(label: ctrl.text.trim());
+        list[index] = list[index].copyWith(label: label);
         _pins = list;
       });
     }
@@ -114,7 +117,13 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
       if (mounted) setState(() => _saving = false);
       return;
     }
-    final path = await widget.saveBytes(bytes);
+    final String path;
+    try {
+      path = await widget.saveBytes(bytes);
+    } catch (_) {
+      if (mounted) setState(() => _saving = false);
+      return;
+    }
     if (!mounted) return;
     final cam = _mapController.camera;
     Navigator.pop<SatelliteResult>(context,
