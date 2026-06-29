@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../model/cell.dart';
@@ -85,6 +86,81 @@ class DeviceChecklistControl extends ControlSpec {
     return 'r$n';
   }
 
+  static Map<String, dynamic> _rowValue(Map<String, dynamic> data, String key, String rowKey) {
+    final v = data[key];
+    if (v is Map) {
+      final rv = v[rowKey];
+      if (rv is Map) return Map<String, dynamic>.from(rv);
+    }
+    return const {};
+  }
+
   @override
-  pw.Widget paintPdf(Cell cell, Map<String, dynamic> data) => pw.SizedBox();
+  pw.Widget paintPdf(Cell cell, Map<String, dynamic> data) {
+    final key = cell.props['key'] as String? ?? '';
+    final rows = rowsOf(cell);
+    final header = showHeaderOf(cell);
+    final nameFlex = nameColsFor(cell, cell.colSpan);
+    final numFlex = numberColsOf(cell);
+    final remFlex = remarkColsOf(cell);
+    const fs = pw.TextStyle(fontSize: 9);
+
+    pw.Widget pcell(pw.Widget child, {pw.Alignment align = pw.Alignment.centerLeft}) =>
+        pw.Container(
+          alignment: align,
+          padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.grey, width: 0.4),
+          ),
+          child: child,
+        );
+
+    pw.Widget row3(pw.Widget a, pw.Widget b, pw.Widget cc) => pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            pw.Expanded(flex: nameFlex, child: a),
+            pw.Expanded(flex: numFlex, child: b),
+            pw.Expanded(flex: remFlex, child: cc),
+          ],
+        );
+
+    final children = <pw.Widget>[];
+    if (header) {
+      children.add(pw.Expanded(
+        child: row3(
+          pcell(pw.Text(cell.props['title'] as String? ?? '', style: fs)),
+          pcell(pw.Text(cell.props['numberLabel'] as String? ?? '', style: fs)),
+          pcell(pw.Text(cell.props['remarkLabel'] as String? ?? '', style: fs)),
+        ),
+      ));
+    }
+    for (final r in rows) {
+      final rk = r['key'] as String? ?? '';
+      final rv = _rowValue(data, key, rk);
+      final checked = rv['check'] == true;
+      children.add(pw.Expanded(
+        child: row3(
+          pcell(pw.Row(children: [
+            pw.Container(
+              width: 8,
+              height: 8,
+              alignment: pw.Alignment.center,
+              decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.6)),
+              child: checked
+                  ? pw.Text('X', style: const pw.TextStyle(fontSize: 7))
+                  : pw.SizedBox(),
+            ),
+            pw.SizedBox(width: 3),
+            pw.Expanded(child: pw.Text(r['label'] as String? ?? '', style: fs)),
+          ])),
+          pcell(pw.Text(rv['number']?.toString() ?? '', style: fs)),
+          pcell(pw.Text(rv['remark']?.toString() ?? '', style: fs)),
+        ),
+      ));
+    }
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: children.isEmpty ? [pw.SizedBox()] : children,
+    );
+  }
 }

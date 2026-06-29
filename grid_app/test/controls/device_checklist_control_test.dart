@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/controls/device_checklist_control.dart';
 import 'package:scss_grid/controls/number_control.dart';
@@ -70,5 +71,25 @@ void main() {
 
     // already consistent → unchanged identity-ish (same length)
     expect(DeviceChecklistControl.rowsOf(c.reconcile(base)).length, 4);
+  });
+
+  test('paintPdf builds a Column of rows, tolerates null/missing values', () {
+    final c = DeviceChecklistControl();
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5,
+        type: 'deviceChecklist', props: c.defaultProps());
+    // stub returns pw.SizedBox → this fails until the real renderer lands
+    expect(c.paintPdf(cell, const {}), isA<pw.Column>());
+    expect(
+        () => c.paintPdf(cell, const {
+              'deviceChecklist': {
+                'r1': {'check': true, 'number': '3', 'remark': 'ok'},
+                'r3': {'check': false},
+              }
+            }),
+        returnsNormally);
+    final noHeader =
+        cell.copyWith(props: {...cell.props, 'showHeader': false});
+    expect(() => c.paintPdf(noHeader, const {}), returnsNormally);
   });
 }
