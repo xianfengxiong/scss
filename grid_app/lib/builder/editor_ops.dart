@@ -1,3 +1,4 @@
+import '../controls/registry.dart';
 import '../grid/tracks.dart';
 import '../grid/validation.dart';
 import '../model/cell.dart';
@@ -130,3 +131,16 @@ String uniqueKey(Template t, String base) {
   }
   return '${base}_$n';
 }
+
+/// After a geometry edit, let the cell's control restore its internal
+/// invariant (default no-op for controls without a `reconcile` override).
+Template reconcileCell(Template t, String id, ControlRegistry r) =>
+    updateCell(t, id, (c) => r.specFor(c.type)?.reconcile(c) ?? c);
+
+/// Sync a cell's rowSpan to its control's `requiredRowSpan` (when the control
+/// declares one), e.g. after the property editor changed the device-row list.
+Template syncRowSpan(Template t, String id, ControlRegistry r) =>
+    updateCell(t, id, (c) {
+      final want = r.specFor(c.type)?.requiredRowSpan(c);
+      return want == null ? c : c.copyWith(rowSpan: want);
+    });
