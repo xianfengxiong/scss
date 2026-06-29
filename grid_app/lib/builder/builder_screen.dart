@@ -54,37 +54,31 @@ class _BuilderScreenState extends State<BuilderScreen> {
   void _addControl(ControlSpec spec) {
     final pos = firstFreeCell(_t);
     if (pos == null) return; // grid full
-    final span = freeRunWidth(_t, pos.col, pos.row);
-    if (span < 1) return;
-    final cell = _withUniqueKey(Cell(
-      id: _newId(spec.type),
-      col: pos.col,
-      row: pos.row,
-      colSpan: span,
-      type: spec.type,
-      props: spec.defaultProps(),
-    ));
-    final candidate = addCell(_t, cell);
-    if (isValid(candidate)) {
-      setState(() {
-        _t = candidate;
-        _selectedId = cell.id;
-      });
-    }
+    final free = freeRunWidth(_t, pos.col, pos.row);
+    if (free < 1) return;
+    _placeAt(spec, pos.col, pos.row, free);
   }
 
   void _placeDropped(ControlSpec spec, int col, int row) {
     if (cellAtCoord(_t, col, row) != null) return; // occupied
-    final span = freeRunWidth(_t, col, row);
-    if (span < 1) return;
-    final cell = _withUniqueKey(Cell(
+    final free = freeRunWidth(_t, col, row);
+    if (free < 1) return;
+    _placeAt(spec, col, row, free);
+  }
+
+  void _placeAt(ControlSpec spec, int col, int row, int free) {
+    final wantCol = spec.defaultColSpan() ?? free;
+    final colSpan = wantCol < free ? wantCol : free;
+    var cell = _withUniqueKey(Cell(
       id: _newId(spec.type),
       col: col,
       row: row,
-      colSpan: span,
+      colSpan: colSpan,
       type: spec.type,
       props: spec.defaultProps(),
     ));
+    final want = spec.requiredRowSpan(cell);
+    if (want != null) cell = cell.copyWith(rowSpan: want);
     final candidate = addCell(_t, cell);
     if (isValid(candidate)) {
       setState(() {
@@ -162,8 +156,11 @@ class _BuilderScreenState extends State<BuilderScreen> {
                         cell: selected,
                         spec: widget.registry.specFor(selected.type)!,
                         maxColSpan: _t.grid.cols,
-                        onPropsChanged: (props) => _commit(updateCell(
-                            _t, selected.id, (c) => c.copyWith(props: props))),
+                        onPropsChanged: (props) => _commit(syncRowSpan(
+                            updateCell(_t, selected.id,
+                                (c) => c.copyWith(props: props)),
+                            selected.id,
+                            widget.registry)),
                         onColSpanChanged: (span) => _commit(updateCell(
                             _t, selected.id, (c) => c.copyWith(colSpan: span))),
                         onDelete: () {
@@ -220,8 +217,8 @@ class _BuilderScreenState extends State<BuilderScreen> {
             selectedId: _selectedId,
             onSelect: (id) => setState(() => _selectedId = id),
             onMove: (id, col, row) => _commit(moveCell(_t, id, col, row)),
-            onSpan: (id, colSpan, rowSpan) =>
-                _commit(setSpan(_t, id, colSpan, rowSpan)),
+            onSpan: (id, colSpan, rowSpan) => _commit(reconcileCell(
+                setSpan(_t, id, colSpan, rowSpan), id, widget.registry)),
             onResizeCol: (boundary, deltaMm) => _commit(
                 _t.copyWith(grid: resizeColBoundary(_t.grid, boundary, deltaMm))),
             onResizeRow: (boundary, deltaMm) => _commit(
