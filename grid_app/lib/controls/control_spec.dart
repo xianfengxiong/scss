@@ -46,4 +46,18 @@ abstract class ControlSpec {
 
   /// Fill-time validation rule (e.g. multiImage min/max). null = valid.
   String? validate(Cell cell, Object? value) => null;
+
+  /// The rowSpan this control requires for its current props, or null if it
+  /// doesn't constrain rowSpan. deviceChecklist returns rows + header so the
+  /// frame syncs its height to the device-row count. Default: null.
+  int? requiredRowSpan(Cell cell) => null;
+
+  /// After a geometry edit (e.g. dragging the vertical handle changed rowSpan),
+  /// return a cell whose internal invariant holds again. deviceChecklist makes
+  /// its `rows` list length follow rowSpan. Default: identity.
+  Cell reconcile(Cell cell) => cell;
+
+  /// Preferred initial colSpan when placed, or null to use the free run width.
+  /// deviceChecklist returns 4 so its three columns fit. Default: null.
+  int? defaultColSpan() => null;
 }
