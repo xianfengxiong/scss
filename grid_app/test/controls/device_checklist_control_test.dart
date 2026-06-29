@@ -39,4 +39,36 @@ void main() {
     final r = buildDefaultRegistry();
     expect(r.specFor('deviceChecklist'), isA<DeviceChecklistControl>());
   });
+
+  test('requiredRowSpan = rows + header', () {
+    final c = DeviceChecklistControl();
+    final withHeader = Cell(
+        id: 'd', col: 0, row: 0, type: 'deviceChecklist', props: c.defaultProps());
+    expect(c.requiredRowSpan(withHeader), 5); // 4 rows + header
+    final noHeader = withHeader.copyWith(
+        props: {...withHeader.props, 'showHeader': false});
+    expect(c.requiredRowSpan(noHeader), 4);
+    expect(c.defaultColSpan(), 4);
+  });
+
+  test('reconcile makes rows follow rowSpan (grow appends blank, shrink trims)', () {
+    final c = DeviceChecklistControl();
+    final base = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5,
+        type: 'deviceChecklist', props: c.defaultProps()); // 4 rows, header
+
+    // grow: rowSpan 7 → want 6 device rows → append 2 blanks with unique keys
+    final grown = c.reconcile(base.copyWith(rowSpan: 7));
+    final grownRows = DeviceChecklistControl.rowsOf(grown);
+    expect(grownRows.length, 6);
+    expect(grownRows.map((e) => e['key']).toSet().length, 6); // keys unique
+    expect(grownRows.last['label'], '');
+
+    // shrink: rowSpan 3 → want 2 device rows → trim from the end
+    final shrunk = c.reconcile(base.copyWith(rowSpan: 3));
+    expect(DeviceChecklistControl.rowsOf(shrunk).length, 2);
+
+    // already consistent → unchanged identity-ish (same length)
+    expect(DeviceChecklistControl.rowsOf(c.reconcile(base)).length, 4);
+  });
 }

@@ -51,5 +51,40 @@ class DeviceChecklistControl extends ControlSpec {
   }
 
   @override
+  int? requiredRowSpan(Cell cell) =>
+      rowsOf(cell).length + (showHeaderOf(cell) ? 1 : 0);
+
+  @override
+  int? defaultColSpan() => 4;
+
+  @override
+  Cell reconcile(Cell cell) {
+    final header = showHeaderOf(cell) ? 1 : 0;
+    final want = cell.rowSpan - header;
+    final wantRows = want < 0 ? 0 : want;
+    final rows = rowsOf(cell);
+    if (rows.length == wantRows) return cell;
+    final next = [...rows];
+    if (next.length > wantRows) {
+      next.removeRange(wantRows, next.length);
+    } else {
+      while (next.length < wantRows) {
+        next.add({'label': '', 'key': _freeRowKey(next)});
+      }
+    }
+    return cell.copyWith(props: {...cell.props, 'rows': next});
+  }
+
+  /// First `r<n>` key (n from 1) not already used in [rows].
+  static String _freeRowKey(List<Map<String, dynamic>> rows) {
+    final used = rows.map((e) => e['key']).toSet();
+    var n = 1;
+    while (used.contains('r$n')) {
+      n++;
+    }
+    return 'r$n';
+  }
+
+  @override
   pw.Widget paintPdf(Cell cell, Map<String, dynamic> data) => pw.SizedBox();
 }
