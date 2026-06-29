@@ -28,6 +28,7 @@ void main() {
       'image',
       'multiImage',
       'satelliteDiagram',
+      'deviceChecklist',
     });
   });
 

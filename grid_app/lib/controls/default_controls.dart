@@ -1,6 +1,7 @@
 import '../services/image_service.dart';
 import '../services/location_service.dart';
 import 'coordinate_control.dart';
+import 'device_checklist_control.dart';
 import 'image_control.dart';
 import 'label_control.dart';
 import 'multi_image_control.dart';
@@ -26,5 +27,6 @@ ControlRegistry buildDefaultRegistry(
   r.register(ImageControl(image: image));
   r.register(MultiImageControl(image: image));
   r.register(SatelliteDiagramControl(location: location, image: image));
+  r.register(DeviceChecklistControl());
   return r;
 }
