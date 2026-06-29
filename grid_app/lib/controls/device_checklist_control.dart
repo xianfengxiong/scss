@@ -90,6 +90,110 @@ class DeviceChecklistControl extends ControlSpec {
       v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
 
   @override
+  Widget previewWidget(Cell cell) {
+    final rows = rowsOf(cell);
+    final header = showHeaderOf(cell);
+    const grey = TextStyle(fontSize: 9, color: Color(0xFF9A9A9A));
+    Widget line(String a) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+        child: Text(a, style: grey, maxLines: 1, overflow: TextOverflow.ellipsis));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (header)
+          Expanded(
+              child: line(cell.props['title'] as String? ?? 'Device checklist')),
+        for (final r in rows)
+          Expanded(
+            child: line('☐ ${(r['label'] as String?)?.isNotEmpty == true ? r['label'] : '设备名'}'),
+          ),
+      ],
+    );
+  }
+
+  @override
+  Widget propEditor(
+      Cell cell, void Function(Map<String, dynamic> props) onChanged) {
+    final rows = rowsOf(cell);
+    Widget textField(String label, String key) => TextFormField(
+          initialValue: cell.props[key]?.toString() ?? '',
+          decoration: InputDecoration(labelText: label),
+          onChanged: (v) => onChanged({...cell.props, key: v}),
+        );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        textField('Key', 'key'),
+        const SizedBox(height: 8),
+        textField('Title', 'title'),
+        Row(children: [
+          const Text('Show header'),
+          const Spacer(),
+          Switch(
+            key: const ValueKey('devck-showheader'),
+            value: showHeaderOf(cell),
+            onChanged: (v) => onChanged({...cell.props, 'showHeader': v}),
+          ),
+        ]),
+        Row(children: [
+          Expanded(child: textField('Number label', 'numberLabel')),
+          const SizedBox(width: 8),
+          Expanded(child: textField('Remark label', 'remarkLabel')),
+        ]),
+        const SizedBox(height: 8),
+        const Text('Device rows', style: TextStyle(fontWeight: FontWeight.bold)),
+        for (var i = 0; i < rows.length; i++)
+          Row(
+            key: ValueKey('devck-row-${rows[i]['key']}'),
+            children: [
+              Expanded(
+                child: TextFormField(
+                  key: ValueKey('devck-rowlabel-${rows[i]['key']}'),
+                  initialValue: rows[i]['label'] as String? ?? '',
+                  decoration:
+                      const InputDecoration(isDense: true, hintText: '设备名'),
+                  onChanged: (v) {
+                    final next = [
+                      for (final r in rows) {...r}
+                    ];
+                    next[i]['label'] = v;
+                    onChanged({...cell.props, 'rows': next});
+                  },
+                ),
+              ),
+              IconButton(
+                key: ValueKey('devck-delrow-${rows[i]['key']}'),
+                icon: const Icon(Icons.remove_circle_outline, size: 18),
+                onPressed: () {
+                  final next = [
+                    for (final r in rows) {...r}
+                  ]..removeAt(i);
+                  onChanged({...cell.props, 'rows': next});
+                },
+              ),
+            ],
+          ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: const ValueKey('devck-addrow'),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('加一行'),
+            onPressed: () {
+              final next = [
+                for (final r in rows) {...r},
+                {'label': '', 'key': _freeRowKey(rows)},
+              ];
+              onChanged({...cell.props, 'rows': next});
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
   Widget fillWidget(
           Cell cell, Object? value, void Function(Object? value) onChanged) =>
       _DeviceChecklistField(

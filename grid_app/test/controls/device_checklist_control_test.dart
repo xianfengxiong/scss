@@ -7,7 +7,7 @@ import 'package:scss_grid/controls/number_control.dart';
 import 'package:scss_grid/model/cell.dart';
 
 Widget _host(Widget child) => MaterialApp(
-    home: Scaffold(body: SizedBox(width: 320, height: 320, child: child)));
+    home: Scaffold(body: SizedBox(width: 320, height: 700, child: child)));
 
 void main() {
   test('ControlSpec hooks default to no-op on existing controls', () {
@@ -124,5 +124,47 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('devck-number-r1')), '3');
     expect((value['r1'] as Map)['number'], '3');
     expect(value.containsKey('r2'), isFalse);
+  });
+
+  testWidgets('propEditor: add row appends a blank row to props.rows',
+      (tester) async {
+    final c = DeviceChecklistControl();
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5,
+        type: 'deviceChecklist', props: c.defaultProps());
+    Map<String, dynamic>? captured;
+    await tester.pumpWidget(_host(SingleChildScrollView(
+        child: c.propEditor(cell, (p) => captured = p))));
+    await tester.tap(find.byKey(const ValueKey('devck-addrow')));
+    expect(captured, isNotNull);
+    expect((captured!['rows'] as List).length, 5);
+  });
+
+  testWidgets('propEditor: delete row removes that row', (tester) async {
+    final c = DeviceChecklistControl();
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5,
+        type: 'deviceChecklist', props: c.defaultProps());
+    Map<String, dynamic>? captured;
+    await tester.pumpWidget(_host(SingleChildScrollView(
+        child: c.propEditor(cell, (p) => captured = p))));
+    await tester.tap(find.byKey(const ValueKey('devck-delrow-r2')));
+    expect((captured!['rows'] as List).length, 3);
+    expect((captured!['rows'] as List).map((e) => e['key']),
+        isNot(contains('r2')));
+  });
+
+  testWidgets('propEditor: editing a row label updates props.rows', (tester) async {
+    final c = DeviceChecklistControl();
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5,
+        type: 'deviceChecklist', props: c.defaultProps());
+    Map<String, dynamic>? captured;
+    await tester.pumpWidget(_host(SingleChildScrollView(
+        child: c.propEditor(cell, (p) => captured = p))));
+    await tester.enterText(
+        find.byKey(const ValueKey('devck-rowlabel-r1')), 'POE Switch');
+    final rows = captured!['rows'] as List;
+    expect((rows.first as Map)['label'], 'POE Switch');
   });
 }
