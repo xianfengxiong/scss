@@ -221,9 +221,9 @@ class DeviceChecklistControl extends ControlSpec {
     final remFlex = remarkColsOf(cell);
     const fs = pw.TextStyle(fontSize: 9);
 
-    pw.Widget pcell(pw.Widget child, {pw.Alignment align = pw.Alignment.centerLeft}) =>
+    pw.Widget pcell(pw.Widget child) =>
         pw.Container(
-          alignment: align,
+          alignment: pw.Alignment.centerLeft,
           padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 1),
           decoration: pw.BoxDecoration(
             border: pw.Border.all(color: PdfColors.grey, width: 0.4),

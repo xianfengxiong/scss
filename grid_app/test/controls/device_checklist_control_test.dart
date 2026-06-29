@@ -71,7 +71,14 @@ void main() {
 
     // shrink: rowSpan 3 → want 2 device rows → trim from the end
     final shrunk = c.reconcile(base.copyWith(rowSpan: 3));
-    expect(DeviceChecklistControl.rowsOf(shrunk).length, 2);
+    final shrunkRows = DeviceChecklistControl.rowsOf(shrunk);
+    expect(shrunkRows.length, 2);
+    // shrink trims from the end: surviving first row keeps original key
+    expect(shrunkRows.first['key'], DeviceChecklistControl.rowsOf(base).first['key']);
+
+    // grow preserves existing rows: first 4 keys are unchanged (only blanks appended)
+    final baseKeys = DeviceChecklistControl.rowsOf(base).map((e) => e['key']).toList();
+    expect(grownRows.take(4).map((e) => e['key']).toList(), baseKeys);
 
     // already consistent → unchanged identity-ish (same length)
     expect(DeviceChecklistControl.rowsOf(c.reconcile(base)).length, 4);
@@ -82,7 +89,6 @@ void main() {
     final cell = Cell(
         id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5,
         type: 'deviceChecklist', props: c.defaultProps());
-    // stub returns pw.SizedBox → this fails until the real renderer lands
     expect(c.paintPdf(cell, const {}), isA<pw.Column>());
     expect(
         () => c.paintPdf(cell, const {
@@ -95,6 +101,33 @@ void main() {
     final noHeader =
         cell.copyWith(props: {...cell.props, 'showHeader': false});
     expect(() => c.paintPdf(noHeader, const {}), returnsNormally);
+  });
+
+  test('nameColsFor: floors to 1 when colSpan - number - remark < 1', () {
+    final c = DeviceChecklistControl();
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, type: 'deviceChecklist', props: c.defaultProps());
+    // defaults: numberCols=1, remarkCols=2; colSpan 3 → 3-1-2=0 → floored to 1
+    expect(DeviceChecklistControl.nameColsFor(cell, 3), 1);
+    // normal case: colSpan 6 → 6-1-2=3
+    expect(DeviceChecklistControl.nameColsFor(cell, 6), 3);
+  });
+
+  testWidgets('fillWidget: pre-existing rows preserved when another row is edited',
+      (tester) async {
+    final c = DeviceChecklistControl();
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5,
+        type: 'deviceChecklist', props: c.defaultProps());
+    Map<String, dynamic> value = {'r2': {'check': true}};
+    await tester.pumpWidget(_host(c.fillWidget(cell, value, (v) {
+      value = Map<String, dynamic>.from(v as Map);
+    })));
+    await tester.enterText(find.byKey(const ValueKey('devck-number-r1')), '42');
+    // r1 number is written
+    expect((value['r1'] as Map)['number'], '42');
+    // r2's pre-existing check is preserved
+    expect((value['r2'] as Map)['check'], true);
   });
 
   testWidgets('fillWidget: tap a row checkbox → onChanged sets that row check',
