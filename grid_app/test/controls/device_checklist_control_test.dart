@@ -1,9 +1,13 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/controls/device_checklist_control.dart';
 import 'package:scss_grid/controls/number_control.dart';
 import 'package:scss_grid/model/cell.dart';
+
+Widget _host(Widget child) => MaterialApp(
+    home: Scaffold(body: SizedBox(width: 320, height: 320, child: child)));
 
 void main() {
   test('ControlSpec hooks default to no-op on existing controls', () {
@@ -91,5 +95,34 @@ void main() {
     final noHeader =
         cell.copyWith(props: {...cell.props, 'showHeader': false});
     expect(() => c.paintPdf(noHeader, const {}), returnsNormally);
+  });
+
+  testWidgets('fillWidget: tap a row checkbox → onChanged sets that row check',
+      (tester) async {
+    final c = DeviceChecklistControl();
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5,
+        type: 'deviceChecklist', props: c.defaultProps());
+    Object? captured;
+    await tester.pumpWidget(_host(c.fillWidget(cell, null, (v) => captured = v)));
+    await tester.tap(find.byKey(const ValueKey('devck-check-r2')));
+    await tester.pump();
+    expect(captured, isA<Map>());
+    expect((captured as Map)['r2'], {'check': true});
+  });
+
+  testWidgets('fillWidget: typing Number/Remark writes that row only',
+      (tester) async {
+    final c = DeviceChecklistControl();
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5,
+        type: 'deviceChecklist', props: c.defaultProps());
+    Map<String, dynamic> value = {};
+    await tester.pumpWidget(_host(c.fillWidget(cell, value, (v) {
+      value = Map<String, dynamic>.from(v as Map);
+    })));
+    await tester.enterText(find.byKey(const ValueKey('devck-number-r1')), '3');
+    expect((value['r1'] as Map)['number'], '3');
+    expect(value.containsKey('r2'), isFalse);
   });
 }

@@ -86,6 +86,18 @@ class DeviceChecklistControl extends ControlSpec {
     return 'r$n';
   }
 
+  static Map<String, dynamic> valueOf(Object? v) =>
+      v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
+
+  @override
+  Widget fillWidget(
+          Cell cell, Object? value, void Function(Object? value) onChanged) =>
+      _DeviceChecklistField(
+        cell: cell,
+        value: valueOf(value),
+        onChanged: onChanged,
+      );
+
   static Map<String, dynamic> _rowValue(Map<String, dynamic> data, String key, String rowKey) {
     final v = data[key];
     if (v is Map) {
@@ -161,6 +173,112 @@ class DeviceChecklistControl extends ControlSpec {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: children.isEmpty ? [pw.SizedBox()] : children,
+    );
+  }
+}
+
+class _DeviceChecklistField extends StatelessWidget {
+  final Cell cell;
+  final Map<String, dynamic> value;
+  final void Function(Object? value) onChanged;
+
+  const _DeviceChecklistField({
+    required this.cell,
+    required this.value,
+    required this.onChanged,
+  });
+
+  void _set(String rowKey, String field, Object? v) {
+    final next = {...value};
+    final row = {...(next[rowKey] as Map? ?? const {})};
+    row[field] = v;
+    next[rowKey] = row;
+    onChanged(next);
+  }
+
+  Map<String, dynamic> _row(String rowKey) {
+    final r = value[rowKey];
+    return r is Map ? Map<String, dynamic>.from(r) : const {};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = DeviceChecklistControl.rowsOf(cell);
+    final header = DeviceChecklistControl.showHeaderOf(cell);
+    final nameFlex = DeviceChecklistControl.nameColsFor(cell, cell.colSpan);
+    final numFlex = DeviceChecklistControl.numberColsOf(cell);
+    final remFlex = DeviceChecklistControl.remarkColsOf(cell);
+    const cellBorder = Border.fromBorderSide(
+        BorderSide(color: Color(0xFFCCCCCC), width: 0.5));
+
+    Widget box(Widget child) =>
+        Container(decoration: const BoxDecoration(border: cellBorder), child: child);
+
+    Widget row3(Widget a, Widget b, Widget cc) => Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(flex: nameFlex, child: box(a)),
+            Expanded(flex: numFlex, child: box(b)),
+            Expanded(flex: remFlex, child: box(cc)),
+          ],
+        );
+
+    Widget input(String rowKey, String field) => TextFormField(
+          key: ValueKey('devck-$field-$rowKey'),
+          initialValue: _row(rowKey)[field]?.toString() ?? '',
+          keyboardType:
+              field == 'number' ? TextInputType.number : TextInputType.text,
+          style: const TextStyle(fontSize: 9),
+          decoration: const InputDecoration(
+            isDense: true,
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+          ),
+          onChanged: (v) => _set(rowKey, field, v),
+        );
+
+    final children = <Widget>[];
+    if (header) {
+      Widget h(String s) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+          child: Text(s,
+              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)));
+      children.add(Expanded(
+        child: row3(
+          h(cell.props['title'] as String? ?? ''),
+          h(cell.props['numberLabel'] as String? ?? ''),
+          h(cell.props['remarkLabel'] as String? ?? ''),
+        ),
+      ));
+    }
+    for (final r in rows) {
+      final rk = r['key'] as String? ?? '';
+      final checked = _row(rk)['check'] == true;
+      children.add(Expanded(
+        child: row3(
+          Row(children: [
+            SizedBox(
+              width: 28,
+              child: Checkbox(
+                key: ValueKey('devck-check-$rk'),
+                value: checked,
+                visualDensity: VisualDensity.compact,
+                onChanged: (v) => _set(rk, 'check', v ?? false),
+              ),
+            ),
+            Expanded(
+              child: Text(r['label'] as String? ?? '',
+                  style: const TextStyle(fontSize: 9)),
+            ),
+          ]),
+          input(rk, 'number'),
+          input(rk, 'remark'),
+        ),
+      ));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: children.isEmpty ? const [SizedBox()] : children,
     );
   }
 }
