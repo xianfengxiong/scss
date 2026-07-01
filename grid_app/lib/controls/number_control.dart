@@ -35,7 +35,7 @@ class NumberControl extends ControlSpec {
         padding: const EdgeInsets.all(2),
         alignment: Alignment.centerLeft,
         child: Text(_unit(cell).isEmpty ? '[number]' : '[number] ${_unit(cell)}',
-            style: const TextStyle(fontSize: 9, color: Color(0xFF9A9A9A))),
+            style: const TextStyle(fontSize: 9, height: 1.0, color: Color(0xFF9A9A9A))),
       );
 
   @override
@@ -47,7 +47,8 @@ class NumberControl extends ControlSpec {
         expands: true,
         maxLines: null,
         textAlignVertical: TextAlignVertical.center,
-        style: const TextStyle(fontSize: 9),
+        style: const TextStyle(fontSize: 9, height: 1.0),
+        strutStyle: const StrutStyle(fontSize: 9, height: 1.0, forceStrutHeight: true),
         decoration: const InputDecoration(
           isDense: true,
           border: InputBorder.none,

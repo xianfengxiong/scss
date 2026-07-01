@@ -39,7 +39,7 @@ class CoordinateControl extends ControlSpec {
         padding: const EdgeInsets.all(2),
         alignment: Alignment.centerLeft,
         child: const Text('[coordinate]',
-            style: TextStyle(fontSize: 9, color: Color(0xFF9A9A9A))),
+            style: TextStyle(fontSize: 9, height: 1.0, color: Color(0xFF9A9A9A))),
       );
 
   @override
@@ -51,7 +51,8 @@ class CoordinateControl extends ControlSpec {
         expands: true,
         maxLines: null,
         textAlignVertical: TextAlignVertical.center,
-        style: const TextStyle(fontSize: 9),
+        style: const TextStyle(fontSize: 9, height: 1.0),
+        strutStyle: const StrutStyle(fontSize: 9, height: 1.0, forceStrutHeight: true),
         decoration: const InputDecoration(
           isDense: true,
           border: InputBorder.none,
@@ -132,7 +133,9 @@ class _CoordinateFieldState extends State<_CoordinateField> {
             expands: true,
             maxLines: null,
             textAlignVertical: TextAlignVertical.center,
-            style: const TextStyle(fontSize: 9),
+            style: const TextStyle(fontSize: 9, height: 1.0),
+            strutStyle:
+                const StrutStyle(fontSize: 9, height: 1.0, forceStrutHeight: true),
             decoration: const InputDecoration(
               isDense: true,
               border: InputBorder.none,
