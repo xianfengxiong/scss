@@ -61,8 +61,12 @@ class LabelControl extends ControlSpec {
         alignment: _align(cell),
         child: Text(_text(cell),
             overflow: TextOverflow.ellipsis,
+            // height:1.0 tightens the line box so a single line is optically
+            // centered (default line-height leaves empty descent space that
+            // pushes glyphs up); matches the PDF's tighter centering.
             style: TextStyle(
                 fontSize: 9,
+                height: 1.0,
                 fontWeight: _bold(cell) ? FontWeight.bold : FontWeight.normal)),
       );
 

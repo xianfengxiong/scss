@@ -28,9 +28,15 @@ class TitleControl extends ControlSpec {
 
   @override
   Widget previewWidget(Cell cell) => Center(
-        child: Text(
-          (cell.props['text'] as String?) ?? '',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        // Scale-down so the (fixed 14pt) title always fits its cell height when
+        // the A4 page is scaled to phone width — otherwise tall text clips
+        // vertically in short grid rows (fill + builder use this widget).
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            (cell.props['text'] as String?) ?? '',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, height: 1.0),
+          ),
         ),
       );
 
