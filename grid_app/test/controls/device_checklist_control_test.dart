@@ -53,7 +53,7 @@ void main() {
     final noHeader = withHeader.copyWith(
         props: {...withHeader.props, 'showHeader': false});
     expect(c.requiredRowSpan(noHeader), 4);
-    expect(c.defaultColSpan(), 4);
+    expect(c.defaultColSpan(), 6); // name column widest by default (6-1-2=3)
   });
 
   test('reconcile makes rows follow rowSpan (grow appends blank, shrink trims)', () {
@@ -199,5 +199,71 @@ void main() {
         find.byKey(const ValueKey('devck-rowlabel-r1')), 'POE Switch');
     final rows = captured!['rows'] as List;
     expect((rows.first as Map)['label'], 'POE Switch');
+  });
+
+  // #2: PDF checked mark is a vector checkmark (✓), not the letter 'X'.
+  test('checkMark: checked → vector CustomPaint, unchecked → empty SizedBox', () {
+    expect(DeviceChecklistControl.checkMark(true), isA<pw.CustomPaint>());
+    expect(DeviceChecklistControl.checkMark(false), isA<pw.SizedBox>());
+  });
+
+  // #3: fill-mode check must be a compact indicator that fits a small grid row,
+  // NOT a fixed-size Material Checkbox that overflows the cell.
+  testWidgets('fillWidget: uses a compact check indicator, not a Material Checkbox',
+      (tester) async {
+    final c = DeviceChecklistControl();
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5,
+        type: 'deviceChecklist', props: c.defaultProps());
+    await tester.pumpWidget(_host(c.fillWidget(cell, null, (_) {})));
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.byKey(const ValueKey('devck-check-r1')), findsOneWidget);
+  });
+
+  // #4: a long header title must stay fully visible in a short/narrow cell by
+  // scaling down (FittedBox), not clip vertically or truncate horizontally.
+  testWidgets('fillWidget: header title scales to fit its cell (FittedBox)',
+      (tester) async {
+    final c = DeviceChecklistControl();
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 4, rowSpan: 5,
+        type: 'deviceChecklist', props: c.defaultProps());
+    await tester.pumpWidget(_host(c.fillWidget(cell, null, (_) {})));
+    expect(
+        find.ancestor(
+            of: find.text('Type of device to install'),
+            matching: find.byType(FittedBox)),
+        findsOneWidget);
+  });
+
+  // #5: property editor exposes Number/Remark column-width steppers.
+  testWidgets('propEditor: number/remark column steppers adjust props', (tester) async {
+    final c = DeviceChecklistControl();
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5,
+        type: 'deviceChecklist', props: c.defaultProps()); // number 1, remark 2, name 3
+    Map<String, dynamic>? captured;
+    await tester.pumpWidget(_host(SingleChildScrollView(
+        child: c.propEditor(cell, (p) => captured = p))));
+    await tester.tap(find.byKey(const ValueKey('devck-numbercols-inc')));
+    expect(captured!['numberCols'], 2);
+    captured = null;
+    await tester.tap(find.byKey(const ValueKey('devck-remarkcols-inc')));
+    expect(captured!['remarkCols'], 3);
+  });
+
+  // #5 guard: cannot grow a column past the point where the name column < 1.
+  testWidgets('propEditor: column stepper inc disabled when name column would drop below 1',
+      (tester) async {
+    final c = DeviceChecklistControl();
+    // colSpan 6, number 3, remark 2 → name = 6-3-2 = 1 (at the floor)
+    final cell = Cell(
+        id: 'd', col: 0, row: 0, colSpan: 6, rowSpan: 5, type: 'deviceChecklist',
+        props: {...c.defaultProps(), 'numberCols': 3, 'remarkCols': 2});
+    await tester.pumpWidget(_host(SingleChildScrollView(
+        child: c.propEditor(cell, (_) {}))));
+    final incBtn = tester.widget<IconButton>(
+        find.byKey(const ValueKey('devck-numbercols-inc')));
+    expect(incBtn.onPressed, isNull);
   });
 }

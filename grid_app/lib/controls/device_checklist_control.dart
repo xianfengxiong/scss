@@ -56,7 +56,7 @@ class DeviceChecklistControl extends ControlSpec {
       rowsOf(cell).length + (showHeaderOf(cell) ? 1 : 0);
 
   @override
-  int? defaultColSpan() => 4;
+  int? defaultColSpan() => 6; // name column widest by default (6 - 1 - 2 = 3)
 
   @override
   Cell reconcile(Cell cell) {
@@ -93,10 +93,14 @@ class DeviceChecklistControl extends ControlSpec {
   Widget previewWidget(Cell cell) {
     final rows = rowsOf(cell);
     final header = showHeaderOf(cell);
-    const grey = TextStyle(fontSize: 9, color: Color(0xFF9A9A9A));
+    const grey = TextStyle(fontSize: 9, height: 1.0, color: Color(0xFF9A9A9A));
     Widget line(String a) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-        child: Text(a, style: grey, maxLines: 1, overflow: TextOverflow.ellipsis));
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(a, style: grey),
+        ));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -120,6 +124,27 @@ class DeviceChecklistControl extends ControlSpec {
           decoration: InputDecoration(labelText: label),
           onChanged: (v) => onChanged({...cell.props, key: v}),
         );
+    final numCols = numberColsOf(cell);
+    final remCols = remarkColsOf(cell);
+    // Device-name column = colSpan − numCols − remCols must stay ≥ 1, so each
+    // column can grow only until the name column would fall below one grid col.
+    Widget colStepper(String label, String propKey, String id, int value, int max) =>
+        Row(children: [
+          Expanded(child: Text(label)),
+          IconButton(
+            key: ValueKey('devck-$id-dec'),
+            icon: const Icon(Icons.remove, size: 18),
+            onPressed:
+                value > 1 ? () => onChanged({...cell.props, propKey: value - 1}) : null,
+          ),
+          Text('$value', key: ValueKey('devck-$id-val')),
+          IconButton(
+            key: ValueKey('devck-$id-inc'),
+            icon: const Icon(Icons.add, size: 18),
+            onPressed:
+                value < max ? () => onChanged({...cell.props, propKey: value + 1}) : null,
+          ),
+        ]);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,6 +166,10 @@ class DeviceChecklistControl extends ControlSpec {
           const SizedBox(width: 8),
           Expanded(child: textField('Remark label', 'remarkLabel')),
         ]),
+        colStepper('Number 列宽', 'numberCols', 'numbercols', numCols,
+            cell.colSpan - remCols - 1),
+        colStepper('Remark 列宽', 'remarkCols', 'remarkcols', remCols,
+            cell.colSpan - numCols - 1),
         const SizedBox(height: 8),
         const Text('Device rows', style: TextStyle(fontWeight: FontWeight.bold)),
         for (var i = 0; i < rows.length; i++)
@@ -211,6 +240,28 @@ class DeviceChecklistControl extends ControlSpec {
     return const {};
   }
 
+  /// The mark drawn in a checked device row for PDF export: a font-independent
+  /// vector check (✓), NOT the letter 'X' (a cross reads as "no"). Unchecked →
+  /// empty. PDF canvas origin is bottom-left, y up.
+  static pw.Widget checkMark(bool checked) => checked
+      ? pw.CustomPaint(
+          size: const PdfPoint(8, 8),
+          painter: (canvas, size) {
+            final w = size.x;
+            final h = size.y;
+            canvas
+              ..setLineCap(PdfLineCap.round)
+              ..setLineJoin(PdfLineJoin.round)
+              ..setLineWidth(0.9)
+              ..setStrokeColor(PdfColors.black)
+              ..moveTo(w * 0.18, h * 0.50)
+              ..lineTo(w * 0.42, h * 0.26)
+              ..lineTo(w * 0.82, h * 0.78)
+              ..strokePath();
+          },
+        )
+      : pw.SizedBox();
+
   @override
   pw.Widget paintPdf(Cell cell, Map<String, dynamic> data) {
     final key = cell.props['key'] as String? ?? '';
@@ -262,9 +313,7 @@ class DeviceChecklistControl extends ControlSpec {
               height: 8,
               alignment: pw.Alignment.center,
               decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.6)),
-              child: checked
-                  ? pw.Text('X', style: const pw.TextStyle(fontSize: 7))
-                  : pw.SizedBox(),
+              child: checkMark(checked),
             ),
             pw.SizedBox(width: 3),
             pw.Expanded(child: pw.Text(r['label'] as String? ?? '', style: fs)),
@@ -332,7 +381,12 @@ class _DeviceChecklistField extends StatelessWidget {
           initialValue: _row(rowKey)[field]?.toString() ?? '',
           keyboardType:
               field == 'number' ? TextInputType.number : TextInputType.text,
-          style: const TextStyle(fontSize: 9),
+          expands: true,
+          maxLines: null,
+          textAlignVertical: TextAlignVertical.center,
+          style: const TextStyle(fontSize: 9, height: 1.0),
+          strutStyle:
+              const StrutStyle(fontSize: 9, height: 1.0, forceStrutHeight: true),
           decoration: const InputDecoration(
             isDense: true,
             border: InputBorder.none,
@@ -344,9 +398,17 @@ class _DeviceChecklistField extends StatelessWidget {
     final children = <Widget>[];
     if (header) {
       Widget h(String s) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
-          child: Text(s,
-              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)));
+          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+          // Scale-down keeps the full header label visible in a short/narrow
+          // cell (no vertical clip, no horizontal truncation) when the page is
+          // scaled to phone width.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(s,
+                style: const TextStyle(
+                    fontSize: 9, height: 1.0, fontWeight: FontWeight.bold)),
+          ));
       children.add(Expanded(
         child: row3(
           h(cell.props['title'] as String? ?? ''),
@@ -360,21 +422,26 @@ class _DeviceChecklistField extends StatelessWidget {
       final checked = _row(rk)['check'] == true;
       children.add(Expanded(
         child: row3(
-          Row(children: [
-            SizedBox(
-              width: 28,
-              child: Checkbox(
-                key: ValueKey('devck-check-$rk'),
-                value: checked,
-                visualDensity: VisualDensity.compact,
-                onChanged: (v) => _set(rk, 'check', v ?? false),
+          GestureDetector(
+            key: ValueKey('devck-check-$rk'),
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _set(rk, 'check', !checked),
+            child: Row(children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Icon(
+                  checked ? Icons.check_box : Icons.check_box_outline_blank,
+                  size: 13,
+                ),
               ),
-            ),
-            Expanded(
-              child: Text(r['label'] as String? ?? '',
-                  style: const TextStyle(fontSize: 9)),
-            ),
-          ]),
+              Expanded(
+                child: Text(r['label'] as String? ?? '',
+                    style: const TextStyle(fontSize: 9, height: 1.0),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ),
+            ]),
+          ),
           input(rk, 'number'),
           input(rk, 'remark'),
         ),

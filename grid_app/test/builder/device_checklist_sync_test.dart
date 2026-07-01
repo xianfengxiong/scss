@@ -50,13 +50,13 @@ void main() {
     // emulate _placeDropped's math on an empty 8-wide grid at (0,0)
     final t = _tpl(const []);
     final free = freeRunWidth(t, 0, 0); // 8
-    final wantCol = spec.defaultColSpan() ?? free; // 4
-    final colSpan = wantCol < free ? wantCol : free; // 4
+    final wantCol = spec.defaultColSpan() ?? free; // 6
+    final colSpan = wantCol < free ? wantCol : free; // 6
     final tmp = Cell(
         id: 'x', col: 0, row: 0, colSpan: colSpan, rowSpan: 1,
         type: 'deviceChecklist', props: spec.defaultProps());
     final rowSpan = spec.requiredRowSpan(tmp) ?? 1; // 5
-    expect(colSpan, 4);
+    expect(colSpan, 6);
     expect(rowSpan, 5);
     final placed = addCell(t, tmp.copyWith(rowSpan: rowSpan));
     expect(isValid(placed), isTrue); // fits in a 20-row grid
