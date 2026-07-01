@@ -1,9 +1,9 @@
 # 进度 — Smart City Survey System (Flutter Android)
 
-_最后更新:2026-06-29_
+_最后更新:2026-07-01_
 
 ## 现状一句话
-**greenfield 重写进行中,现场能力(Phase 3)基本收官。** A4 网格模版构建器。建模(网格/拖拽/VB 工具箱/边框合并)+ 填写闭环 + PDF 导出(WYSIWYG)均已合并 `main`;控件已覆盖 title / label / text / number / coordinate(GPS) / image / multiImage / **satelliteDiagram(卫星图打钉截图)**。**最新:Phase 3d satelliteDiagram 已 TDD 实现、真机 SM-A528B 验收过、合并 main @ `f1daeb4`,173 测试绿、analyze 0。** 工程在 `grid_app/`(包名 `scss_grid`)。**Phase 4 已启动:`deviceChecklist`(网格原生设备勾选表)经 SDD 9 任务 TDD 实现完毕(190 测试绿、analyze 0、opus 全分支终审 Ready=Yes),APK 已上真机 SM-A528B、真机验收进行中、未合并 main。验收通过 → 合并 → Phase 4 续做 select / date / checkbox。**
+**greenfield 重写进行中,现场能力(Phase 3)基本收官。** A4 网格模版构建器。建模(网格/拖拽/VB 工具箱/边框合并)+ 填写闭环 + PDF 导出(WYSIWYG)均已合并 `main`;控件已覆盖 title / label / text / number / coordinate(GPS) / image / multiImage / **satelliteDiagram(卫星图打钉截图)**。**最新:Phase 3d satelliteDiagram 已 TDD 实现、真机 SM-A528B 验收过、合并 main @ `f1daeb4`,173 测试绿、analyze 0。** 工程在 `grid_app/`(包名 `scss_grid`)。**Phase 4 `deviceChecklist`(网格原生设备勾选表)经 SDD 9 任务 TDD 实现 + 真机 SM-A528B 验收(2026-07-01)修 7 项 UI 问题(PDF 对勾非 X / 勾选框溢出 / 列宽可调 / 标题竖切 / 文字竖向居中 等)并端到端(建模→填写→PDF WYSIWYG)验证通过;197 测试绿、analyze 0,分支 `phase4-devicechecklist`(main 之上 = 原实现 + 3 个 fix commit)待合并 main → Phase 4 续做 select / date / checkbox。**
 
 > 注:本文件的逐阶段细节维护在 memory `scss-project-status.md`(更全更新);Phase 2 之后各阶段的完整设计/计划见 `docs/superpowers/specs/` 与 `docs/superpowers/plans/`,实现细节见 git 历史。下方为滚动汇总。
 
@@ -42,12 +42,14 @@ TDD(subagent 驱动,3 组 6 任务 + 组内评审 + 全分支终审 + 模拟器�
 - **Phase 3c multiImage 多图** + dock 折叠属性面板 + 填写画布缩放(InteractiveViewer):值=`List<String>`;列恒定行高均分铺满;末行留白;单张清除。
 - **Phase 3d satelliteDiagram 卫星图打钉截图**(@`f1daeb4`):`flutter_map`+`latlong2`+`screenshot`(**无需 connectivity_plus/Kotlin/AGP 改动**,仅 main manifest 加 `INTERNET`);值=Map`{path,pins,center,zoom}`;`PinLabelDialog` 自持控制器;Esri 瓦片 + 打钉/标签 + GPS 定心 + screenshot;PDF `pw.Center` 居中。真机迭代修 4 bug(删钉崩溃 / 落钉偏差 / 缩略图 contain+点开重开 / PDF 左对齐)。
 
-## 进行中:Phase 4 — `deviceChecklist`(代码完成 @ `c653773`,待真机验收,未合并)
+## Phase 4 — `deviceChecklist`(真机验收通过、UI 修复完成,待合并 main)
 
 **Phase 4 `deviceChecklist`(网格原生设备勾选表)代码完成、待真机验收**(2026-06-29,subagent-driven-development,9 任务 TDD + 各任务 sonnet 评审 + opus 全分支终审;190 测试绿、analyze 0;分支 `phase4-devicechecklist`)。设计/计划:`docs/superpowers/specs/2026-06-29-phase4-devicechecklist-design.md`、`docs/superpowers/plans/2026-06-29-phase4-devicechecklist.md`。**形态(方案 B 网格原生)**:每设备行=一个网格行、整块落网格、与相邻字段对齐成一张表;**不变式 `rowSpan==rows.length+(showHeader?1:0)` 双向同步**(拖纵向手柄→`reconcileCell` 让 rows 跟随;属性面板加/删行→`syncRowSpan` 让 rowSpan 跟随;两路 disjoint、无 loop、均过 `isValid` 守卫,破坏态不落库)。固定三列(勾选/数量/备注);值=`data[key]={rowKey:{check,number,remark}}`(JSON 安全、无 Drift schema 变更,沿用 satelliteDiagram/multiImage 嵌套值先例)。**架构触点**:`ControlSpec` 加 3 个默认 no-op 钩子(`requiredRowSpan`/`reconcile`/`defaultColSpan`)+ `editor_ops` 2 个泛型纯函数(`reconcileCell`/`syncRowSpan`)+ `builder_screen` 3 处接线(放置初始尺寸 / onSpan→reconcileCell / onPropsChanged→syncRowSpan),全程泛型无 type-switch。新文件 `lib/controls/device_checklist_control.dart`(+ register 1 行)。**opus 终审 Ready=Yes、0 Crit/0 Imp**;Minor 全 defer,pre-merge polish 已补不变式断言/删死参数。APK(debug @ `c653773`)已 `install -r` 真机 SM-A528B,**真机验收进行中(用户)**。本期列宽用默认(Number1/Remark2,propEditor 不可调,YAGNI);两个 defer:加行空间不足静默无反馈、shrink 后孤立 fill 值未清(均无害)。
 
-## 下一步:真机验收 → 合并 → Phase 4 余下控件及之后
-1. **真机验收通过后合并 `phase4-devicechecklist`**(finishing-a-development-branch);之后 Phase 4 续做 `select` / `date` / `checkbox`、staticText 样式、调色板补全。完整分期见 spec §12。
+**✅ 真机 SM-A528B 验收(2026-07-01)+ 修复完成、端到端验证通过**(197 测试绿、analyze 0;分支新增 3 个 fix commit `a52802d`/`71de161`/`a1eeb74`,待合并)。用户真机验收暴露 7 项、全部 TDD 修复 + adb 截图/PDF 真机核对:① **『保存后重进全丢』经 DB 实证非数据丢失**——数据正常落库,是模板列表『Fill』每次新建空白 survey、须走 AppBar『Surveys』列表恢复(用户选本期不动此工作流,列为后续独立项);② PDF 勾选画字面 `X`→ 新增 `checkMark()` 用矢量 `pw.CustomPaint` 画对勾(基础字体无 ✓);③ 填写勾选框 Material `Checkbox` 固定最小尺寸溢出矮格→ 换紧凑 13px `Icon` + 整格 `GestureDetector`;④ 设备名列太窄→ `defaultColSpan` 4→6;⑤ 列宽不可调→ propEditor 加 `numberCols`/`remarkCols` 步进器(名列≥1 守卫);⑥ 标题/表头**竖向裁切**(画布按页宽缩几何但字号固定 px 不缩)→ 标题类文字套 `FittedBox(scaleDown)`;⑦ label + 所有输入文字**没竖向居中、偏上**(Flutter 居中含字体 leading 的行框、pdf 包更贴字形→ PDF 正常)→ App 端 `TextStyle(height:1.0)` + `strutStyle(forceStrutHeight)` 收紧行度量(PDF 不动)。改动仅 `lib/controls/*`,golden 因 title/label 像素重生成。真实勘测表端到端(TestSite/Dubai + Varifocal ✓9 roof / PTZ ✓2 / Radar ✓ → PDF 逐项 WYSIWYG 一致)通过。
+
+## 下一步:合并 → Phase 4 余下控件及之后
+1. **合并 `phase4-devicechecklist` 到 main**(finishing-a-development-branch,真机验收已过);之后 Phase 4 续做 `select` / `date` / `checkbox`、staticText 样式、调色板补全。完整分期见 spec §12。**#1『保存/恢复』体验(autosave / Fill 续填 / Surveys 入口可发现性)作为 Phase 4 后续独立一项。**
 2. **Phase 5 打磨**:内嵌 NotoSansSC 解决中文缺字、release 构建;填写画布缩放/平移已提前做。
 3. 已知待办:6 张图在"又宽又矮"的 multiImage 控件里 PDF contain 仍显参差(用户选不裁,改善杠杆=控件做高/加 rowSpan)。
 4. 延后的 minor:拖移"左上角吸附指针"(无抓取偏移);`_colX`/`_rowY` 或可并入 geometry;取消选中/空白点选的负路径测试。
