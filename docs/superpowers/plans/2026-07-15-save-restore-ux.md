@@ -517,9 +517,11 @@ class _SurveyNameDialogState extends State<SurveyNameDialog> {
           valueListenable: _ctrl,
           builder: (_, value, __) => TextButton(
             key: const ValueKey('survey-name-ok'),
+            // 启用态用 value(随输入重建);pop 值读 live 的 _ctrl.text——
+            // builder 的 value 快照在 enterText→tap 无 pump 的测试时序下会滞后。
             onPressed: value.text.trim().isEmpty
                 ? null
-                : () => Navigator.of(context).pop(value.text.trim()),
+                : () => Navigator.of(context).pop(_ctrl.text.trim()),
             child: const Text('OK'),
           ),
         ),
