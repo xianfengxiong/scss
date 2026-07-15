@@ -4,7 +4,10 @@ import '../controls/registry.dart';
 import '../data/survey_store.dart';
 import '../data/template_store.dart';
 import '../model/survey.dart';
+import '../model/template.dart';
 import 'fill_screen.dart';
+import 'survey_name_dialog.dart';
+import 'time_label.dart';
 
 /// Lists saved surveys: resume one (loads its template, opens FillScreen) or
 /// swipe to delete. Surveys are created from the template list's Fill action.
@@ -26,6 +29,7 @@ class SurveyListScreen extends StatefulWidget {
 
 class _SurveyListScreenState extends State<SurveyListScreen> {
   List<Survey> _surveys = [];
+  Map<String, String> _tplNames = {};
   bool _loading = true;
 
   @override
@@ -36,9 +40,11 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
 
   Future<void> _reload() async {
     final list = await widget.surveyStore.all();
+    final templates = await widget.templateStore.all();
     if (!mounted) return;
     setState(() {
       _surveys = list;
+      _tplNames = {for (final Template t in templates) t.id: t.name};
       _loading = false;
     });
   }
@@ -69,6 +75,16 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
     await _reload();
   }
 
+  Future<void> _rename(Survey s) async {
+    final name = await promptForSurveyName(context,
+        title: 'Rename survey', initial: s.name);
+    if (name == null || !mounted) return;
+    await widget.surveyStore
+        .upsert(s.copyWith(name: name, updatedAt: DateTime.now()));
+    if (!mounted) return;
+    await _reload();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,7 +110,16 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
                         onDismissed: (_) => _delete(s),
                         child: ListTile(
                           title: Text(s.name),
-                          subtitle: Text('${s.data.length} fields filled'),
+                          subtitle: Text(
+                              '${_tplNames[s.templateId] ?? s.templateId} · '
+                              '${updatedLabel(s.updatedAt, DateTime.now())} · '
+                              '${s.data.length} fields'),
+                          trailing: IconButton(
+                            key: ValueKey('rename-${s.id}'),
+                            icon: const Icon(Icons.edit_outlined),
+                            tooltip: 'Rename',
+                            onPressed: () => _rename(s),
+                          ),
                           onTap: () => _resume(s),
                         ),
                       ),

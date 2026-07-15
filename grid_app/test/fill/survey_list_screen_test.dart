@@ -50,4 +50,61 @@ void main() {
     await tester.pumpAndSettle();
     expect(await surveyStore.all(), isEmpty);
   });
+
+  testWidgets('newest first; subtitle shows template name and relative time',
+      (tester) async {
+    final templateStore = InMemoryTemplateStore();
+    await templateStore.upsert(sampleTemplate()); // id 'sample'
+    final surveyStore = InMemorySurveyStore();
+    await surveyStore.upsert(Survey(
+        id: 'old', templateId: 'sample', name: 'Old site',
+        updatedAt: DateTime.now().subtract(const Duration(days: 2))));
+    await surveyStore.upsert(Survey(
+        id: 'new', templateId: 'sample', name: 'New site',
+        updatedAt: DateTime.now()));
+
+    await tester.pumpWidget(MaterialApp(
+      home: SurveyListScreen(
+        surveyStore: surveyStore,
+        templateStore: templateStore,
+        registry: buildDefaultRegistry(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    final newY = tester.getTopLeft(find.text('New site')).dy;
+    final oldY = tester.getTopLeft(find.text('Old site')).dy;
+    expect(newY, lessThan(oldY)); // 最近更新在前
+
+    // subtitle 含模板名(sampleTemplate 的 name)与相对时间
+    expect(find.textContaining(sampleTemplate().name), findsNWidgets(2));
+    expect(find.textContaining('2d ago'), findsOneWidget);
+  });
+
+  testWidgets('rename button opens dialog; OK persists new name',
+      (tester) async {
+    final surveyStore = InMemorySurveyStore();
+    await surveyStore.upsert(Survey(
+        id: 's1', templateId: 'sample', name: 'Old name',
+        updatedAt: DateTime.now()));
+
+    await tester.pumpWidget(MaterialApp(
+      home: SurveyListScreen(
+        surveyStore: surveyStore,
+        templateStore: InMemoryTemplateStore(),
+        registry: buildDefaultRegistry(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('rename-s1')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const ValueKey('survey-name-field')), 'New name');
+    await tester.tap(find.byKey(const ValueKey('survey-name-ok')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('New name'), findsOneWidget);
+    expect((await surveyStore.get('s1'))!.name, 'New name');
+  });
 }
