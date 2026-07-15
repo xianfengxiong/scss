@@ -11,8 +11,8 @@
 # ── Android / Gradle ──
 **/.gradle/
 **/local.properties
-# 本仓库为纯本地私有仓库,release keystore/key.properties 有意纳入 git 随仓库备份;
-# 若将来给仓库加远端(尤其公开),必须先把它们移出 git 历史再推(见 grid_app/BUILD_NOTES.md)。
+# release keystore/key.properties 有意纳入 git 随仓库备份(远端为 GitHub 私有仓库,保持 Private);
+# 若仓库转公开,必须先把它们移出 git 历史并换签名 keystore(见 grid_app/BUILD_NOTES.md)。
 
 # ── iOS / macOS ──
 **/Pods/

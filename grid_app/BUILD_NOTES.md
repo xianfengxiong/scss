@@ -16,7 +16,7 @@ flutter build apk --release --split-per-abi
 - keystore:`android/keystore/scss-release.jks`(alias `scss`);口令见 `android/key.properties`。
 - `android/app/build.gradle` 自动读取 `android/key.properties`:文件在 → 正式签名;不在 → 回落 debug 签名(构建不中断,但产物只能覆盖同为 debug 签名的旧装)。
 - 验签:`$ANDROID_SDK/build-tools/<ver>/apksigner verify --print-certs <apk>`,应看到 `CN=SCSS Survey`。
-- ⚠️ **本仓库为纯本地私有仓库,keystore/key.properties 有意进 git**(随仓库备份、换机可续)。**若将来给仓库加远端(尤其公开),必须先把这两个文件移出 git 历史**(`git filter-repo` 或重建仓库)再推,并另行保管 keystore。
+- ⚠️ **keystore/key.properties 有意进 git**(随仓库备份、换机可续;2026-07-15 用户确认)。仓库远端为 **GitHub 私有仓库** `git@github.com:xianfengxiong/scss.git`——**保持 Private**;**若将来转公开,必须先把这两个文件移出 git 历史**(`git filter-repo` 或重建仓库)并更换签名 keystore(视同已泄露)。
 - keystore 一旦丢失,无法再对已装用户做覆盖升级(须卸载重装、丢本机数据)——本仓库即备份,别丢仓库。
 
 ## 工具链配套(2026-07-15,Flutter 3.44.6 / Dart 3.12.2 / JDK 21)
