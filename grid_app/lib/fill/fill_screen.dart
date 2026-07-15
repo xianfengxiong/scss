@@ -52,8 +52,9 @@ class _FillScreenState extends State<FillScreen> {
     if (pos == null) return;
     // 以双击点为中心放大到 1.5×。
     _tc.value = Matrix4.identity()
-      ..translate(-pos.dx * (_doubleTapScale - 1), -pos.dy * (_doubleTapScale - 1))
-      ..scale(_doubleTapScale);
+      ..translateByDouble(
+          -pos.dx * (_doubleTapScale - 1), -pos.dy * (_doubleTapScale - 1), 0, 1)
+      ..scaleByDouble(_doubleTapScale, _doubleTapScale, _doubleTapScale, 1);
   }
 
   Survey get _current => widget.survey.copyWith(data: _data);

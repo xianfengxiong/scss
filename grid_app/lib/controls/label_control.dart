@@ -84,7 +84,7 @@ class LabelControl extends ControlSpec {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _alignName(cell),
+          initialValue: _alignName(cell),
           decoration: const InputDecoration(labelText: 'Align'),
           items: const ['left', 'center', 'right']
               .map((v) => DropdownMenuItem(value: v, child: Text(v)))
