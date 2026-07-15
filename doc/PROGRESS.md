@@ -1,9 +1,9 @@
 # 进度 — Smart City Survey System (Flutter Android)
 
-_最后更新:2026-07-01_
+_最后更新:2026-07-15_
 
 ## 现状一句话
-**greenfield 重写进行中,现场能力(Phase 3)基本收官。** A4 网格模版构建器。建模(网格/拖拽/VB 工具箱/边框合并)+ 填写闭环 + PDF 导出(WYSIWYG)均已合并 `main`;控件已覆盖 title / label / text / number / coordinate(GPS) / image / multiImage / **satelliteDiagram(卫星图打钉截图)**。**最新:Phase 3d satelliteDiagram 已 TDD 实现、真机 SM-A528B 验收过、合并 main @ `f1daeb4`,173 测试绿、analyze 0。** 工程在 `grid_app/`(包名 `scss_grid`)。**Phase 4 `deviceChecklist`(网格原生设备勾选表)经 SDD 9 任务 TDD 实现 + 真机 SM-A528B 验收(2026-07-01)修 7 项 UI 问题(PDF 对勾非 X / 勾选框溢出 / 列宽可调 / 标题竖切 / 文字竖向居中 等)并端到端(建模→填写→PDF WYSIWYG)验证通过;197 测试绿、analyze 0,分支 `phase4-devicechecklist`(main 之上 = 原实现 + 3 个 fix commit)待合并 main → Phase 4 续做 select / date / checkbox。**
+**greenfield 重写进行中,现场能力(Phase 3)基本收官。** A4 网格模版构建器。建模(网格/拖拽/VB 工具箱/边框合并)+ 填写闭环 + PDF 导出(WYSIWYG)均已合并 `main`;控件已覆盖 title / label / text / number / coordinate(GPS) / image / multiImage / **satelliteDiagram(卫星图打钉截图)**。**最新:Phase 3d satelliteDiagram 已 TDD 实现、真机 SM-A528B 验收过、合并 main @ `f1daeb4`,173 测试绿、analyze 0。** 工程在 `grid_app/`(包名 `scss_grid`)。**Phase 4 `deviceChecklist`(网格原生设备勾选表)经 SDD 9 任务 TDD 实现 + 真机 SM-A528B 验收(2026-07-01)修 7 项 UI 问题(PDF 对勾非 X / 勾选框溢出 / 列宽可调 / 标题竖切 / 文字竖向居中 等)并端到端(建模→填写→PDF WYSIWYG)验证通过;197 测试绿、analyze 0,Phase 4 已合并 main @ `2e1344d`(快进,分支已删)。**2026-07-15 决策:Phase 4 余下控件(select/date/checkbox/staticText/调色板)暂缓——当前业务用不到;NotoSansSC 取消——现场用不到中文(偶发中文在 PDF 显示为方框、不崩,可接受)。Phase 5 = 纯 release 构建**(正式签名 keystore 进 git(纯本地仓库)/ 显示名 SCSS Survey / split-per-abi arm64 交付,见 `docs/superpowers/specs/2026-07-15-phase5-release-build-design.md` 与 `grid_app/BUILD_NOTES.md`)。另:本机 Flutter 已升 3.44.6(Dart 3.12.2),工程随之适配 Gradle 8.7 / AGP 8.6 + 修 3 处 deprecation,197 测试绿、analyze 0。**
 
 > 注:本文件的逐阶段细节维护在 memory `scss-project-status.md`(更全更新);Phase 2 之后各阶段的完整设计/计划见 `docs/superpowers/specs/` 与 `docs/superpowers/plans/`,实现细节见 git 历史。下方为滚动汇总。
 
@@ -48,11 +48,10 @@ TDD(subagent 驱动,3 组 6 任务 + 组内评审 + 全分支终审 + 模拟器�
 
 **✅ 真机 SM-A528B 验收(2026-07-01)+ 修复完成、端到端验证通过**(197 测试绿、analyze 0;分支新增 3 个 fix commit `a52802d`/`71de161`/`a1eeb74`,待合并)。用户真机验收暴露 7 项、全部 TDD 修复 + adb 截图/PDF 真机核对:① **『保存后重进全丢』经 DB 实证非数据丢失**——数据正常落库,是模板列表『Fill』每次新建空白 survey、须走 AppBar『Surveys』列表恢复(用户选本期不动此工作流,列为后续独立项);② PDF 勾选画字面 `X`→ 新增 `checkMark()` 用矢量 `pw.CustomPaint` 画对勾(基础字体无 ✓);③ 填写勾选框 Material `Checkbox` 固定最小尺寸溢出矮格→ 换紧凑 13px `Icon` + 整格 `GestureDetector`;④ 设备名列太窄→ `defaultColSpan` 4→6;⑤ 列宽不可调→ propEditor 加 `numberCols`/`remarkCols` 步进器(名列≥1 守卫);⑥ 标题/表头**竖向裁切**(画布按页宽缩几何但字号固定 px 不缩)→ 标题类文字套 `FittedBox(scaleDown)`;⑦ label + 所有输入文字**没竖向居中、偏上**(Flutter 居中含字体 leading 的行框、pdf 包更贴字形→ PDF 正常)→ App 端 `TextStyle(height:1.0)` + `strutStyle(forceStrutHeight)` 收紧行度量(PDF 不动)。改动仅 `lib/controls/*`,golden 因 title/label 像素重生成。真实勘测表端到端(TestSite/Dubai + Varifocal ✓9 roof / PTZ ✓2 / Radar ✓ → PDF 逐项 WYSIWYG 一致)通过。
 
-## 下一步:合并 → Phase 4 余下控件及之后
-1. **合并 `phase4-devicechecklist` 到 main**(finishing-a-development-branch,真机验收已过);之后 Phase 4 续做 `select` / `date` / `checkbox`、staticText 样式、调色板补全。完整分期见 spec §12。**#1『保存/恢复』体验(autosave / Fill 续填 / Surveys 入口可发现性)作为 Phase 4 后续独立一项。**
-2. **Phase 5 打磨**:内嵌 NotoSansSC 解决中文缺字、release 构建;填写画布缩放/平移已提前做。
-3. 已知待办:6 张图在"又宽又矮"的 multiImage 控件里 PDF contain 仍显参差(用户选不裁,改善杠杆=控件做高/加 rowSpan)。
-4. 延后的 minor:拖移"左上角吸附指针"(无抓取偏移);`_colX`/`_rowY` 或可并入 geometry;取消选中/空白点选的负路径测试。
+## 下一步(2026-07-15 调整后)
+1. **Phase 5 release 构建**(本期,spec `2026-07-15-phase5-release-build-design.md`):签名/显示名/split-per-abi/真机覆盖升级验证/BUILD_NOTES。
+2. **暂缓池(用户拍板,现在用不到)**:Phase 4 余下控件(select/date/checkbox/staticText 样式/调色板补全);NotoSansSC 内嵌(取消,恢复时的技术备忘见 spec §1)。
+3. **待办池**:#1『保存/恢复』体验(autosave / Fill 续填 / Surveys 入口可发现性);multiImage 6 图 PDF contain 参差(杠杆=控件做高);拖移左上角吸附指针;`_colX`/`_rowY` 并入 geometry;取消选中/空白点选负路径测试;deviceChecklist 两 defer(加行空间不足静默无反馈 / shrink 后孤立 fill 值未清);pubspec 钉版(drift/geolocator)理由随 Dart 3.12 已失效、可择机放开(见 `grid_app/BUILD_NOTES.md`)。
 
 ## 旧版(已被取代,仅作历史)
 第一阶段字段式 MVP、第二阶段表格式 TemplateRow 重构(`app/` 现有代码)均完成过并跑在模拟器上;因网格线不对齐、编辑器不通用,整体被本次 greenfield 网格设计取代。可复用的是底层服务(GPS、相机压缩、卫星图打钉+RepaintBoundary 截图、pdf 导出)与依赖钉版经验(`app/BUILD_NOTES.md`)。
