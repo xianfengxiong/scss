@@ -5,6 +5,8 @@ import '../data/survey_store.dart';
 import '../data/template_store.dart';
 import '../fill/fill_screen.dart';
 import '../fill/survey_list_screen.dart';
+import '../fill/survey_name_dialog.dart';
+import '../fill/time_label.dart';
 import '../model/survey.dart';
 import '../model/template.dart';
 import '../sample/sample_template.dart';
@@ -64,12 +66,76 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
     await _reload();
   }
 
+  /// Fill = resume-or-create: no surveys yet → straight to the name dialog;
+  /// otherwise a sheet lists this template's surveys (newest first) plus a
+  /// "New survey" item.
   Future<void> _fill(Template t) async {
+    final existing = await widget.surveyStore.byTemplate(t.id);
+    if (!mounted) return;
+    if (existing.isEmpty) {
+      await _newSurvey(t);
+      return;
+    }
+
+    Survey? resume;
+    var createNew = false;
+    await showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetCtx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            ListTile(
+              key: const ValueKey('fill-new'),
+              leading: const Icon(Icons.add),
+              title: const Text('New survey'),
+              onTap: () {
+                createNew = true;
+                Navigator.of(sheetCtx).pop();
+              },
+            ),
+            const Divider(height: 1),
+            for (final s in existing)
+              ListTile(
+                key: ValueKey('fill-resume-${s.id}'),
+                title: Text(s.name),
+                subtitle: Text(
+                    '${updatedLabel(s.updatedAt, DateTime.now())} · ${s.data.length} fields'),
+                onTap: () {
+                  resume = s;
+                  Navigator.of(sheetCtx).pop();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (createNew) {
+      await _newSurvey(t);
+    } else if (resume != null) {
+      await _openFill(t, resume!);
+    }
+  }
+
+  /// Name dialog → persist immediately (a named empty survey is a legitimate
+  /// in-progress state; the dialog is the guard against accidental orphans).
+  Future<void> _newSurvey(Template t) async {
+    final name = await promptForSurveyName(context,
+        title: 'New survey', initial: '${t.name} ${dateStamp(DateTime.now())}');
+    if (name == null || !mounted) return;
     final survey = Survey(
       id: 'srv_${DateTime.now().millisecondsSinceEpoch}',
       templateId: t.id,
-      name: t.name,
+      name: name,
+      updatedAt: DateTime.now(),
     );
+    await widget.surveyStore.upsert(survey);
+    if (!mounted) return;
+    await _openFill(t, survey);
+  }
+
+  Future<void> _openFill(Template t, Survey survey) async {
     await Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => FillScreen(
         template: t,
