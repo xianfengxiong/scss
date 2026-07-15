@@ -31,7 +31,7 @@ class FillScreen extends StatefulWidget {
 }
 
 class _FillScreenState extends State<FillScreen> {
-  // Working copy of the answers; committed to the store on Save.
+  // Working copy of the answers; autosaved to the store (debounce + dispose flush).
   late final Map<String, dynamic> _data = {...widget.survey.data};
 
   // Autosave: debounce writes so per-keystroke onChanged doesn't hammer the
@@ -78,8 +78,15 @@ class _FillScreenState extends State<FillScreen> {
     _saveTimer = null;
     if (!_dirty) return;
     _dirty = false;
-    widget.store.upsert(widget.survey
-        .copyWith(data: {..._data}, updatedAt: DateTime.now()));
+    widget.store
+        .upsert(widget.survey
+            .copyWith(data: {..._data}, updatedAt: DateTime.now()))
+        .catchError((Object e) {
+      // Keep the edit pending so the next change/flush retries; a lost write
+      // must not be silent-dropped (autosave is the only persistence path).
+      debugPrint('autosave failed: $e');
+      _dirty = true;
+    });
   }
 
   void _export() {

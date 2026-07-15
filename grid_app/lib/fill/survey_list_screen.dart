@@ -79,8 +79,11 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
     final name = await promptForSurveyName(context,
         title: 'Rename survey', initial: s.name);
     if (name == null || !mounted) return;
+    // Re-read: the list snapshot can lag a just-disposed FillScreen's
+    // autosave flush; renaming the stale copy would clobber that edit.
+    final latest = await widget.surveyStore.get(s.id) ?? s;
     await widget.surveyStore
-        .upsert(s.copyWith(name: name, updatedAt: DateTime.now()));
+        .upsert(latest.copyWith(name: name, updatedAt: DateTime.now()));
     if (!mounted) return;
     await _reload();
   }

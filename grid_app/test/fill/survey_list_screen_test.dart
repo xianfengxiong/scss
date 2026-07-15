@@ -107,4 +107,39 @@ void main() {
     expect(find.text('New name'), findsOneWidget);
     expect((await surveyStore.get('s1'))!.name, 'New name');
   });
+
+  testWidgets(
+      'rename re-reads the latest row so it does not clobber a just-flushed '
+      'autosave edit (F2)', (tester) async {
+    final surveyStore = InMemorySurveyStore();
+    await surveyStore.upsert(Survey(
+        id: 's1', templateId: 'sample', name: 'A',
+        data: const {'k': 'old'}, updatedAt: DateTime.now()));
+
+    await tester.pumpWidget(MaterialApp(
+      home: SurveyListScreen(
+        surveyStore: surveyStore,
+        templateStore: InMemoryTemplateStore(),
+        registry: buildDefaultRegistry(),
+      ),
+    ));
+    await tester.pumpAndSettle(); // list 快照了旧的 s1(data: old)
+
+    // 模拟 FillScreen 在列表快照之后才落地的一次 autosave flush:直接写
+    // store,不刷新这个已挂载的列表 widget。
+    await surveyStore.upsert(Survey(
+        id: 's1', templateId: 'sample', name: 'A',
+        data: const {'k': 'new'}, updatedAt: DateTime.now()));
+
+    await tester.tap(find.byKey(const ValueKey('rename-s1')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const ValueKey('survey-name-field')), 'B');
+    await tester.tap(find.byKey(const ValueKey('survey-name-ok')));
+    await tester.pumpAndSettle();
+
+    final saved = await surveyStore.get('s1');
+    expect(saved!.name, 'B');
+    expect(saved.data['k'], 'new'); // 没有被 stale 的列表快照冲回 'old'
+  });
 }
