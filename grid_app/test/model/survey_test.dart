@@ -27,4 +27,23 @@ void main() {
     expect([r.id, r.templateId, r.name], ['s1', 't1', 'B']);
     expect(r.data, {'k': 2});
   });
+
+  test('updatedAt defaults to null and round-trips through JSON', () {
+    const s = Survey(id: 's1', templateId: 't1', name: 'A');
+    expect(s.updatedAt, isNull);
+    expect(s.toJson().containsKey('updatedAt'), isFalse);
+
+    final t = DateTime.parse('2026-07-15T10:30:00.000');
+    final withTime = s.copyWith(updatedAt: t);
+    final back = Survey.fromJson(withTime.toJson());
+    expect(back.updatedAt, t);
+  });
+
+  test('fromJson without updatedAt yields null (legacy rows)', () {
+    final back = Survey.fromJson({
+      'id': 's1', 'templateId': 't1', 'name': 'A', 'data': {'k': 1},
+    });
+    expect(back.updatedAt, isNull);
+    expect(back.data, {'k': 1});
+  });
 }
