@@ -399,16 +399,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scss_grid/fill/survey_name_dialog.dart';
 
-Future<String?> _open(WidgetTester tester, {String initial = 'Init'}) async {
-  String? result;
-  var opened = false;
+/// Pumps a button that opens the dialog, taps it, and settles — leaving the
+/// dialog open. The dialog's eventual result is delivered via [onResult]
+/// (called only when the dialog closes), so tests assert on a captured
+/// variable after they close the dialog themselves.
+Future<void> _pumpOpener(WidgetTester tester, void Function(String?) onResult,
+    {String initial = 'Init'}) async {
   await tester.pumpWidget(MaterialApp(
     home: Builder(
       builder: (ctx) => TextButton(
         onPressed: () async {
-          opened = true;
-          result = await promptForSurveyName(ctx,
-              title: 'New survey', initial: initial);
+          onResult(await promptForSurveyName(ctx,
+              title: 'New survey', initial: initial));
         },
         child: const Text('open'),
       ),
@@ -416,32 +418,32 @@ Future<String?> _open(WidgetTester tester, {String initial = 'Init'}) async {
   ));
   await tester.tap(find.text('open'));
   await tester.pumpAndSettle();
-  expect(opened, isTrue);
-  return result;
 }
 
 void main() {
   testWidgets('prefills initial and returns trimmed text on OK',
       (tester) async {
-    final future = _open(tester, initial: 'Site A');
+    String? result = 'sentinel';
+    await _pumpOpener(tester, (r) => result = r, initial: 'Site A');
     expect(find.text('Site A'), findsOneWidget);
 
     await tester.enterText(
         find.byKey(const ValueKey('survey-name-field')), '  Site B  ');
     await tester.tap(find.byKey(const ValueKey('survey-name-ok')));
     await tester.pumpAndSettle();
-    expect(await future, 'Site B');
+    expect(result, 'Site B');
   });
 
   testWidgets('cancel returns null', (tester) async {
-    final future = _open(tester);
+    String? result = 'sentinel';
+    await _pumpOpener(tester, (r) => result = r);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
-    expect(await future, isNull);
+    expect(result, isNull);
   });
 
   testWidgets('blank input disables OK', (tester) async {
-    _open(tester); // ignore returned future; dialog stays open
+    await _pumpOpener(tester, (_) {});
     await tester.enterText(
         find.byKey(const ValueKey('survey-name-field')), '   ');
     await tester.pump();
@@ -452,7 +454,7 @@ void main() {
 }
 ```
 
-注意:`_open` 内部已 pump 完整流程,返回的 future 在对话框关闭后才 complete;第三个用例不关对话框、只检查按钮态(测试结束时 flutter_test 会自动处理未关闭的路由)。
+注意:结果经 `onResult` 回调捕获(对话框关闭时才回调),每个用例自己关对话框后对捕获变量断言——时序确定,不依赖未 await 的 future。第三个用例不关对话框、只检查按钮态(测试结束时 flutter_test 会自动处理未关闭的路由)。
 
 - [ ] **Step 2: 跑测试确认失败**
 
