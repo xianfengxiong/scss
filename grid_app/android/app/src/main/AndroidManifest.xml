@@ -7,7 +7,7 @@
          release needs it here or tiles silently fail in production. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="scss_grid"
+        android:label="SCSS Survey"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
