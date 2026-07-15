@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../builder/canvas_metrics.dart';
@@ -32,6 +34,12 @@ class _FillScreenState extends State<FillScreen> {
   // Working copy of the answers; committed to the store on Save.
   late final Map<String, dynamic> _data = {...widget.survey.data};
 
+  // Autosave: debounce writes so per-keystroke onChanged doesn't hammer the
+  // store; flush pending edits on dispose so backing out never loses input.
+  Timer? _saveTimer;
+  bool _dirty = false;
+  static const _autosaveDelay = Duration(milliseconds: 500);
+
   // Zoom/pan transform for the fill canvas; double-tap toggles 1×/1.5×.
   final TransformationController _tc = TransformationController();
   TapDownDetails? _doubleTapDetails;
@@ -39,6 +47,7 @@ class _FillScreenState extends State<FillScreen> {
 
   @override
   void dispose() {
+    _flush();
     _tc.dispose();
     super.dispose();
   }
@@ -57,14 +66,20 @@ class _FillScreenState extends State<FillScreen> {
       ..scaleByDouble(_doubleTapScale, _doubleTapScale, _doubleTapScale, 1);
   }
 
-  Survey get _current => widget.survey.copyWith(data: _data);
+  void _onChanged(String key, dynamic value) {
+    setState(() => _data[key] = value);
+    _dirty = true;
+    _saveTimer?.cancel();
+    _saveTimer = Timer(_autosaveDelay, _flush);
+  }
 
-  Future<void> _save() async {
-    await widget.store.upsert(_current);
-    if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Survey saved.')));
-    }
+  void _flush() {
+    _saveTimer?.cancel();
+    _saveTimer = null;
+    if (!_dirty) return;
+    _dirty = false;
+    widget.store.upsert(widget.survey
+        .copyWith(data: {..._data}, updatedAt: DateTime.now()));
   }
 
   void _export() {
@@ -90,11 +105,6 @@ class _FillScreenState extends State<FillScreen> {
             tooltip: 'Export',
             onPressed: _export,
           ),
-          IconButton(
-            icon: const Icon(Icons.save_outlined),
-            tooltip: 'Save',
-            onPressed: _save,
-          ),
         ],
       ),
       // Pinch-zoom + pan so fields are usable on a small phone screen: the
@@ -115,7 +125,7 @@ class _FillScreenState extends State<FillScreen> {
                 template: widget.template,
                 registry: widget.registry,
                 data: _data,
-                onChanged: (key, value) => setState(() => _data[key] = value),
+                onChanged: _onChanged,
               ),
             ),
           ),
