@@ -121,12 +121,20 @@ class DriftSurveyStore implements SurveyStore {
 
   @override
   Future<List<Survey>> all() async {
-    final query = _db.select(_db.surveyRows)
-      ..orderBy([(r) => OrderingTerm(expression: r.name)]);
-    final rows = await query.get();
-    return rows
+    final rows = await _db.select(_db.surveyRows).get();
+    return sortByUpdatedDesc(rows
         .map((r) => Survey.fromJson(jsonDecode(r.json) as Map<String, dynamic>))
-        .toList();
+        .toList());
+  }
+
+  @override
+  Future<List<Survey>> byTemplate(String templateId) async {
+    final rows = await (_db.select(_db.surveyRows)
+          ..where((r) => r.templateId.equals(templateId)))
+        .get();
+    return sortByUpdatedDesc(rows
+        .map((r) => Survey.fromJson(jsonDecode(r.json) as Map<String, dynamic>))
+        .toList());
   }
 
   @override
