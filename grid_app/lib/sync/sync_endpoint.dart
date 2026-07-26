@@ -72,13 +72,8 @@ class SyncEndpoint {
   /// pushes it back to them).
   Future<void> applyTombstones(List<Tombstone> incoming) async {
     for (final t in incoming) {
-      final localUpdated = switch (t.kind) {
-        Tombstone.kindTemplate => (await templates.get(t.id))?.updatedAt,
-        Tombstone.kindSurvey => (await surveys.get(t.id))?.updatedAt,
-        _ => null,
-      };
       final action = decideMerge(
-        localUpdated: localUpdated,
+        localUpdated: await _presentAt(t.kind, t.id),
         localDeleted: await _tombstoneAt(t.kind, t.id),
         remoteDeleted: t.deletedAt,
       );
@@ -107,19 +102,28 @@ class SyncEndpoint {
     return null;
   }
 
+  /// This device's object timestamp for (kind, id): null when absent, epoch
+  /// when present but saved before sync stamped updatedAt.
+  Future<DateTime?> _presentAt(String kind, String id) async {
+    switch (kind) {
+      case Tombstone.kindTemplate:
+        final t = await templates.get(id);
+        return t == null ? null : (t.updatedAt ?? syncEpoch);
+      case Tombstone.kindSurvey:
+        final s = await surveys.get(id);
+        return s == null ? null : (s.updatedAt ?? syncEpoch);
+    }
+    return null;
+  }
+
   /// A write is accepted when the incoming timestamp is not older than every
   /// local event for that id (missing timestamps sort as epoch).
   Future<bool> _acceptsWrite(
       String kind, String id, DateTime? incomingUpdated) async {
-    final localUpdated = switch (kind) {
-      Tombstone.kindTemplate => (await templates.get(id))?.updatedAt,
-      Tombstone.kindSurvey => (await surveys.get(id))?.updatedAt,
-      _ => null,
-    };
     final action = decideMerge(
-      localUpdated: localUpdated,
+      localUpdated: await _presentAt(kind, id),
       localDeleted: await _tombstoneAt(kind, id),
-      remoteUpdated: incomingUpdated ?? DateTime.fromMillisecondsSinceEpoch(0),
+      remoteUpdated: incomingUpdated ?? syncEpoch,
     );
     // From this side's perspective the incoming write is "remote": accept
     // exactly when the merge rule says the remote object should win here.

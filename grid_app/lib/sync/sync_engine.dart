@@ -124,11 +124,16 @@ class SyncEngine {
       ...remoteTombs.keys,
     };
 
+    // An entry that exists without updatedAt (legacy row) still counts as
+    // present — as epoch, so any stamped edit or deletion beats it.
+    DateTime? presentAt(ManifestEntry? e) =>
+        e == null ? null : (e.updatedAt ?? syncEpoch);
+
     final outgoingTombstones = <Tombstone>[];
     for (final id in ids) {
       final action = decideMerge(
-        localUpdated: localEntries[id]?.updatedAt,
-        remoteUpdated: remoteEntries[id]?.updatedAt,
+        localUpdated: presentAt(localEntries[id]),
+        remoteUpdated: presentAt(remoteEntries[id]),
         localDeleted: localTombs[id]?.deletedAt,
         remoteDeleted: remoteTombs[id]?.deletedAt,
       );

@@ -23,9 +23,10 @@ enum MergeAction {
   deleteRemote,
 }
 
-/// Objects saved before sync existed have no updatedAt; they sort as epoch,
-/// losing against any real edit or deletion.
-final _epoch = DateTime.fromMillisecondsSinceEpoch(0);
+/// Timestamp callers substitute for an object that exists but was saved
+/// before sync stamped updatedAt: it sorts before any real edit or deletion,
+/// while still counting as present (null means absent).
+final syncEpoch = DateTime.fromMillisecondsSinceEpoch(0);
 
 MergeAction decideMerge({
   DateTime? localUpdated,

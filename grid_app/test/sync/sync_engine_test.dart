@@ -187,6 +187,21 @@ void main() {
     );
   });
 
+  test('legacy rows without updatedAt still sync (treated as epoch)', () async {
+    // Saved before sync existed: no timestamp at all.
+    await desktop.templates
+        .upsert(sampleTemplate().copyWith(id: 'tpl_legacy'));
+    await phone.surveys.upsert(
+        const Survey(id: 'srv_legacy', templateId: 'tpl_legacy', name: 'S'));
+
+    final report = await sync(phone, desktop);
+
+    expect(report.pulledTemplates, 1);
+    expect(report.pushedSurveys, 1);
+    expect(await phone.templates.get('tpl_legacy'), isNotNull);
+    expect(await desktop.surveys.get('srv_legacy'), isNotNull);
+  });
+
   test('files already on the peer are not re-sent', () async {
     final photo = Uint8List.fromList(const [9, 9]);
     await phone.files.write('a.jpg', photo);
