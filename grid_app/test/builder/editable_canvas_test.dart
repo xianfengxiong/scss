@@ -67,6 +67,55 @@ void main() {
     expect([mc, mr], [3, 3]);
   });
 
+  testWidgets(
+      'dragging grabs the cell under the pointer, not a stale selection',
+      (tester) async {
+    // Regression: with 'a' still selected, starting a drag on 'b' used to
+    // move 'a'. The drag target is decided by where the pan starts.
+    String? moved;
+    String? selected;
+    await tester.pumpWidget(_host(EditableCanvas(
+      template: _tpl(const [
+        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'text',
+            props: {'key': 'k1', 'hint': ''}),
+        Cell(id: 'b', col: 2, row: 2, colSpan: 1, type: 'text',
+            props: {'key': 'k2', 'hint': ''}),
+      ]),
+      registry: buildDefaultRegistry(),
+      selectedId: 'a',
+      onSelect: (id) => selected = id,
+      onMove: (id, c, r) => moved = id,
+      onSpan: (_, __, ___) {},
+      onResizeCol: (_, __) {},
+      onResizeRow: (_, __) {},
+    )));
+    // cell 'b' covers x 70..105mm, y 60..90mm -> start the drag inside it
+    await tester.dragFrom(const Offset(75, 65), const Offset(35, 30));
+    expect(moved, 'b');
+    expect(selected, 'b', reason: 'grabbing a control also selects it');
+  });
+
+  testWidgets('a drag starting on an empty cell moves nothing',
+      (tester) async {
+    String? moved;
+    await tester.pumpWidget(_host(EditableCanvas(
+      template: _tpl(const [
+        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'text',
+            props: {'key': 'k', 'hint': ''}),
+      ]),
+      registry: buildDefaultRegistry(),
+      selectedId: 'a',
+      onSelect: (_) {},
+      onMove: (id, c, r) => moved = id,
+      onSpan: (_, __, ___) {},
+      onResizeCol: (_, __) {},
+      onResizeRow: (_, __) {},
+    )));
+    // (150,150)px is an empty cell — dragging from there must not move 'a'.
+    await tester.dragFrom(const Offset(150, 150), const Offset(-100, -100));
+    expect(moved, isNull);
+  });
+
   testWidgets('dragging the right span handle reports a larger colSpan',
       (tester) async {
     int? cs;

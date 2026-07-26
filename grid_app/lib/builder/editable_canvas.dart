@@ -50,6 +50,11 @@ class EditableCanvas extends StatefulWidget {
 class _EditableCanvasState extends State<EditableCanvas> {
   final _key = GlobalKey();
 
+  /// The cell being moved by the current pan — decided by where the pan
+  /// STARTED, not by the selection: dragging must grab the control under
+  /// the finger, otherwise a leftover selection hijacks the gesture.
+  String? _dragId;
+
   ({int col, int row})? _coordAt(Offset globalPos) {
     final box = _key.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize || box.size.width == 0) return null;
@@ -98,13 +103,26 @@ class _EditableCanvasState extends State<EditableCanvas> {
                     final hit = c == null ? null : cellAtCoord(t, c.col, c.row);
                     widget.onSelect(hit?.id);
                   },
+                  onPanStart: (d) {
+                    final c = cellCoordAtMm(t.grid, d.localPosition.dx / scale,
+                        d.localPosition.dy / scale);
+                    final hit = c == null ? null : cellAtCoord(t, c.col, c.row);
+                    _dragId = hit?.id;
+                    // Grabbing a control also selects it, so the inspector
+                    // and span handles follow the drag target.
+                    if (hit != null && hit.id != widget.selectedId) {
+                      widget.onSelect(hit.id);
+                    }
+                  },
                   onPanUpdate: (d) {
-                    final id = widget.selectedId;
+                    final id = _dragId;
                     if (id == null) return;
                     final c = cellCoordAtMm(t.grid, d.localPosition.dx / scale,
                         d.localPosition.dy / scale);
                     if (c != null) widget.onMove(id, c.col, c.row);
                   },
+                  onPanEnd: (_) => _dragId = null,
+                  onPanCancel: () => _dragId = null,
                   child: GridCanvas(
                       template: t,
                       registry: widget.registry,
