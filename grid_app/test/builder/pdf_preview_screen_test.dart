@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:printing/printing.dart';
 import 'package:scss_grid/builder/pdf_preview_screen.dart';
 import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/sample/sample_template.dart';
@@ -15,5 +16,15 @@ void main() {
     // platform and may never settle in the test harness. One frame is enough
     // to assert the screen scaffold built.
     expect(find.text('Preview'), findsOneWidget);
+  });
+
+  testWidgets('page width is capped so desktop windows show the whole page',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: PdfPreviewScreen(
+          template: sampleTemplate(), registry: buildDefaultRegistry()),
+    ));
+    final preview = tester.widget<PdfPreview>(find.byType(PdfPreview));
+    expect(preview.maxPageWidth, 700);
   });
 }

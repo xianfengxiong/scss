@@ -32,6 +32,11 @@ class PdfPreviewScreen extends StatelessWidget {
         },
         canChangePageFormat: false,
         canChangeOrientation: false,
+        // PdfPreview fills the available width by default — fine on a phone,
+        // but a wide desktop window blows the A4 page up past the viewport.
+        // Cap it so the whole page is visible; phones (narrower than the
+        // cap) are unaffected.
+        maxPageWidth: 700,
       ),
     );
   }
