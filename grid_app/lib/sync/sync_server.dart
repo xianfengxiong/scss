@@ -28,9 +28,13 @@ class SyncServer {
   final SyncEndpoint endpoint;
   final String token;
 
+  /// One line per handled request (`peer method /path → status`), for the
+  /// desktop's activity log. Null = silent.
+  final void Function(String line)? onActivity;
+
   HttpServer? _server;
 
-  SyncServer({required this.endpoint, required this.token});
+  SyncServer({required this.endpoint, required this.token, this.onActivity});
 
   bool get running => _server != null;
   int? get port => _server?.port;
@@ -48,13 +52,26 @@ class SyncServer {
     _server = null;
   }
 
-  Handler get handler => _auth(_route);
+  Handler get handler => _log(_auth(_route));
 
   Handler _auth(Handler inner) => (request) {
         if (request.headers['x-sync-token'] != token) {
           return Response(401, body: 'bad token');
         }
         return inner(request);
+      };
+
+  Handler _log(Handler inner) => (request) async {
+        final response = await inner(request);
+        final log = onActivity;
+        if (log != null) {
+          final info = request.context['shelf.io.connection_info']
+              as HttpConnectionInfo?;
+          final peer = info?.remoteAddress.address ?? '?';
+          log('$peer ${request.method} /${request.url.path} → '
+              '${response.statusCode}');
+        }
+        return response;
       };
 
   Future<Response> _route(Request request) async {
