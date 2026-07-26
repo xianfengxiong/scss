@@ -46,6 +46,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
   final _mapController = MapController();
   late List<Pin> _pins;
   bool _saving = false;
+  bool _locating = false;
 
   @override
   void initState() {
@@ -69,6 +70,24 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
     final res = await svc.getCoordinate();
     if (!mounted || !res.ok) return;
     _mapController.move(LatLng(res.lat!, res.lon!), widget.initialZoom);
+  }
+
+  /// The my-location button: recenter on the device's position, keeping the
+  /// current zoom (the user set it for a reason).
+  Future<void> _goToMyLocation() async {
+    final svc = widget.location;
+    if (svc == null || _locating) return;
+    setState(() => _locating = true);
+    final res = await svc.getCoordinate();
+    if (!mounted) return;
+    setState(() => _locating = false);
+    if (!res.ok) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('定位失败——请确认已开启定位权限与 GPS')));
+      return;
+    }
+    _mapController.move(
+        LatLng(res.lat!, res.lon!), _mapController.camera.zoom);
   }
 
   void _addPin(LatLng pos) {
@@ -211,6 +230,20 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
           ),
         ],
       ),
+      // Outside the Screenshot subtree, so the captured PNG never shows it.
+      floatingActionButton: widget.location == null
+          ? null
+          : FloatingActionButton(
+              key: const ValueKey('my-location'),
+              tooltip: '定位到当前位置',
+              onPressed: _goToMyLocation,
+              child: _locating
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2.5))
+                  : const Icon(Icons.my_location),
+            ),
     );
   }
 }
