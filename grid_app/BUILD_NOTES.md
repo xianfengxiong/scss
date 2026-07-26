@@ -1,5 +1,25 @@
 # grid_app 构建笔记
 
+## 双端形态与同步(2026-07-26)
+
+同一代码库出两个形态:**macOS 桌面端**(模版设计为主,首页=模版列表,AppBar「同步」= 服务端)与 **Android 手机端**(填写为主,首页=调查表列表,AppBar「同步」= 客户端)。手机端仍保留完整 builder(首页右上「Templates」进入)。
+
+**同步使用**:手机与电脑连同一 WiFi → 电脑打开「同步」页(显示地址+6 位配对码,页面开着服务才在)→ 手机「同步」页输入地址与配对码(首次之后自动记住)→「开始同步」。双向合并规则:同 id 取 updatedAt 新者(LWW);删除经墓碑传播,删除后另一端又编辑(更晚)则复活。图片按引用清单传输,答案里只存文件名(`documents/survey_images/` 平面目录)。协议 v1,端口 17423,token 经 `x-sync-token` 头校验。
+
+## macOS 桌面端构建
+
+```bash
+cd grid_app
+flutter build macos --release   # 产物 build/macos/Build/Products/Release/SCSS Survey.app
+flutter run -d macos            # 开发调试
+```
+
+- 沙箱 entitlements(Debug+Release)已开 `network.client`/`network.server`/`files.user-selected.read-write`——**动 entitlements 后同步会静默断网,排查先看这里**。
+- 部署目标 10.15(Podfile + pbxproj,flutter build 自动迁移过)。
+- bundle id 仍为 `com.example.scssGrid`(个人工具不上店;沙箱容器路径 `~/Library/Containers/com.example.scssGrid/` 含本机库与图片,改 id = 换容器丢数据)。
+- 分发给他人需 Developer ID 签名+公证(未配置);本机自用 `flutter run`/直接 open .app 即可。
+- Windows 端代码同源,但需在 Windows 机器构建,且 flutter_image_compress 无 Windows 实现(桌面只做设计影响不大,做填写需旁路)。
+
 ## Release 构建与交付
 
 ```bash

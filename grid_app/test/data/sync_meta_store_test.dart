@@ -38,7 +38,8 @@ void main() {
       await meta.removeTombstone(Tombstone.kindTemplate, 'x');
       final left = await meta.tombstones();
       expect(left.single.kind, Tombstone.kindSurvey);
-      expect(left.single.deletedAt, at);
+      // Stored as UTC; compare the instant.
+      expect(left.single.deletedAt.isAtSameMomentAs(at), isTrue);
     });
 
     test('template delete leaves a tombstone; re-upsert clears it', () async {

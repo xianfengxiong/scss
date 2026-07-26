@@ -130,7 +130,7 @@ class DriftTemplateStore implements TemplateStore {
               TombstoneRowsCompanion.insert(
                 kind: Tombstone.kindTemplate,
                 id: id,
-                deletedAt: DateTime.now().toIso8601String(),
+                deletedAt: DateTime.now().toUtc().toIso8601String(),
               ),
             );
       });
@@ -194,7 +194,7 @@ class DriftSurveyStore implements SurveyStore {
               TombstoneRowsCompanion.insert(
                 kind: Tombstone.kindSurvey,
                 id: id,
-                deletedAt: DateTime.now().toIso8601String(),
+                deletedAt: DateTime.now().toUtc().toIso8601String(),
               ),
             );
       });
@@ -212,7 +212,7 @@ class DriftSyncMetaStore implements SyncMetaStore {
             TombstoneRowsCompanion.insert(
               kind: t.kind,
               id: t.id,
-              deletedAt: t.deletedAt.toIso8601String(),
+              deletedAt: t.deletedAt.toUtc().toIso8601String(),
             ),
           );
 

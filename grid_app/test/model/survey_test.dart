@@ -36,7 +36,9 @@ void main() {
     final t = DateTime.parse('2026-07-15T10:30:00.000');
     final withTime = s.copyWith(updatedAt: t);
     final back = Survey.fromJson(withTime.toJson());
-    expect(back.updatedAt, t);
+    // Serialized as UTC (sync compares instants across devices), so compare
+    // the instant, not the DateTime object.
+    expect(back.updatedAt!.isAtSameMomentAs(t), isTrue);
   });
 
   test('fromJson without updatedAt yields null (legacy rows)', () {

@@ -41,7 +41,11 @@ class Survey {
         'id': id,
         'templateId': templateId,
         'name': name,
-        if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
+        // UTC ("Z" suffix) so the paired device parses the same instant; a
+        // bare local string would shift by the devices' zone difference and
+        // invert LWW ordering.
+        if (updatedAt != null)
+          'updatedAt': updatedAt!.toUtc().toIso8601String(),
         'data': data,
       };
 

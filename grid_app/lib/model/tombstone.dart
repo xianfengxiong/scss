@@ -18,7 +18,10 @@ class Tombstone {
   Map<String, dynamic> toJson() => {
         'kind': kind,
         'id': id,
-        'deletedAt': deletedAt.toIso8601String(),
+        // UTC ("Z" suffix) so the paired device parses the same instant; a
+        // bare local string would shift by the devices' zone difference and
+        // could delete edits that are actually newer.
+        'deletedAt': deletedAt.toUtc().toIso8601String(),
       };
 
   factory Tombstone.fromJson(Map<String, dynamic> j) => Tombstone(

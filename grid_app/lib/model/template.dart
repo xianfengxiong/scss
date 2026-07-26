@@ -59,7 +59,11 @@ class Template {
         'page': page.toJson(),
         'grid': grid.toJson(),
         'cells': cells.map((c) => c.toJson()).toList(),
-        if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
+        // UTC ("Z" suffix) so the paired device parses the same instant; a
+        // bare local string would shift by the devices' zone difference and
+        // invert LWW ordering.
+        if (updatedAt != null)
+          'updatedAt': updatedAt!.toUtc().toIso8601String(),
       };
 
   factory Template.fromJson(Map<String, dynamic> j) => Template(

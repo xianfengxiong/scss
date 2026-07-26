@@ -21,7 +21,9 @@ class ManifestEntry {
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
+        // UTC, matching the object serializers — see Template.toJson.
+        if (updatedAt != null)
+          'updatedAt': updatedAt!.toUtc().toIso8601String(),
       };
 
   factory ManifestEntry.fromJson(Map<String, dynamic> j) => ManifestEntry(

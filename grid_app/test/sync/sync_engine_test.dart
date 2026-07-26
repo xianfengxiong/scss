@@ -73,7 +73,9 @@ void main() {
     final report = await sync(phone, desktop);
 
     expect(report.pulledTemplates, 1);
-    expect((await phone.templates.get('tpl_1'))?.updatedAt, t1);
+    // Wire format is UTC; compare the instant.
+    expect((await phone.templates.get('tpl_1'))!.updatedAt!.isAtSameMomentAs(t1),
+        isTrue);
   });
 
   test('phone-filled survey (with images) reaches the desktop', () async {

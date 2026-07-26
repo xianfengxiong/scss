@@ -7,7 +7,9 @@ void main() {
     final at = DateTime(2026, 7, 26, 10, 30);
     final t = sampleTemplate().copyWith(id: 'tpl_x', updatedAt: at);
     final back = Template.fromJson(t.toJson());
-    expect(back.updatedAt, at);
+    // Serialized as UTC (sync compares instants across devices), so compare
+    // the instant, not the DateTime object.
+    expect(back.updatedAt!.isAtSameMomentAs(at), isTrue);
   });
 
   test('fromJson tolerates rows saved before updatedAt existed', () {
