@@ -82,8 +82,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get changeDirectory => '更改目录…';
 
   @override
-  String get exportHint =>
-      '每个模版一个文件夹,每份调查表一个 PDF(多页模版加 _1/_2 后缀)。\n增量导出:内容未变化的调查表自动跳过。';
+  String get exportHint => '每个模版一个文件夹,每份调查表一个多页 PDF。\n增量导出:内容未变化的调查表自动跳过。';
 
   @override
   String get preparing => '准备中…';

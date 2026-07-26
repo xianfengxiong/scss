@@ -61,18 +61,32 @@ void main() {
 
   File out(String rel) => File(p.join(tmp.path, rel));
 
-  test('writes one folder per template; multi-page surveys get _N suffixes',
+  test('writes one folder per template, one multi-page PDF per survey',
       () async {
     final report = await exporter.export(rootDir: tmp.path);
 
     expect(report.written, 2);
     expect(report.skipped, 0);
-    expect(out('铁塔勘测/北郊 A012_1.pdf').existsSync(), isTrue);
-    expect(out('铁塔勘测/北郊 A012_2.pdf').existsSync(), isTrue);
-    expect(out('铁塔勘测/北郊 A012.pdf').existsSync(), isFalse);
+    expect(out('铁塔勘测/北郊 A012.pdf').existsSync(), isTrue);
     expect(out('机房清点/一号机房.pdf').existsSync(), isTrue);
-    // PDFs are real documents.
+    // PDFs are real documents; the two-page one is bigger than the one-pager.
     expect(out('机房清点/一号机房.pdf').lengthSync(), greaterThan(500));
+    expect(out('铁塔勘测/北郊 A012.pdf').lengthSync(),
+        greaterThan(out('机房清点/一号机房.pdf').lengthSync()));
+  });
+
+  test('re-export after a change removes the previously recorded files',
+      () async {
+    await exporter.export(rootDir: tmp.path);
+    // Rename the survey; its old output must not linger after re-export.
+    await surveys.upsert(Survey(
+        id: 'srv_2', templateId: 'tpl_b', name: '一号机房(复检)', updatedAt: t2));
+
+    final report = await exporter.export(rootDir: tmp.path);
+    expect(report.written, 1);
+    expect(out('机房清点/一号机房.pdf').existsSync(), isFalse,
+        reason: 'stale output removed');
+    expect(out('机房清点/一号机房(复检).pdf').existsSync(), isTrue);
   });
 
   test('second run skips everything unchanged', () async {

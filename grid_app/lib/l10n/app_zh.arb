@@ -26,7 +26,7 @@
 
   "exportTo": "导出到:",
   "changeDirectory": "更改目录…",
-  "exportHint": "每个模版一个文件夹,每份调查表一个 PDF(多页模版加 _1/_2 后缀)。\n增量导出:内容未变化的调查表自动跳过。",
+  "exportHint": "每个模版一个文件夹,每份调查表一个多页 PDF。\n增量导出:内容未变化的调查表自动跳过。",
   "preparing": "准备中…",
   "exportingProgress": "导出中 {done}/{total}",
   "exporting": "导出中…",

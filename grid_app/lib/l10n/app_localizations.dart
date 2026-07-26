@@ -239,7 +239,7 @@ abstract class AppLocalizations {
   /// No description provided for @exportHint.
   ///
   /// In en, this message translates to:
-  /// **'One folder per template, one PDF per survey (multi-page templates add _1/_2 suffixes).\nIncremental: unchanged surveys are skipped.'**
+  /// **'One folder per template, one multi-page PDF per survey.\nIncremental: unchanged surveys are skipped.'**
   String get exportHint;
 
   /// No description provided for @preparing.

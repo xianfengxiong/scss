@@ -83,7 +83,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exportHint =>
-      'One folder per template, one PDF per survey (multi-page templates add _1/_2 suffixes).\nIncremental: unchanged surveys are skipped.';
+      'One folder per template, one multi-page PDF per survey.\nIncremental: unchanged surveys are skipped.';
 
   @override
   String get preparing => 'Preparing…';

@@ -28,19 +28,6 @@ pw.Document renderTemplate(
   return doc;
 }
 
-/// Render just page [pageIndex] as its own document — batch export writes
-/// one PDF file per page. Same precondition as [renderTemplate].
-pw.Document renderTemplateSinglePage(
-  Template t,
-  int pageIndex,
-  Map<String, dynamic> data,
-  ControlRegistry registry,
-) {
-  final doc = pw.Document();
-  doc.addPage(_renderPage(t, t.pages[pageIndex], data, registry));
-  return doc;
-}
-
 pw.Page _renderPage(
   Template t,
   TemplatePage page,

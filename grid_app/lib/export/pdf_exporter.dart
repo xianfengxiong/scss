@@ -27,8 +27,8 @@ String sanitizeFileName(String name) {
 
 const _manifestName = '.scss_export_manifest.json';
 
-/// Batch PDF export: one folder per template, one PDF per survey — or one
-/// per page (`name_1.pdf`, `name_2.pdf`) when the template has several.
+/// Batch PDF export: one folder per template, one multi-page PDF per survey
+/// (matching what the phone's in-app export produces).
 ///
 /// Incremental: the root's manifest records, per survey, the
 /// survey+template `updatedAt` signature and the files written; a survey
@@ -103,6 +103,13 @@ class PdfExporter {
       }
 
       try {
+        // Re-exporting replaces this survey's previous output — remove the
+        // files the manifest recorded (covers renamed surveys and the old
+        // one-file-per-page layout) before writing the new one.
+        for (final f in (entry?['files'] as List? ?? const [])) {
+          final old = File(p.join(rootDir, f as String));
+          if (old.existsSync()) old.deleteSync();
+        }
         final files = await _writeSurvey(rootDir, t, s);
         entries[s.id] = {'sig': sig, 'files': files};
         report.written++;
@@ -134,23 +141,10 @@ class PdfExporter {
 
     await Directory(p.join(rootDir, tplDir)).create(recursive: true);
     final resolved = await resolvePdfData(t, s.data, registry);
-    final files = <String>[];
-    if (t.pages.length == 1) {
-      files.add(await _writePage(rootDir, tplDir, base, t, 0, resolved));
-    } else {
-      for (var i = 0; i < t.pages.length; i++) {
-        files.add(
-            await _writePage(rootDir, tplDir, '${base}_${i + 1}', t, i, resolved));
-      }
-    }
-    return files;
-  }
-
-  Future<String> _writePage(String rootDir, String tplDir, String fileBase,
-      Template t, int pageIndex, Map<String, dynamic> resolved) async {
-    final doc = renderTemplateSinglePage(t, pageIndex, resolved, registry);
-    final rel = p.join(tplDir, '$fileBase.pdf');
+    // One document with all pages — same shape as the phone's in-app export.
+    final doc = renderTemplate(t, resolved, registry);
+    final rel = p.join(tplDir, '$base.pdf');
     await File(p.join(rootDir, rel)).writeAsBytes(await doc.save());
-    return rel;
+    return [rel];
   }
 }
