@@ -12,6 +12,7 @@ import '../data/survey_store.dart';
 import '../model/survey.dart';
 import '../model/template.dart';
 import '../services/platform_info.dart';
+import '../widgets/page_turn_switcher.dart';
 import 'fill_canvas.dart';
 
 /// Fill mode: render [template]'s grid with real inputs, edit values, save the
@@ -49,6 +50,9 @@ class _FillScreenState extends State<FillScreen> {
   // same gesture keeps panning the page.
   Offset _swipeAccum = Offset.zero;
   bool _swipeMultiTouch = false;
+
+  // Which way the last page change travelled, for the slide animation.
+  int _turnDir = 1;
 
   // Autosave: debounce writes so per-keystroke onChanged doesn't hammer the
   // store; flush pending edits on dispose so backing out never loses input.
@@ -143,6 +147,7 @@ class _FillScreenState extends State<FillScreen> {
     final count = widget.template.pages.length;
     if (index < 0 || index >= count || index == _pageIndex) return;
     setState(() {
+      _turnDir = index > _pageIndex ? 1 : -1;
       _pageIndex = index;
       _tc.value = Matrix4.identity(); // new page starts fully visible
     });
@@ -240,12 +245,16 @@ class _FillScreenState extends State<FillScreen> {
                       },
                       onInteractionEnd: (_) => _maybeSwipePage(),
                       child: Center(
-                        child: FillCanvas(
-                          template: widget.template,
+                        child: PageTurnSwitcher(
                           pageIndex: _pageIndex,
-                          registry: widget.registry,
-                          data: _data,
-                          onChanged: _onChanged,
+                          direction: _turnDir,
+                          child: FillCanvas(
+                            template: widget.template,
+                            pageIndex: _pageIndex,
+                            registry: widget.registry,
+                            data: _data,
+                            onChanged: _onChanged,
+                          ),
                         ),
                       ),
                     ),

@@ -8,6 +8,7 @@ import '../grid/grid_resize.dart';
 import '../model/cell.dart';
 import '../model/template.dart';
 import '../services/platform_info.dart';
+import '../widgets/page_turn_switcher.dart';
 import 'canvas_metrics.dart';
 import 'cell_inspector.dart';
 import 'collapsible_dock.dart';
@@ -44,6 +45,9 @@ class _BuilderScreenState extends State<BuilderScreen> {
   int _pageIndex = 0;
   String? _selectedId;
   int _seq = 0;
+
+  // Which way the last page change travelled, for the slide animation.
+  int _turnDir = 1;
 
   static Template _centerAllPages(Template t) {
     var out = t;
@@ -140,12 +144,15 @@ class _BuilderScreenState extends State<BuilderScreen> {
   }
 
   void _goToPage(int index) => setState(() {
-        _pageIndex = index.clamp(0, _t.pages.length - 1);
+        final target = index.clamp(0, _t.pages.length - 1);
+        _turnDir = target >= _pageIndex ? 1 : -1;
+        _pageIndex = target;
         _selectedId = null;
       });
 
   void _addPage() => setState(() {
         _t = addPageAfter(_t, _pageIndex);
+        _turnDir = 1;
         _pageIndex++;
         _selectedId = null;
       });
@@ -173,6 +180,7 @@ class _BuilderScreenState extends State<BuilderScreen> {
     }
     setState(() {
       _t = removed;
+      _turnDir = -1;
       _pageIndex = _pageIndex.clamp(0, _t.pages.length - 1);
       _selectedId = null;
     });
@@ -417,7 +425,10 @@ class _BuilderScreenState extends State<BuilderScreen> {
   Widget _canvasArea() => Padding(
         padding: const EdgeInsets.all(kCanvasPad),
         child: Center(
-          child: EditableCanvas(
+          child: PageTurnSwitcher(
+            pageIndex: _pageIndex,
+            direction: _turnDir,
+            child: EditableCanvas(
             template: _t,
             pageIndex: _pageIndex,
             registry: widget.registry,
@@ -430,9 +441,10 @@ class _BuilderScreenState extends State<BuilderScreen> {
                 grid: resizeColBoundary(_page.grid, boundary, deltaMm))),
             onResizeRow: (boundary, deltaMm) => _commitPage(_page.copyWith(
                 grid: resizeRowBoundary(_page.grid, boundary, deltaMm))),
-            onDropControl: _placeDropped,
-            // Horizontal swipe on an empty cell turns the page.
-            onSwipePage: (dir) => _goToPage(_pageIndex + dir),
+              onDropControl: _placeDropped,
+              // Horizontal swipe on an empty cell turns the page.
+              onSwipePage: (dir) => _goToPage(_pageIndex + dir),
+            ),
           ),
         ),
       );
