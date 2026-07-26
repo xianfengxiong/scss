@@ -207,8 +207,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                         leading: templateListIcon(context),
                         title: Text(t.name),
                         subtitle: Text(
-                            '${t.pages.length} page(s) · ${t.allCells.length} cells · '
-                            '${_surveyCounts[t.id] ?? 0} 份调查表'),
+                            '${t.pages.length} 页 · ${_surveyCounts[t.id] ?? 0} 份调查表'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
