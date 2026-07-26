@@ -54,4 +54,27 @@ void main() {
         find.byKey(const ValueKey('survey-name-ok')));
     expect(ok.onPressed, isNull);
   });
+
+  testWidgets('Enter/done submits like OK', (tester) async {
+    String? result = 'sentinel';
+    await _pumpOpener(tester, (r) => result = r);
+    await tester.enterText(
+        find.byKey(const ValueKey('survey-name-field')), '  Site C  ');
+    // The field's submit action — Enter on a physical keyboard, "done" on
+    // the soft keyboard.
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(result, 'Site C');
+  });
+
+  testWidgets('Enter on blank input keeps the dialog open', (tester) async {
+    String? result = 'sentinel';
+    await _pumpOpener(tester, (r) => result = r);
+    await tester.enterText(
+        find.byKey(const ValueKey('survey-name-field')), '   ');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(result, 'sentinel', reason: 'dialog must not close');
+    expect(find.byKey(const ValueKey('survey-name-ok')), findsOneWidget);
+  });
 }

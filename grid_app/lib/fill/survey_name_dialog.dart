@@ -32,6 +32,15 @@ class _SurveyNameDialogState extends State<SurveyNameDialog> {
     super.dispose();
   }
 
+  // Shared by the OK button and the field's submit action (Enter on a
+  // physical keyboard, "done" on the soft keyboard). Reads the live
+  // controller value (not a build snapshot) — see the OK button note.
+  void _submit() {
+    final name = _ctrl.text.trim();
+    if (name.isEmpty) return;
+    Navigator.of(context).pop(name);
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -41,6 +50,8 @@ class _SurveyNameDialogState extends State<SurveyNameDialog> {
         controller: _ctrl,
         autofocus: true,
         decoration: const InputDecoration(labelText: 'Name'),
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _submit(),
       ),
       actions: [
         TextButton(
@@ -57,7 +68,7 @@ class _SurveyNameDialogState extends State<SurveyNameDialog> {
                 // captured by this build) because tests can tap this button
                 // in the same synchronous phase as an enterText() that
                 // hasn't triggered a rebuild yet.
-                : () => Navigator.of(context).pop(_ctrl.text.trim()),
+                : _submit,
             child: const Text('OK'),
           ),
         ),
