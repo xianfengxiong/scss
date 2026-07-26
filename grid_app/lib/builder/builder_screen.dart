@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../controls/control_spec.dart';
 import '../controls/registry.dart';
 import '../data/template_store.dart';
+import '../fill/survey_name_dialog.dart';
 import '../grid/grid_resize.dart';
 import '../model/cell.dart';
 import '../model/template.dart';
@@ -104,6 +105,18 @@ class _BuilderScreenState extends State<BuilderScreen> {
     }
   }
 
+  /// Renaming persists immediately (unlike layout edits, which wait for
+  /// Save) — a name is list-facing metadata, not part of the canvas work in
+  /// progress, so backing out without Save must not revert it.
+  Future<void> _rename() async {
+    final name = await promptForSurveyName(context,
+        title: 'Rename template', initial: _t.name);
+    if (name == null || !mounted) return;
+    setState(
+        () => _t = _t.copyWith(name: name, updatedAt: DateTime.now()));
+    await widget.store.upsert(_t);
+  }
+
   @override
   Widget build(BuildContext context) {
     final selected = _selected;
@@ -120,6 +133,12 @@ class _BuilderScreenState extends State<BuilderScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            key: const ValueKey('builder-rename'),
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Rename',
+            onPressed: _rename,
+          ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf_outlined),
             tooltip: 'Preview',

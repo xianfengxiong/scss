@@ -6,6 +6,7 @@ import '../data/sync_meta_store.dart';
 import '../data/template_store.dart';
 import '../fill/survey_actions.dart';
 import '../fill/survey_list_screen.dart';
+import '../fill/survey_name_dialog.dart';
 import '../model/ids.dart';
 import '../model/template.dart';
 import '../sample/sample_template.dart';
@@ -114,6 +115,19 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
     await _reload();
   }
 
+  Future<void> _rename(Template t) async {
+    final name = await promptForSurveyName(context,
+        title: 'Rename template', initial: t.name);
+    if (name == null || !mounted) return;
+    // Re-read: the list snapshot can lag a just-closed BuilderScreen's save;
+    // renaming the stale copy would clobber that edit. Mirrors survey rename.
+    final latest = await widget.store.get(t.id) ?? t;
+    await widget.store
+        .upsert(latest.copyWith(name: name, updatedAt: DateTime.now()));
+    if (!mounted) return;
+    await _reload();
+  }
+
   Future<void> _delete(Template t) async {
     await widget.store.delete(t.id);
     if (!mounted) return;
@@ -188,6 +202,12 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              IconButton(
+                                key: ValueKey('rename-${t.id}'),
+                                icon: const Icon(Icons.edit_outlined),
+                                tooltip: 'Rename',
+                                onPressed: () => _rename(t),
+                              ),
                               IconButton(
                                 key: ValueKey('fill-${t.id}'),
                                 icon: const Icon(Icons.edit_note),
