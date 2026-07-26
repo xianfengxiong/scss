@@ -36,12 +36,11 @@ MergeAction decideMerge({
   // Stores keep object and tombstone mutually exclusive per side; if both
   // ever appear (mid-sync race), the newer event represents the side.
   final localAlive = localUpdated != null &&
-      (localDeleted == null || !localDeleted.isAfter(localUpdated ?? _epoch));
+      (localDeleted == null || !localDeleted.isAfter(localUpdated));
   final remoteAlive = remoteUpdated != null &&
-      (remoteDeleted == null ||
-          !remoteDeleted.isAfter(remoteUpdated ?? _epoch));
-  final localAt = localAlive ? (localUpdated ?? _epoch) : localDeleted;
-  final remoteAt = remoteAlive ? (remoteUpdated ?? _epoch) : remoteDeleted;
+      (remoteDeleted == null || !remoteDeleted.isAfter(remoteUpdated));
+  final localAt = localAlive ? localUpdated : localDeleted;
+  final remoteAt = remoteAlive ? remoteUpdated : remoteDeleted;
 
   if (localAt == null && remoteAt == null) return MergeAction.none;
 

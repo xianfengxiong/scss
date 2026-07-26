@@ -17,13 +17,13 @@ import 'sync_endpoint.dart';
 /// Routes:
 ///   GET  /ping                 → {app, protocolVersion, deviceName}
 ///   GET  /manifest             → SyncManifest
-///   GET  /templates/<id>       → template JSON | 404
-///   PUT  /templates/<id>       → 204 | 409 (ours is newer)
-///   GET  /surveys/<id>         → survey JSON | 404
-///   PUT  /surveys/<id>         → 204 | 409
+///   GET  /templates/`id`       → template JSON | 404
+///   PUT  /templates/`id`       → 204 | 409 (ours is newer)
+///   GET  /surveys/`id`         → survey JSON | 404
+///   PUT  /surveys/`id`         → 204 | 409
 ///   POST /tombstones           → 204 (applies peer deletions)
-///   GET  /files/<name>         → bytes | 404
-///   PUT  /files/<name>         → 204
+///   GET  /files/`name`         → bytes | 404
+///   PUT  /files/`name`         → 204
 class SyncServer {
   final SyncEndpoint endpoint;
   final String token;
