@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../builder/border_layer.dart';
@@ -8,10 +10,16 @@ import '../grid/geometry.dart';
 import '../model/cell.dart';
 import '../model/template.dart';
 
-/// Renders [template] as a white A4 page scaled to width — the SAME geometry the
-/// builder and PDF use (`cellRectMm` + `pageScale`) — but draws each cell with
-/// its control's `fillWidget`, so the user fills values in place (WYSIWYG).
-/// Structure is fixed; only values change.
+/// Renders [template] as a white A4 page fitted to the available box — the
+/// SAME geometry the builder and PDF use (`cellRectMm` + `pageScale`) — but
+/// draws each cell with its control's `fillWidget`, so the user fills values
+/// in place (WYSIWYG). Structure is fixed; only values change.
+///
+/// Fit is width AND height (like the builder canvas): a phone in portrait has
+/// spare height so this equals the old fit-to-width, while a wide desktop
+/// window shows the whole page instead of a blown-up top slice with no way to
+/// scroll (FillScreen deliberately has no ScrollView; zooming in is
+/// InteractiveViewer's job).
 class FillCanvas extends StatelessWidget {
   final Template template;
   final ControlRegistry registry;
@@ -35,7 +43,12 @@ class FillCanvas extends StatelessWidget {
     final page = template.page;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final scale = pageScale(constraints.maxWidth, page.widthMm);
+        final scale = math.min(
+          pageScale(constraints.maxWidth, page.widthMm),
+          constraints.maxHeight.isFinite
+              ? pageScale(constraints.maxHeight, page.heightMm)
+              : double.infinity,
+        );
         final grid = template.grid;
         return Container(
           width: page.widthMm * scale,

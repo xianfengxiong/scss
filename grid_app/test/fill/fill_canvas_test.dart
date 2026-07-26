@@ -62,4 +62,41 @@ void main() {
     expect(gotKey, 'site_name');
     expect(gotVal, 'Berat');
   });
+
+  testWidgets('a wide short box fits the whole page (desktop window)',
+      (tester) async {
+    // 594x297: twice as wide as A4 at this height. Fit-to-width would blow
+    // the page up to 594x840 (top slice only); fit-both keeps it 210x297.
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: 594,
+            height: 297,
+            // Center loosens the constraints, matching production
+            // (FillScreen hosts the canvas as InteractiveViewer > Center).
+            child: Center(
+              child: FillCanvas(
+                template: _tpl(),
+                registry: buildDefaultRegistry(),
+                data: const {},
+                onChanged: (_, __) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    ));
+    final page = tester.getSize(find.byType(FillCanvas));
+    // The canvas box is given 594 wide, but the painted page inside must be
+    // height-fitted: its Container child is 210x297.
+    final container = tester.getSize(
+      find.descendant(
+          of: find.byType(FillCanvas), matching: find.byType(Container)).first,
+    );
+    expect(page.height, 297);
+    expect(container.width, closeTo(210, 0.5));
+    expect(container.height, closeTo(297, 0.5));
+  });
 }
