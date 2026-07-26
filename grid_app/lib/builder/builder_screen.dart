@@ -7,8 +7,10 @@ import '../fill/survey_name_dialog.dart';
 import '../grid/grid_resize.dart';
 import '../model/cell.dart';
 import '../model/template.dart';
+import '../services/platform_info.dart';
 import 'canvas_metrics.dart';
 import 'cell_inspector.dart';
+import 'collapsible_dock.dart';
 import 'control_palette.dart';
 import 'editable_canvas.dart';
 import 'editor_ops.dart';
@@ -157,7 +159,14 @@ class _BuilderScreenState extends State<BuilderScreen> {
               onPressed: _save),
         ],
       ),
-      body: Column(
+      // Desktop has the width for IDE-style side docks; the phone keeps the
+      // stacked layout (palette strip on top, inspector overlaying the
+      // canvas bottom).
+      body: isDesktopPlatform ? _desktopBody(selected) : _mobileBody(selected),
+    );
+  }
+
+  Widget _mobileBody(Cell? selected) => Column(
         children: [
           _gridControls(),
           ControlPalette(registry: widget.registry, onPick: _addControl),
@@ -176,31 +185,74 @@ class _BuilderScreenState extends State<BuilderScreen> {
                     bottom: 0,
                     child: Material(
                       elevation: 8,
-                      child: CellInspector(
-                        cell: selected,
-                        spec: widget.registry.specFor(selected.type)!,
-                        maxColSpan: _t.grid.cols,
-                        onPropsChanged: (props) => _commit(syncRowSpan(
-                            updateCell(_t, selected.id,
-                                (c) => c.copyWith(props: props)),
-                            selected.id,
-                            widget.registry)),
-                        onColSpanChanged: (span) => _commit(updateCell(
-                            _t, selected.id, (c) => c.copyWith(colSpan: span))),
-                        onDelete: () {
-                          _commit(removeCell(_t, selected.id));
-                          setState(() => _selectedId = null);
-                        },
-                      ),
+                      child: _inspector(selected, docked: false),
                     ),
                   ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
+      );
+
+  Widget _desktopBody(Cell? selected) => Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          CollapsibleDock(
+            title: 'Controls',
+            onLeft: true,
+            width: 176,
+            child: ControlPalette(
+              registry: widget.registry,
+              onPick: _addControl,
+              axis: Axis.vertical,
+            ),
+          ),
+          const VerticalDivider(width: 1),
+          Expanded(
+            child: Column(
+              children: [
+                _gridControls(),
+                const Divider(height: 1),
+                Expanded(child: _canvasArea()),
+              ],
+            ),
+          ),
+          const VerticalDivider(width: 1),
+          // Always present (fixed width) so selecting/deselecting never
+          // resizes the canvas mid-drag.
+          CollapsibleDock(
+            title: 'Properties',
+            onLeft: false,
+            width: 280,
+            child: selected == null
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text('点击画布上的控件以编辑属性',
+                          textAlign: TextAlign.center),
+                    ),
+                  )
+                : _inspector(selected, docked: true),
+          ),
+        ],
+      );
+
+  Widget _inspector(Cell selected, {required bool docked}) => CellInspector(
+        cell: selected,
+        spec: widget.registry.specFor(selected.type)!,
+        maxColSpan: _t.grid.cols,
+        docked: docked,
+        onPropsChanged: (props) => _commit(syncRowSpan(
+            updateCell(_t, selected.id, (c) => c.copyWith(props: props)),
+            selected.id,
+            widget.registry)),
+        onColSpanChanged: (span) => _commit(
+            updateCell(_t, selected.id, (c) => c.copyWith(colSpan: span))),
+        onDelete: () {
+          _commit(removeCell(_t, selected.id));
+          setState(() => _selectedId = null);
+        },
+      );
 
   Widget _gridControls() => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
