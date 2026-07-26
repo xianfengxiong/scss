@@ -13,6 +13,7 @@ import '../sample/sample_template.dart';
 import '../services/platform_info.dart';
 import '../sync/media_file_store.dart';
 import '../sync/sync_host_screen.dart';
+import '../widgets/list_icons.dart';
 import 'builder_screen.dart';
 
 /// The design side's list (home screen on desktop): tapping a template opens
@@ -194,6 +195,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                     for (final t in _templates)
                       ListTile(
                         key: ValueKey(t.id),
+                        leading: templateListIcon(context),
                         title: Text(t.name),
                         subtitle: Text(
                             '${t.pages.length} page(s) · ${t.allCells.length} cells · '

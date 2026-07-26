@@ -12,6 +12,7 @@ import '../sync/media_file_store.dart';
 import '../sync/sync_client_screen.dart';
 import '../sync/sync_host_screen.dart';
 import 'fill_screen.dart';
+import '../widgets/list_icons.dart';
 import 'survey_actions.dart';
 import 'time_label.dart';
 
@@ -141,6 +142,7 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
             for (final t in templates)
               ListTile(
                 key: ValueKey('pick-template-${t.id}'),
+                leading: templateListIcon(context),
                 title: Text(t.name),
                 subtitle: Text(
                     '${t.pages.length} page(s) · ${t.allCells.length} cells'),
@@ -246,6 +248,7 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
                         ),
                         onDismissed: (_) => _delete(s),
                         child: ListTile(
+                          leading: surveyListIcon(context),
                           title: Text(s.name),
                           subtitle: Text(
                               '${_tplNames[s.templateId] ?? s.templateId} · '

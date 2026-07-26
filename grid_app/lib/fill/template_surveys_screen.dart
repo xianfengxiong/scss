@@ -4,6 +4,7 @@ import '../controls/registry.dart';
 import '../data/survey_store.dart';
 import '../model/survey.dart';
 import '../model/template.dart';
+import '../widgets/list_icons.dart';
 import 'survey_actions.dart';
 import 'time_label.dart';
 
@@ -116,6 +117,7 @@ class _TemplateSurveysScreenState extends State<TemplateSurveysScreen> {
                     for (final s in _surveys)
                       ListTile(
                         key: ValueKey('survey-${s.id}'),
+                        leading: surveyListIcon(context),
                         title: Text(s.name),
                         subtitle: Text(
                             '${updatedLabel(s.updatedAt, DateTime.now())} · '
