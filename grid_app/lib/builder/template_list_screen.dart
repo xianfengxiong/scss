@@ -2,29 +2,40 @@ import 'package:flutter/material.dart';
 
 import '../controls/registry.dart';
 import '../data/survey_store.dart';
+import '../data/sync_meta_store.dart';
 import '../data/template_store.dart';
-import '../fill/fill_screen.dart';
+import '../fill/survey_actions.dart';
 import '../fill/survey_list_screen.dart';
-import '../fill/survey_name_dialog.dart';
-import '../fill/time_label.dart';
 import '../model/ids.dart';
-import '../model/survey.dart';
 import '../model/template.dart';
 import '../sample/sample_template.dart';
+import '../services/platform_info.dart';
+import '../sync/media_file_store.dart';
+import '../sync/sync_host_screen.dart';
 import 'builder_screen.dart';
 
-/// Home screen: lists saved templates; create a new one (seeded from the sample
-/// layout), open one to view/preview, or delete one.
+/// The design side's list (home screen on desktop): create a template
+/// (seeded from the sample layout), open one to edit, fill it, or delete.
+/// On desktop the AppBar also hosts the sync server screen, and a visible
+/// delete button replaces swipe-to-dismiss.
 class TemplateListScreen extends StatefulWidget {
   final TemplateStore store;
   final SurveyStore surveyStore;
   final ControlRegistry registry;
 
-  const TemplateListScreen(
-      {super.key,
-      required this.store,
-      required this.surveyStore,
-      required this.registry});
+  /// Sync wiring; when either is null the sync entry is hidden (tests, or a
+  /// context that offers sync elsewhere).
+  final SyncMetaStore? meta;
+  final MediaFileStore? files;
+
+  const TemplateListScreen({
+    super.key,
+    required this.store,
+    required this.surveyStore,
+    required this.registry,
+    this.meta,
+    this.files,
+  });
 
   @override
   State<TemplateListScreen> createState() => _TemplateListScreenState();
@@ -68,84 +79,13 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
     await _reload();
   }
 
-  /// Fill = resume-or-create: no surveys yet → straight to the name dialog;
-  /// otherwise a sheet lists this template's surveys (newest first) plus a
-  /// "New survey" item.
   Future<void> _fill(Template t) async {
-    final existing = await widget.surveyStore.byTemplate(t.id);
-    if (!mounted) return;
-    if (existing.isEmpty) {
-      await _newSurvey(t);
-      return;
-    }
-
-    Survey? resume;
-    var createNew = false;
-    await showModalBottomSheet<void>(
-      context: context,
-      builder: (sheetCtx) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            ListTile(
-              key: const ValueKey('fill-new'),
-              leading: const Icon(Icons.add),
-              title: const Text('New survey'),
-              onTap: () {
-                createNew = true;
-                Navigator.of(sheetCtx).pop();
-              },
-            ),
-            const Divider(height: 1),
-            for (final s in existing)
-              ListTile(
-                key: ValueKey('fill-resume-${s.id}'),
-                title: Text(s.name),
-                subtitle: Text(
-                    '${updatedLabel(s.updatedAt, DateTime.now())} · ${s.data.length} fields'),
-                onTap: () {
-                  resume = s;
-                  Navigator.of(sheetCtx).pop();
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-    if (!mounted) return;
-    if (createNew) {
-      await _newSurvey(t);
-    } else if (resume != null) {
-      await _openFill(t, resume!);
-    }
-  }
-
-  /// Name dialog → persist immediately (a named empty survey is a legitimate
-  /// in-progress state; the dialog is the guard against accidental orphans).
-  Future<void> _newSurvey(Template t) async {
-    final name = await promptForSurveyName(context,
-        title: 'New survey', initial: '${t.name} ${dateStamp(DateTime.now())}');
-    if (name == null || !mounted) return;
-    final survey = Survey(
-      id: newSurveyId(),
-      templateId: t.id,
-      name: name,
-      updatedAt: DateTime.now(),
-    );
-    await widget.surveyStore.upsert(survey);
-    if (!mounted) return;
-    await _openFill(t, survey);
-  }
-
-  Future<void> _openFill(Template t, Survey survey) async {
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => FillScreen(
+    await startSurveyForTemplate(context,
         template: t,
-        survey: survey,
-        store: widget.surveyStore,
-        registry: widget.registry,
-      ),
-    ));
+        surveyStore: widget.surveyStore,
+        registry: widget.registry);
+    if (!mounted) return;
+    await _reload();
   }
 
   Future<void> _openSurveys() async {
@@ -156,6 +96,22 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
         registry: widget.registry,
       ),
     ));
+    await _reload();
+  }
+
+  Future<void> _openSync() async {
+    final meta = widget.meta;
+    final files = widget.files;
+    if (meta == null || files == null) return;
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => SyncHostScreen(
+        templates: widget.store,
+        surveys: widget.surveyStore,
+        meta: meta,
+        files: files,
+      ),
+    ));
+    await _reload();
   }
 
   Future<void> _delete(Template t) async {
@@ -164,12 +120,40 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
     await _reload();
   }
 
+  Future<void> _confirmDelete(Template t) async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete "${t.name}"?'),
+        content: const Text('Surveys filled from it are kept.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Delete')),
+        ],
+      ),
+    );
+    if (yes == true) await _delete(t);
+  }
+
+  bool get _hasSync => widget.meta != null && widget.files != null;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('SCSS Templates'),
         actions: [
+          if (_hasSync && isDesktopPlatform)
+            IconButton(
+              key: const ValueKey('open-sync-host'),
+              icon: const Icon(Icons.sync),
+              tooltip: '同步',
+              onPressed: _openSync,
+            ),
           IconButton(
             icon: const Icon(Icons.assignment_outlined),
             tooltip: 'Surveys',
@@ -186,7 +170,9 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                     for (final t in _templates)
                       Dismissible(
                         key: ValueKey(t.id),
-                        direction: DismissDirection.endToStart,
+                        direction: isDesktopPlatform
+                            ? DismissDirection.none
+                            : DismissDirection.endToStart,
                         background: const SizedBox.shrink(),
                         secondaryBackground: Container(
                           color: Colors.red,
@@ -199,11 +185,25 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                           title: Text(t.name),
                           subtitle: Text(
                               '${t.grid.cols}×${t.grid.rows} · ${t.cells.length} cells'),
-                          trailing: IconButton(
-                            key: ValueKey('fill-${t.id}'),
-                            icon: const Icon(Icons.edit_note),
-                            tooltip: 'Fill',
-                            onPressed: () => _fill(t),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                key: ValueKey('fill-${t.id}'),
+                                icon: const Icon(Icons.edit_note),
+                                tooltip: 'Fill',
+                                onPressed: () => _fill(t),
+                              ),
+                              // Swipe-to-delete is undiscoverable with a
+                              // mouse; desktop gets a visible button.
+                              if (isDesktopPlatform)
+                                IconButton(
+                                  key: ValueKey('delete-${t.id}'),
+                                  icon: const Icon(Icons.delete_outline),
+                                  tooltip: 'Delete',
+                                  onPressed: () => _confirmDelete(t),
+                                ),
+                            ],
                           ),
                           onTap: () => _open(t),
                         ),
