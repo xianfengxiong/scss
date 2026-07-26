@@ -431,6 +431,8 @@ class _BuilderScreenState extends State<BuilderScreen> {
             onResizeRow: (boundary, deltaMm) => _commitPage(_page.copyWith(
                 grid: resizeRowBoundary(_page.grid, boundary, deltaMm))),
             onDropControl: _placeDropped,
+            // Horizontal swipe on an empty cell turns the page.
+            onSwipePage: (dir) => _goToPage(_pageIndex + dir),
           ),
         ),
       );

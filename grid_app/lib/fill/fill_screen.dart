@@ -39,8 +39,16 @@ class _FillScreenState extends State<FillScreen> {
   late final Map<String, dynamic> _data = {...widget.survey.data};
 
   // Multi-page templates: one page on screen at a time, switched by the
-  // bottom navigator. Answers stay one map for the whole template.
+  // bottom navigator or an unzoomed horizontal swipe. Answers stay one map
+  // for the whole template.
   int _pageIndex = 0;
+
+  // Swipe-to-turn-page tracking, fed by InteractiveViewer's own gesture
+  // stream (no competing recognizer): at 1× the canvas can't pan, so a
+  // mostly-horizontal single-finger run reads as a page turn; zoomed in the
+  // same gesture keeps panning the page.
+  Offset _swipeAccum = Offset.zero;
+  bool _swipeMultiTouch = false;
 
   // Autosave: debounce writes so per-keystroke onChanged doesn't hammer the
   // store; flush pending edits on dispose so backing out never loses input.
@@ -131,6 +139,25 @@ class _FillScreenState extends State<FillScreen> {
     return m;
   }
 
+  void _goToPage(int index) {
+    final count = widget.template.pages.length;
+    if (index < 0 || index >= count || index == _pageIndex) return;
+    setState(() {
+      _pageIndex = index;
+      _tc.value = Matrix4.identity(); // new page starts fully visible
+    });
+  }
+
+  void _maybeSwipePage() {
+    final run = _swipeAccum;
+    _swipeAccum = Offset.zero;
+    if (_swipeMultiTouch) return;
+    if (widget.template.pages.length < 2) return;
+    if (_tc.value.getMaxScaleOnAxis() > 1.01) return; // zoomed → pan, not turn
+    if (run.dx.abs() < 60 || run.dx.abs() < run.dy.abs() * 1.5) return;
+    _goToPage(_pageIndex + (run.dx < 0 ? 1 : -1));
+  }
+
   void _onChanged(String key, dynamic value) {
     setState(() => _data[key] = value);
     _dirty = true;
@@ -203,6 +230,15 @@ class _FillScreenState extends State<FillScreen> {
                       // _onPointerSignal — IV's own scaling would also zoom
                       // on a bare wheel. Phone: pinch zoom stays IV's job.
                       scaleEnabled: !isDesktopPlatform,
+                      onInteractionStart: (d) {
+                        _swipeAccum = Offset.zero;
+                        _swipeMultiTouch = d.pointerCount > 1;
+                      },
+                      onInteractionUpdate: (d) {
+                        if (d.pointerCount > 1) _swipeMultiTouch = true;
+                        _swipeAccum += d.focalPointDelta;
+                      },
+                      onInteractionEnd: (_) => _maybeSwipePage(),
                       child: Center(
                         child: FillCanvas(
                           template: widget.template,
@@ -224,14 +260,10 @@ class _FillScreenState extends State<FillScreen> {
     );
   }
 
-  /// Bottom page switcher, only for multi-page templates. Switching resets
-  /// the zoom so the new page starts fully visible.
+  /// Bottom page switcher, only for multi-page templates (swiping unzoomed
+  /// turns pages too).
   Widget _pageBar() {
     final count = widget.template.pages.length;
-    void go(int i) => setState(() {
-          _pageIndex = i.clamp(0, count - 1);
-          _tc.value = Matrix4.identity();
-        });
     return SafeArea(
       top: false,
       child: Row(
@@ -240,15 +272,17 @@ class _FillScreenState extends State<FillScreen> {
           IconButton(
             key: const ValueKey('fill-page-prev'),
             icon: const Icon(Icons.chevron_left),
-            onPressed: _pageIndex > 0 ? () => go(_pageIndex - 1) : null,
+            onPressed:
+                _pageIndex > 0 ? () => _goToPage(_pageIndex - 1) : null,
           ),
           Text('${_pageIndex + 1} / $count',
               key: const ValueKey('fill-page-indicator')),
           IconButton(
             key: const ValueKey('fill-page-next'),
             icon: const Icon(Icons.chevron_right),
-            onPressed:
-                _pageIndex < count - 1 ? () => go(_pageIndex + 1) : null,
+            onPressed: _pageIndex < count - 1
+                ? () => _goToPage(_pageIndex + 1)
+                : null,
           ),
         ],
       ),

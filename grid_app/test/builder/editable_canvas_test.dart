@@ -120,6 +120,52 @@ void main() {
     expect(moved, isNull);
   });
 
+  testWidgets('horizontal swipe on an empty cell turns the page',
+      (tester) async {
+    int? swiped;
+    await tester.pumpWidget(_host(EditableCanvas(
+      template: _tpl(const [
+        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'text',
+            props: {'key': 'k', 'hint': ''}),
+      ]),
+      registry: buildDefaultRegistry(),
+      selectedId: null,
+      onSelect: (_) {},
+      onMove: (_, __, ___) {},
+      onSpan: (_, __, ___) {},
+      onResizeCol: (_, __) {},
+      onResizeRow: (_, __) {},
+      onSwipePage: (dir) => swiped = dir,
+    )));
+    // Empty area: swipe left → next page (+1)...
+    await tester.dragFrom(const Offset(150, 150), const Offset(-100, 0));
+    expect(swiped, 1);
+    // ...swipe right → previous (-1).
+    await tester.dragFrom(const Offset(150, 150), const Offset(100, 0));
+    expect(swiped, -1);
+  });
+
+  testWidgets('dragging a control never turns the page', (tester) async {
+    int? swiped;
+    await tester.pumpWidget(_host(EditableCanvas(
+      template: _tpl(const [
+        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'text',
+            props: {'key': 'k', 'hint': ''}),
+      ]),
+      registry: buildDefaultRegistry(),
+      selectedId: null,
+      onSelect: (_) {},
+      onMove: (_, __, ___) {},
+      onSpan: (_, __, ___) {},
+      onResizeCol: (_, __) {},
+      onResizeRow: (_, __) {},
+      onSwipePage: (dir) => swiped = dir,
+    )));
+    // Starts inside cell 'a' → moves the control, no page turn.
+    await tester.dragFrom(const Offset(5, 5), const Offset(120, 0));
+    expect(swiped, isNull);
+  });
+
   testWidgets('dragging the right span handle reports a larger colSpan',
       (tester) async {
     int? cs;

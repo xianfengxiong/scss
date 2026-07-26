@@ -34,6 +34,11 @@ class EditableCanvas extends StatefulWidget {
   /// cell (col,row). Null disables drop placement.
   final void Function(ControlSpec spec, int col, int row)? onDropControl;
 
+  /// A horizontal swipe that started on an EMPTY cell (a drag starting on a
+  /// control moves that control instead): +1 = next page, -1 = previous.
+  /// Null disables swipe paging.
+  final void Function(int direction)? onSwipePage;
+
   const EditableCanvas({
     super.key,
     required this.template,
@@ -46,6 +51,7 @@ class EditableCanvas extends StatefulWidget {
     required this.onResizeCol,
     required this.onResizeRow,
     this.onDropControl,
+    this.onSwipePage,
   });
 
   @override
@@ -59,6 +65,10 @@ class _EditableCanvasState extends State<EditableCanvas> {
   /// STARTED, not by the selection: dragging must grab the control under
   /// the finger, otherwise a leftover selection hijacks the gesture.
   String? _dragId;
+
+  /// Accumulated pan while no control is being dragged (started on an empty
+  /// cell); a mostly-horizontal run turns the page on release.
+  Offset? _swipeAccum;
 
   TemplatePage get _p => widget.template.pages[widget.pageIndex];
 
@@ -116,6 +126,7 @@ class _EditableCanvasState extends State<EditableCanvas> {
                         d.localPosition.dy / scale);
                     final hit = c == null ? null : cellAtCoord(p, c.col, c.row);
                     _dragId = hit?.id;
+                    _swipeAccum = hit == null ? Offset.zero : null;
                     // Grabbing a control also selects it, so the inspector
                     // and span handles follow the drag target.
                     if (hit != null && hit.id != widget.selectedId) {
@@ -124,13 +135,22 @@ class _EditableCanvasState extends State<EditableCanvas> {
                   },
                   onPanUpdate: (d) {
                     final id = _dragId;
-                    if (id == null) return;
+                    if (id == null) {
+                      if (_swipeAccum != null) _swipeAccum = _swipeAccum! + d.delta;
+                      return;
+                    }
                     final c = cellCoordAtMm(p.grid, d.localPosition.dx / scale,
                         d.localPosition.dy / scale);
                     if (c != null) widget.onMove(id, c.col, c.row);
                   },
-                  onPanEnd: (_) => _dragId = null,
-                  onPanCancel: () => _dragId = null,
+                  onPanEnd: (_) {
+                    _dragId = null;
+                    _maybeSwipePage();
+                  },
+                  onPanCancel: () {
+                    _dragId = null;
+                    _swipeAccum = null;
+                  },
                   child: GridCanvas(
                       template: t,
                       pageIndex: widget.pageIndex,
@@ -149,6 +169,16 @@ class _EditableCanvasState extends State<EditableCanvas> {
         },
       ),
     );
+  }
+
+  /// Swipe left (content pushed left) → next page; right → previous. Needs a
+  /// clearly horizontal run so a sloppy vertical pan never flips pages.
+  void _maybeSwipePage() {
+    final run = _swipeAccum;
+    _swipeAccum = null;
+    if (run == null || widget.onSwipePage == null) return;
+    if (run.dx.abs() < 60 || run.dx.abs() < run.dy.abs() * 1.5) return;
+    widget.onSwipePage!(run.dx < 0 ? 1 : -1);
   }
 
   Cell? _cellById(String id) {
