@@ -18,7 +18,9 @@ import 'pdf_preview_screen.dart';
 
 /// Template editor: add controls from the palette, tap a cell to select,
 /// edit it in the inspector, change grid rows/cols, and drag cells/handles
-/// directly on the canvas (Phase 1B-ii-b).
+/// directly on the canvas. Multi-page: the canvas edits one page at a time;
+/// the page navigator switches, adds (inheriting the current page's grid,
+/// empty of controls) and deletes pages.
 class BuilderScreen extends StatefulWidget {
   final Template template;
   final ControlRegistry registry;
@@ -38,37 +40,51 @@ class BuilderScreen extends StatefulWidget {
 class _BuilderScreenState extends State<BuilderScreen> {
   // Templates saved before the centering invariant existed open off-center;
   // normalize on entry so the canvas shows what the next save will persist.
-  late Template _t = centerGridX(widget.template);
+  late Template _t = _centerAllPages(widget.template);
+  int _pageIndex = 0;
   String? _selectedId;
   int _seq = 0;
 
+  static Template _centerAllPages(Template t) {
+    var out = t;
+    for (var i = 0; i < t.pages.length; i++) {
+      out = out.withPage(i, centerGridX(out.pages[i], out.page));
+    }
+    return out;
+  }
+
+  TemplatePage get _page => _t.pages[_pageIndex];
+
   String _newId(String type) => '${type}_${DateTime.now().microsecondsSinceEpoch}_${_seq++}';
 
-  // Give a value control a key that doesn't collide with existing cells.
+  // Give a value control a key that doesn't collide with existing cells
+  // (across ALL pages — survey answers are one map for the whole template).
   Cell _withUniqueKey(Cell c) {
     final key = c.props['key'];
     if (key is! String) return c;
     return c.copyWith(props: {...c.props, 'key': uniqueKey(_t, key)});
   }
 
-  void _commit(Template? candidate) {
+  /// Commit an edit to the current page: recenter, then accept only if the
+  /// whole template stays valid.
+  void _commitPage(TemplatePage? candidate) {
     if (candidate == null) return;
-    final centered = centerGridX(candidate);
-    if (!isValid(centered)) return;
-    setState(() => _t = centered);
+    final next = _t.withPage(_pageIndex, centerGridX(candidate, _t.page));
+    if (!isValid(next)) return;
+    setState(() => _t = next);
   }
 
   void _addControl(ControlSpec spec) {
-    final pos = firstFreeCell(_t);
+    final pos = firstFreeCell(_page);
     if (pos == null) return; // grid full
-    final free = freeRunWidth(_t, pos.col, pos.row);
+    final free = freeRunWidth(_page, pos.col, pos.row);
     if (free < 1) return;
     _placeAt(spec, pos.col, pos.row, free);
   }
 
   void _placeDropped(ControlSpec spec, int col, int row) {
-    if (cellAtCoord(_t, col, row) != null) return; // occupied
-    final free = freeRunWidth(_t, col, row);
+    if (cellAtCoord(_page, col, row) != null) return; // occupied
+    final free = freeRunWidth(_page, col, row);
     if (free < 1) return;
     _placeAt(spec, col, row, free);
   }
@@ -86,17 +102,17 @@ class _BuilderScreenState extends State<BuilderScreen> {
     ));
     final want = spec.requiredRowSpan(cell);
     if (want != null) cell = cell.copyWith(rowSpan: want);
-    final candidate = addCell(_t, cell);
-    if (isValid(candidate)) {
+    final next = _t.withPage(_pageIndex, addCell(_page, cell));
+    if (isValid(next)) {
       setState(() {
-        _t = candidate;
+        _t = next;
         _selectedId = cell.id;
       });
     }
   }
 
   Cell? get _selected {
-    for (final c in _t.cells) {
+    for (final c in _page.cells) {
       if (c.id == _selectedId) return c;
     }
     return null;
@@ -123,27 +139,68 @@ class _BuilderScreenState extends State<BuilderScreen> {
     await widget.store.upsert(_t);
   }
 
+  void _goToPage(int index) => setState(() {
+        _pageIndex = index.clamp(0, _t.pages.length - 1);
+        _selectedId = null;
+      });
+
+  void _addPage() => setState(() {
+        _t = addPageAfter(_t, _pageIndex);
+        _pageIndex++;
+        _selectedId = null;
+      });
+
+  Future<void> _deletePage() async {
+    final removed = removePage(_t, _pageIndex);
+    if (removed == null) return; // last page — button is disabled anyway
+    if (_page.cells.isNotEmpty) {
+      final yes = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('删除第 ${_pageIndex + 1} 页?'),
+          content: Text('该页上的 ${_page.cells.length} 个控件将一并删除。'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel')),
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Delete')),
+          ],
+        ),
+      );
+      if (yes != true || !mounted) return;
+    }
+    setState(() {
+      _t = removed;
+      _pageIndex = _pageIndex.clamp(0, _t.pages.length - 1);
+      _selectedId = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final selected = _selected;
     return Scaffold(
       appBar: AppBar(
-        // Desktop: the grid steppers share the title row (the window is wide
-        // and it frees a whole toolbar row for the canvas). Phone: keep the
-        // stacked title + separate controls row — the AppBar is too narrow.
+        // Desktop: the grid steppers and page navigator share the title row
+        // (the window is wide and it frees a toolbar row for the canvas).
+        // Phone: stacked title; steppers + page navigator on their own row.
         title: isDesktopPlatform
             ? Row(
                 children: [
                   Flexible(
                       child: Text(_t.name, overflow: TextOverflow.ellipsis)),
                   const SizedBox(width: 24),
-                  _stepper('Cols', _t.grid.cols,
-                      () => _commit(setCols(_t, _t.grid.cols - 1)),
-                      () => _commit(setCols(_t, _t.grid.cols + 1)), 'cols'),
+                  _stepper('Cols', _page.grid.cols,
+                      () => _commitPage(setCols(_page, _t.page, _page.grid.cols - 1)),
+                      () => _commitPage(setCols(_page, _t.page, _page.grid.cols + 1)), 'cols'),
                   const SizedBox(width: 12),
-                  _stepper('Rows', _t.grid.rows,
-                      () => _commit(setRows(_t, _t.grid.rows - 1)),
-                      () => _commit(setRows(_t, _t.grid.rows + 1)), 'rows'),
+                  _stepper('Rows', _page.grid.rows,
+                      () => _commitPage(setRows(_page, _t.page, _page.grid.rows - 1)),
+                      () => _commitPage(setRows(_page, _t.page, _page.grid.rows + 1)), 'rows'),
+                  const SizedBox(width: 12),
+                  _pageNav(),
                 ],
               )
             : Column(
@@ -151,7 +208,8 @@ class _BuilderScreenState extends State<BuilderScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(_t.name),
-                  Text('${_t.grid.cols} × ${_t.grid.rows} grid',
+                  Text(
+                      '${_page.grid.cols} × ${_page.grid.rows} grid · ${_t.pages.length} page(s)',
                       style: const TextStyle(
                           fontSize: 12, fontWeight: FontWeight.normal)),
                 ],
@@ -177,9 +235,6 @@ class _BuilderScreenState extends State<BuilderScreen> {
               onPressed: _save),
         ],
       ),
-      // Desktop has the width for IDE-style side docks; the phone keeps the
-      // stacked layout (palette strip on top, inspector overlaying the
-      // canvas bottom).
       body: isDesktopPlatform ? _desktopBody(selected) : _mobileBody(selected),
     );
   }
@@ -226,8 +281,8 @@ class _BuilderScreenState extends State<BuilderScreen> {
             ),
           ),
           const VerticalDivider(width: 1),
-          // Grid steppers live in the AppBar title row on desktop, so the
-          // middle column is all canvas.
+          // Grid steppers + page navigator live in the AppBar title row on
+          // desktop, so the middle column is all canvas.
           Expanded(child: _canvasArea()),
           const VerticalDivider(width: 1),
           // Always present (fixed width) so selecting/deselecting never
@@ -252,33 +307,83 @@ class _BuilderScreenState extends State<BuilderScreen> {
   Widget _inspector(Cell selected, {required bool docked}) => CellInspector(
         cell: selected,
         spec: widget.registry.specFor(selected.type)!,
-        maxColSpan: _t.grid.cols,
+        maxColSpan: _page.grid.cols,
         docked: docked,
-        onPropsChanged: (props) => _commit(syncRowSpan(
-            updateCell(_t, selected.id, (c) => c.copyWith(props: props)),
+        onPropsChanged: (props) => _commitPage(syncRowSpan(
+            updateCell(_page, selected.id, (c) => c.copyWith(props: props)),
             selected.id,
             widget.registry)),
-        onColSpanChanged: (span) => _commit(
-            updateCell(_t, selected.id, (c) => c.copyWith(colSpan: span))),
+        onColSpanChanged: (span) => _commitPage(
+            updateCell(_page, selected.id, (c) => c.copyWith(colSpan: span))),
         onDelete: () {
-          _commit(removeCell(_t, selected.id));
+          _commitPage(removeCell(_page, selected.id));
           setState(() => _selectedId = null);
         },
       );
 
+  /// Phone: steppers + page navigator on one row above the palette. FittedBox
+  /// keeps a narrow screen from overflowing.
   Widget _gridControls() => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Row(
-          children: [
-            _stepper('Cols', _t.grid.cols,
-                () => _commit(setCols(_t, _t.grid.cols - 1)),
-                () => _commit(setCols(_t, _t.grid.cols + 1)), 'cols'),
-            const SizedBox(width: 16),
-            _stepper('Rows', _t.grid.rows,
-                () => _commit(setRows(_t, _t.grid.rows - 1)),
-                () => _commit(setRows(_t, _t.grid.rows + 1)), 'rows'),
-          ],
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Row(
+            children: [
+              _stepper('Cols', _page.grid.cols,
+                  () => _commitPage(setCols(_page, _t.page, _page.grid.cols - 1)),
+                  () => _commitPage(setCols(_page, _t.page, _page.grid.cols + 1)), 'cols'),
+              const SizedBox(width: 16),
+              _stepper('Rows', _page.grid.rows,
+                  () => _commitPage(setRows(_page, _t.page, _page.grid.rows - 1)),
+                  () => _commitPage(setRows(_page, _t.page, _page.grid.rows + 1)), 'rows'),
+              const SizedBox(width: 16),
+              _pageNav(),
+            ],
+          ),
         ),
+      );
+
+  /// `‹ 1/3 ›  +  🗑` — switch, append (inherits this page's grid, no
+  /// controls), delete (disabled on the last page; confirms if not empty).
+  Widget _pageNav() => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            key: const ValueKey('page-prev'),
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_left, size: 20),
+            tooltip: 'Previous page',
+            onPressed: _pageIndex > 0 ? () => _goToPage(_pageIndex - 1) : null,
+          ),
+          Text('${_pageIndex + 1}/${_t.pages.length}',
+              key: const ValueKey('page-indicator'),
+              style:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
+          IconButton(
+            key: const ValueKey('page-next'),
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.chevron_right, size: 20),
+            tooltip: 'Next page',
+            onPressed: _pageIndex < _t.pages.length - 1
+                ? () => _goToPage(_pageIndex + 1)
+                : null,
+          ),
+          IconButton(
+            key: const ValueKey('page-add'),
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.post_add, size: 20),
+            tooltip: '新增页(沿用本页网格)',
+            onPressed: _addPage,
+          ),
+          IconButton(
+            key: const ValueKey('page-delete'),
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.delete_sweep_outlined, size: 20),
+            tooltip: '删除本页',
+            onPressed: _t.pages.length > 1 ? _deletePage : null,
+          ),
+        ],
       );
 
   /// `Label − N +` — compact enough for the AppBar title row.
@@ -314,16 +419,17 @@ class _BuilderScreenState extends State<BuilderScreen> {
         child: Center(
           child: EditableCanvas(
             template: _t,
+            pageIndex: _pageIndex,
             registry: widget.registry,
             selectedId: _selectedId,
             onSelect: (id) => setState(() => _selectedId = id),
-            onMove: (id, col, row) => _commit(moveCell(_t, id, col, row)),
-            onSpan: (id, colSpan, rowSpan) => _commit(reconcileCell(
-                setSpan(_t, id, colSpan, rowSpan), id, widget.registry)),
-            onResizeCol: (boundary, deltaMm) => _commit(
-                _t.copyWith(grid: resizeColBoundary(_t.grid, boundary, deltaMm))),
-            onResizeRow: (boundary, deltaMm) => _commit(
-                _t.copyWith(grid: resizeRowBoundary(_t.grid, boundary, deltaMm))),
+            onMove: (id, col, row) => _commitPage(moveCell(_page, id, col, row)),
+            onSpan: (id, colSpan, rowSpan) => _commitPage(reconcileCell(
+                setSpan(_page, id, colSpan, rowSpan), id, widget.registry)),
+            onResizeCol: (boundary, deltaMm) => _commitPage(_page.copyWith(
+                grid: resizeColBoundary(_page.grid, boundary, deltaMm))),
+            onResizeRow: (boundary, deltaMm) => _commitPage(_page.copyWith(
+                grid: resizeRowBoundary(_page.grid, boundary, deltaMm))),
             onDropControl: _placeDropped,
           ),
         ),

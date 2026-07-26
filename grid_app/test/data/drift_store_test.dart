@@ -15,8 +15,8 @@ void main() {
     final loaded = await store.get(t.id);
     expect(loaded, isNotNull);
     expect(loaded!.name, t.name);
-    expect(loaded.cells.length, t.cells.length);
-    expect(loaded.grid.cols, t.grid.cols);
+    expect(loaded.allCells.length, t.allCells.length);
+    expect(loaded.pages[0].grid.cols, t.pages[0].grid.cols);
 
     expect((await store.all()).length, 1);
     await store.delete(t.id);

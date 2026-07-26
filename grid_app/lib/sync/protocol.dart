@@ -7,7 +7,9 @@ import 'media_file_store.dart';
 /// Bumped when the wire format changes; both apps must speak the same
 /// version (they are built from the same source, so a mismatch just means
 /// "update the other device").
-const syncProtocolVersion = 1;
+///
+/// v2: templates carry `pages` (multi-page); a v1 app can't read them.
+const syncProtocolVersion = 2;
 
 /// Fixed LAN port the desktop's sync server listens on.
 const syncDefaultPort = 17423;

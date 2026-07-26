@@ -11,9 +11,13 @@ Template _tpl(List<Cell> cells) => Template(
       id: 't',
       name: 'n',
       page: const PageSize.a4(),
-      grid: GridFrame.uniform(
-          xMm: 0, yMm: 0, cols: 6, rows: 6, colWidthMm: 35, rowHeightMm: 30),
-      cells: cells,
+      pages: [
+        TemplatePage(
+          grid: GridFrame.uniform(
+              xMm: 0, yMm: 0, cols: 6, rows: 6, colWidthMm: 35, rowHeightMm: 30),
+          cells: cells,
+        ),
+      ],
     );
 
 Widget _host(Widget child) => MaterialApp(

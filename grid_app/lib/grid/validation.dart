@@ -18,19 +18,25 @@ class LayoutViolation {
   String toString() => 'LayoutViolation($cellId, $reason)';
 }
 
-/// Returns one violation per offending cell. Empty list means a valid layout:
-/// every cell is in-bounds and no two cells overlap.
-List<LayoutViolation> validateLayout(Template t) {
+/// Returns one violation per offending cell across all pages. Empty list
+/// means a valid layout: every cell is in-bounds on its page and no two
+/// cells on the same page overlap (cells on different pages are independent).
+List<LayoutViolation> validateLayout(Template t) => [
+      for (final page in t.pages) ...validatePageLayout(page)
+    ];
+
+/// Violations for a single page.
+List<LayoutViolation> validatePageLayout(TemplatePage page) {
   final violations = <LayoutViolation>[];
   final occupied = <String>{}; // "col,row" units already taken
 
-  for (final c in t.cells) {
+  for (final c in page.cells) {
     final inBounds = c.col >= 0 &&
         c.row >= 0 &&
         c.colSpan >= 1 &&
         c.rowSpan >= 1 &&
-        c.col + c.colSpan <= t.grid.cols &&
-        c.row + c.rowSpan <= t.grid.rows;
+        c.col + c.colSpan <= page.grid.cols &&
+        c.row + c.rowSpan <= page.grid.rows;
     if (!inBounds) {
       violations.add(LayoutViolation(c.id, 'out-of-bounds'));
       continue; // don't mark occupancy for an out-of-bounds cell

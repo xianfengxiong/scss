@@ -14,11 +14,16 @@ Template _partial() => Template(
       id: 'p',
       name: 'Partial',
       page: const PageSize.a4(),
-      grid: GridFrame.uniform(
-          xMm: 10, yMm: 10, cols: 12, rows: 16, colWidthMm: 15, rowHeightMm: 8),
-      cells: const [
-        Cell(id: 'a', col: 0, row: 0, colSpan: 6, type: 'text',
-            props: {'key': 'k', 'hint': ''}),
+      pages: [
+        TemplatePage(
+          grid: GridFrame.uniform(
+              xMm: 10, yMm: 10, cols: 12, rows: 16,
+              colWidthMm: 15, rowHeightMm: 8),
+          cells: const [
+            Cell(id: 'a', col: 0, row: 0, colSpan: 6, type: 'text',
+                props: {'key': 'k', 'hint': ''}),
+          ],
+        ),
       ],
     );
 
@@ -38,8 +43,8 @@ void main() {
     await tester.pump();
 
     final saved = await store.get('p');
-    expect(saved!.cells.length, 2);
-    final added = saved.cells.firstWhere((c) => c.id != 'a');
+    expect(saved!.pages[0].cells.length, 2);
+    final added = saved.pages[0].cells.firstWhere((c) => c.id != 'a');
     expect([added.col, added.row, added.colSpan], [6, 0, 6]);
   });
 }

@@ -13,13 +13,17 @@ Template _tpl() => Template(
       id: 't1',
       name: 'Site Survey',
       page: const PageSize.a4(),
-      grid: GridFrame.uniform(
-          xMm: 0, yMm: 0, cols: 12, rows: 4, colWidthMm: 15, rowHeightMm: 20),
-      cells: const [
-        Cell(id: 'name_l', col: 0, row: 0, colSpan: 3, type: 'label',
-            props: {'text': 'Site', 'align': 'left', 'bold': false}),
-        Cell(id: 'name_v', col: 3, row: 0, colSpan: 9, type: 'text',
-            props: {'key': 'site_name', 'hint': ''}),
+      pages: [
+        TemplatePage(
+          grid: GridFrame.uniform(
+              xMm: 0, yMm: 0, cols: 12, rows: 4, colWidthMm: 15, rowHeightMm: 20),
+          cells: const [
+            Cell(id: 'name_l', col: 0, row: 0, colSpan: 3, type: 'label',
+                props: {'text': 'Site', 'align': 'left', 'bold': false}),
+            Cell(id: 'name_v', col: 3, row: 0, colSpan: 9, type: 'text',
+                props: {'key': 'site_name', 'hint': ''}),
+          ],
+        ),
       ],
     );
 

@@ -10,7 +10,7 @@ Future<Map<String, dynamic>> resolvePdfData(
   ControlRegistry registry,
 ) async {
   final out = Map<String, dynamic>.from(data);
-  for (final cell in t.cells) {
+  for (final cell in t.allCells) {
     final spec = registry.specFor(cell.type);
     if (spec == null) continue;
     final key = spec.dataKey(cell);

@@ -4,10 +4,7 @@ import 'package:scss_grid/model/template.dart';
 import 'package:scss_grid/model/grid_frame.dart';
 import 'package:scss_grid/builder/editor_ops.dart';
 
-Template _tpl(List<Cell> cells) => Template(
-      id: 't',
-      name: 'n',
-      page: const PageSize.a4(),
+TemplatePage _page(List<Cell> cells) => TemplatePage(
       grid: GridFrame.uniform(
           xMm: 0, yMm: 0, cols: 6, rows: 6, colWidthMm: 20, rowHeightMm: 8),
       cells: cells,
@@ -15,29 +12,29 @@ Template _tpl(List<Cell> cells) => Template(
 
 void main() {
   test('moveCell sets new col/row, leaving spans intact', () {
-    final t = _tpl(const [
+    final p = _page(const [
       Cell(id: 'a', col: 0, row: 0, colSpan: 2, rowSpan: 1, type: 'text'),
     ]);
-    final m = moveCell(t, 'a', 3, 2);
+    final m = moveCell(p, 'a', 3, 2);
     final c = m.cells.single;
     expect([c.col, c.row, c.colSpan, c.rowSpan], [3, 2, 2, 1]);
   });
 
   test('setSpan sets colSpan/rowSpan, leaving position intact', () {
-    final t = _tpl(const [
+    final p = _page(const [
       Cell(id: 'a', col: 1, row: 1, type: 'text'),
     ]);
-    final s = setSpan(t, 'a', 3, 2);
+    final s = setSpan(p, 'a', 3, 2);
     final c = s.cells.single;
     expect([c.col, c.row, c.colSpan, c.rowSpan], [1, 1, 3, 2]);
   });
 
   test('moveCell clamps so a wide cell stays inside the grid', () {
-    final t = _tpl(const [
+    final p = _page(const [
       Cell(id: 'a', col: 0, row: 0, colSpan: 6, type: 'text'), // full width
     ]);
     // try to put the top-left at col 3 — clamps to 0 (6 cols - 6 span); row -> 4
-    final c = moveCell(t, 'a', 3, 4).cells.single;
+    final c = moveCell(p, 'a', 3, 4).cells.single;
     expect([c.col, c.row], [0, 4]);
   });
 }

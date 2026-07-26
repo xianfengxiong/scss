@@ -20,13 +20,13 @@ class GridEdge {
   });
 }
 
-/// The 4 outline edges (left, right, top, bottom) of every control's mm-rect.
-/// Shared by the builder canvas, the fill canvas and the PDF so the table
-/// borders are identical (WYSIWYG).
-List<GridEdge> controlOutlineEdges(Template t) {
+/// The 4 outline edges (left, right, top, bottom) of every control's mm-rect
+/// on one page. Shared by the builder canvas, the fill canvas and the PDF so
+/// the table borders are identical (WYSIWYG).
+List<GridEdge> controlOutlineEdges(TemplatePage page) {
   final edges = <GridEdge>[];
-  for (final cell in t.cells) {
-    final r = cellRectMm(t.grid, cell);
+  for (final cell in page.cells) {
+    final r = cellRectMm(page.grid, cell);
     edges.add(GridEdge(
         vertical: true, atMm: r.leftMm, fromMm: r.topMm, toMm: r.bottomMm));
     edges.add(GridEdge(

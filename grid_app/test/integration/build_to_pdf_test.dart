@@ -13,8 +13,9 @@ void main() {
     expect(validateLayout(t), isEmpty);
 
     // 2. frame fits within the A4 page
-    expect(t.grid.xMm + t.grid.frameWidthMm, lessThanOrEqualTo(t.page.widthMm));
-    expect(t.grid.yMm + t.grid.frameHeightMm, lessThanOrEqualTo(t.page.heightMm));
+    final g = t.pages[0].grid;
+    expect(g.xMm + g.frameWidthMm, lessThanOrEqualTo(t.page.widthMm));
+    expect(g.yMm + g.frameHeightMm, lessThanOrEqualTo(t.page.heightMm));
 
     // 3. renders to a real PDF file
     final doc = renderTemplate(t, const {

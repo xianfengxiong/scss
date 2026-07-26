@@ -9,8 +9,9 @@ import '../model/template.dart';
 /// Millimetres → PDF points (1 inch = 25.4 mm = 72 pt).
 const double mmToPt = 72.0 / 25.4;
 
-/// Render [t] to a single A4 page. Each cell is absolutely positioned by its
-/// mm rectangle and drawn by its control's `paintPdf`. No pagination.
+/// Render [t] to one PDF page per template page, in order. Each cell is
+/// absolutely positioned by its mm rectangle and drawn by its control's
+/// `paintPdf`. Pagination is the user's design — nothing flows or splits.
 ///
 /// Precondition: [t] must be a valid layout — `validateLayout(t)` empty. An
 /// invalid layout (overlapping or out-of-bounds cells) has undefined output and
@@ -21,16 +22,27 @@ pw.Document renderTemplate(
   ControlRegistry registry,
 ) {
   final doc = pw.Document();
-  doc.addPage(
-    pw.Page(
+  for (final page in t.pages) {
+    doc.addPage(_renderPage(t, page, data, registry));
+  }
+  return doc;
+}
+
+pw.Page _renderPage(
+  Template t,
+  TemplatePage page,
+  Map<String, dynamic> data,
+  ControlRegistry registry,
+) {
+  return pw.Page(
       pageFormat: PdfPageFormat(
         t.page.widthMm * mmToPt,
         t.page.heightMm * mmToPt,
       ),
       build: (context) {
         final children = <pw.Widget>[];
-        for (final cell in t.cells) {
-          final r = cellRectMm(t.grid, cell);
+        for (final cell in page.cells) {
+          final r = cellRectMm(page.grid, cell);
           final spec = registry.specFor(cell.type);
           final content = spec?.paintPdf(cell, data) ??
               pw.Container(
@@ -55,7 +67,7 @@ pw.Document renderTemplate(
         // builder/fill canvases.
         const borderPt = 0.7; // 0.7pt ≈ the 1.0 device-px canvas line (kCellBorderPx); thinner reads right in print.
         final borderColor = PdfColor.fromInt(0xFF455A64);
-        for (final e in controlOutlineEdges(t)) {
+        for (final e in controlOutlineEdges(page)) {
           if (e.vertical) {
             children.add(pw.Positioned(
               left: e.atMm * mmToPt - borderPt / 2,
@@ -79,8 +91,5 @@ pw.Document renderTemplate(
           }
         }
         return pw.Stack(children: children);
-      },
-    ),
-  );
-  return doc;
+      });
 }

@@ -14,6 +14,10 @@ import 'canvas_metrics.dart';
 /// Read-only in Phase 1B-i (no editing).
 class GridCanvas extends StatelessWidget {
   final Template template;
+
+  /// Which of the template's pages to render.
+  final int pageIndex;
+
   final ControlRegistry registry;
 
   /// Draw the faint interior column/row lines so the empty grid is visible
@@ -26,10 +30,13 @@ class GridCanvas extends StatelessWidget {
   const GridCanvas({
     super.key,
     required this.template,
+    this.pageIndex = 0,
     required this.registry,
     this.showGridLines = true,
     this.selectedId,
   });
+
+  TemplatePage get _p => template.pages[pageIndex];
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +44,7 @@ class GridCanvas extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final scale = pageScale(constraints.maxWidth, page.widthMm);
-        final grid = template.grid;
+        final grid = _p.grid;
         return Container(
           width: page.widthMm * scale,
           height: page.heightMm * scale,
@@ -56,8 +63,8 @@ class GridCanvas extends StatelessWidget {
                       border: Border.all(color: const Color(0xFF607D8B))),
                 ),
               ),
-              for (final cell in template.cells) _cell(cell, scale),
-              ...borderLineWidgets(controlOutlineEdges(template), scale),
+              for (final cell in _p.cells) _cell(cell, scale),
+              ...borderLineWidgets(controlOutlineEdges(_p), scale),
             ],
           ),
         );
@@ -68,7 +75,7 @@ class GridCanvas extends StatelessWidget {
   /// Faint interior lines between columns and rows (the frame border is drawn
   /// separately). Count = (cols - 1) verticals + (rows - 1) horizontals.
   List<Widget> _gridLines(double scale) {
-    final grid = template.grid;
+    final grid = _p.grid;
     final lines = <Widget>[];
     // vertical lines at each interior column boundary
     var x = grid.xMm;
@@ -98,7 +105,7 @@ class GridCanvas extends StatelessWidget {
   }
 
   Widget _cell(Cell cell, double scale) {
-    final r = cellRectMm(template.grid, cell);
+    final r = cellRectMm(_p.grid, cell);
     final spec = registry.specFor(cell.type);
     final Widget content = spec?.previewWidget(cell) ??
         Container(

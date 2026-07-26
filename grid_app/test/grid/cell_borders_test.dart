@@ -4,10 +4,7 @@ import 'package:scss_grid/model/cell.dart';
 import 'package:scss_grid/model/grid_frame.dart';
 import 'package:scss_grid/model/template.dart';
 
-Template _tpl(List<Cell> cells) => Template(
-      id: 't',
-      name: 'n',
-      page: const PageSize.a4(),
+TemplatePage _tpl(List<Cell> cells) => TemplatePage(
       grid: GridFrame.uniform(
           xMm: 10, yMm: 10, cols: 4, rows: 4, colWidthMm: 20, rowHeightMm: 10),
       cells: cells,

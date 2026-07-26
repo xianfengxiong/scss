@@ -11,27 +11,33 @@ import 'package:scss_grid/sample/sample_template.dart';
 void main() {
   test('centerGridX derives xMm from the column total', () {
     // 12 * 15 = 180mm on a 210mm page → x = 15 regardless of the stored x.
-    final offCenter = sampleTemplate().copyWith(
-        grid: sampleTemplate().grid.copyWith(xMm: 10.0));
-    expect(centerGridX(offCenter).grid.xMm, 15.0);
+    final t = sampleTemplate();
+    final offCenter =
+        t.pages[0].copyWith(grid: t.pages[0].grid.copyWith(xMm: 10.0));
+    expect(centerGridX(offCenter, t.page).grid.xMm, 15.0);
     // Already centered → unchanged instance data.
-    expect(centerGridX(centerGridX(offCenter)).grid.xMm, 15.0);
+    expect(centerGridX(centerGridX(offCenter, t.page), t.page).grid.xMm, 15.0);
   });
 
   test('centerGridX leaves an over-wide frame alone for the guards to reject',
       () {
-    final tooWide = sampleTemplate().copyWith(
+    final t = sampleTemplate();
+    final tooWide = t.pages[0].copyWith(
       grid: GridFrame.uniform(
           xMm: 0, yMm: 10, cols: 12, rows: 16, colWidthMm: 20, rowHeightMm: 8),
     );
-    expect(centerGridX(tooWide).grid.xMm, 0.0);
+    expect(centerGridX(tooWide, t.page).grid.xMm, 0.0);
   });
 
   testWidgets('opening an off-center legacy template saves it centered',
       (tester) async {
     final store = InMemoryTemplateStore();
-    final legacy = sampleTemplate().copyWith(
-        id: 'tpl_1', grid: sampleTemplate().grid.copyWith(xMm: 10.0));
+    final base = sampleTemplate();
+    final legacy = base.copyWith(
+        id: 'tpl_1',
+        pages: [
+          base.pages[0].copyWith(grid: base.pages[0].grid.copyWith(xMm: 10.0))
+        ]);
     await store.upsert(legacy);
 
     await tester.pumpWidget(MaterialApp(
@@ -44,7 +50,7 @@ void main() {
     await tester.tap(find.byTooltip('Save'));
     await tester.pumpAndSettle();
 
-    expect((await store.get('tpl_1'))?.grid.xMm, 15.0);
+    expect((await store.get('tpl_1'))?.pages[0].grid.xMm, 15.0);
   });
 
   testWidgets('canvas page centers horizontally in a wide (desktop) window',

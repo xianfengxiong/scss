@@ -8,9 +8,13 @@ Template _tpl(List<Cell> cells) => Template(
       id: 't',
       name: 'n',
       page: const PageSize.a4(),
-      grid: GridFrame.uniform(
-          xMm: 0, yMm: 0, cols: 6, rows: 4, colWidthMm: 20, rowHeightMm: 10),
-      cells: cells,
+      pages: [
+        TemplatePage(
+          grid: GridFrame.uniform(
+              xMm: 0, yMm: 0, cols: 6, rows: 4, colWidthMm: 20, rowHeightMm: 10),
+          cells: cells,
+        ),
+      ],
     );
 
 void main() {

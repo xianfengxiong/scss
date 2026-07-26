@@ -11,9 +11,14 @@ Template _empty() => Template(
       id: 'e',
       name: 'Empty',
       page: const PageSize.a4(),
-      grid: GridFrame.uniform(
-          xMm: 10, yMm: 10, cols: 12, rows: 16, colWidthMm: 15, rowHeightMm: 8),
-      cells: const [],
+      pages: [
+        TemplatePage(
+          grid: GridFrame.uniform(
+              xMm: 10, yMm: 10, cols: 12, rows: 16,
+              colWidthMm: 15, rowHeightMm: 8),
+          cells: const [],
+        ),
+      ],
     );
 
 void main() {
@@ -55,6 +60,6 @@ void main() {
     await tester.tap(find.byTooltip('Save'));
     await tester.pump();
     final saved = await store.get('e');
-    expect(saved!.cells, isNotEmpty); // a control was placed by the drop
+    expect(saved!.pages[0].cells, isNotEmpty); // a control was placed by the drop
   });
 }

@@ -12,11 +12,16 @@ Template _one() => Template(
       id: 'o',
       name: 'One',
       page: const PageSize.a4(),
-      grid: GridFrame.uniform(
-          xMm: 0, yMm: 0, cols: 6, rows: 6, colWidthMm: 30, rowHeightMm: 30),
-      cells: const [
-        Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'text',
-            props: {'key': 'k', 'hint': ''}),
+      pages: [
+        TemplatePage(
+          grid: GridFrame.uniform(
+              xMm: 0, yMm: 0, cols: 6, rows: 6,
+              colWidthMm: 30, rowHeightMm: 30),
+          cells: const [
+            Cell(id: 'a', col: 0, row: 0, colSpan: 1, type: 'text',
+                props: {'key': 'k', 'hint': ''}),
+          ],
+        ),
       ],
     );
 

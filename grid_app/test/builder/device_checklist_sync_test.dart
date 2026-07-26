@@ -10,9 +10,13 @@ Template _tpl(List<Cell> cells) => Template(
       id: 't',
       name: 'n',
       page: const PageSize.a4(),
-      grid: GridFrame.uniform(
-          xMm: 0, yMm: 0, cols: 8, rows: 20, colWidthMm: 20, rowHeightMm: 8),
-      cells: cells,
+      pages: [
+        TemplatePage(
+          grid: GridFrame.uniform(
+              xMm: 0, yMm: 0, cols: 8, rows: 20, colWidthMm: 20, rowHeightMm: 8),
+          cells: cells,
+        ),
+      ],
     );
 
 Cell _dc() => Cell(
@@ -24,7 +28,7 @@ void main() {
 
   test('reconcileCell: after rowSpan grows, rows follow (geometry path)', () {
     final t = _tpl([_dc().copyWith(rowSpan: 7)]);
-    final out = reconcileCell(t, 'd', reg);
+    final out = reconcileCell(t.pages[0], 'd', reg);
     final cell = out.cells.single;
     expect(DeviceChecklistControl.rowsOf(cell).length, 6); // 7 - header
   });
@@ -34,7 +38,7 @@ void main() {
     final rows = DeviceChecklistControl.rowsOf(_dc())
       ..add({'label': '', 'key': 'r5'});
     final t = _tpl([_dc().copyWith(props: {..._dc().props, 'rows': rows})]);
-    final out = syncRowSpan(t, 'd', reg);
+    final out = syncRowSpan(t.pages[0], 'd', reg);
     expect(out.cells.single.rowSpan, 6); // 5 rows + header
   });
 
@@ -42,14 +46,14 @@ void main() {
     final t = _tpl(const [
       Cell(id: 'n', col: 0, row: 0, type: 'number', props: {'key': 'k'})
     ]);
-    expect(syncRowSpan(t, 'n', reg).cells.single.rowSpan, 1);
+    expect(syncRowSpan(t.pages[0], 'n', reg).cells.single.rowSpan, 1);
   });
 
   test('placement initial span: rowSpan=requiredRowSpan, colSpan clamped to free run', () {
     final spec = DeviceChecklistControl();
     // emulate _placeDropped's math on an empty 8-wide grid at (0,0)
     final t = _tpl(const []);
-    final free = freeRunWidth(t, 0, 0); // 8
+    final free = freeRunWidth(t.pages[0], 0, 0); // 8
     final wantCol = spec.defaultColSpan() ?? free; // 6
     final colSpan = wantCol < free ? wantCol : free; // 6
     final tmp = Cell(
@@ -58,7 +62,7 @@ void main() {
     final rowSpan = spec.requiredRowSpan(tmp) ?? 1; // 5
     expect(colSpan, 6);
     expect(rowSpan, 5);
-    final placed = addCell(t, tmp.copyWith(rowSpan: rowSpan));
-    expect(isValid(placed), isTrue); // fits in a 20-row grid
+    final placed = addCell(t.pages[0], tmp.copyWith(rowSpan: rowSpan));
+    expect(isValid(t.withPage(0, placed)), isTrue); // fits in a 20-row grid
   });
 }

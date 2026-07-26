@@ -150,7 +150,8 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
               ListTile(
                 key: ValueKey('pick-template-${t.id}'),
                 title: Text(t.name),
-                subtitle: Text('${t.grid.cols}×${t.grid.rows} · ${t.cells.length} cells'),
+                subtitle: Text(
+                    '${t.pages.length} page(s) · ${t.allCells.length} cells'),
                 onTap: () {
                   picked = t;
                   Navigator.of(sheetCtx).pop();

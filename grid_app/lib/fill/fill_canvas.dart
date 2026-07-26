@@ -22,6 +22,10 @@ import '../model/template.dart';
 /// InteractiveViewer's job).
 class FillCanvas extends StatelessWidget {
   final Template template;
+
+  /// Which of the template's pages to render.
+  final int pageIndex;
+
   final ControlRegistry registry;
 
   /// Current answers, keyed by each control's `dataKey`.
@@ -33,6 +37,7 @@ class FillCanvas extends StatelessWidget {
   const FillCanvas({
     super.key,
     required this.template,
+    this.pageIndex = 0,
     required this.registry,
     required this.data,
     required this.onChanged,
@@ -49,7 +54,8 @@ class FillCanvas extends StatelessWidget {
               ? pageScale(constraints.maxHeight, page.heightMm)
               : double.infinity,
         );
-        final grid = template.grid;
+        final tp = template.pages[pageIndex];
+        final grid = tp.grid;
         return Container(
           width: page.widthMm * scale,
           height: page.heightMm * scale,
@@ -67,8 +73,8 @@ class FillCanvas extends StatelessWidget {
                       border: Border.all(color: const Color(0xFF607D8B))),
                 ),
               ),
-              for (final cell in template.cells) _cell(cell, scale),
-              ...borderLineWidgets(controlOutlineEdges(template), scale),
+              for (final cell in tp.cells) _cell(cell, tp, scale),
+              ...borderLineWidgets(controlOutlineEdges(tp), scale),
             ],
           ),
         );
@@ -76,8 +82,8 @@ class FillCanvas extends StatelessWidget {
     );
   }
 
-  Widget _cell(Cell cell, double scale) {
-    final r = cellRectMm(template.grid, cell);
+  Widget _cell(Cell cell, TemplatePage tp, double scale) {
+    final r = cellRectMm(tp.grid, cell);
     final spec = registry.specFor(cell.type);
     final Widget content;
     if (spec == null) {

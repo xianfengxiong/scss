@@ -198,7 +198,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                         child: ListTile(
                           title: Text(t.name),
                           subtitle: Text(
-                              '${t.grid.cols}×${t.grid.rows} · ${t.cells.length} cells'),
+                              '${t.pages.length} page(s) · ${t.allCells.length} cells'),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

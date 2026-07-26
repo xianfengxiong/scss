@@ -38,6 +38,10 @@ class _FillScreenState extends State<FillScreen> {
   // Working copy of the answers; autosaved to the store (debounce + dispose flush).
   late final Map<String, dynamic> _data = {...widget.survey.data};
 
+  // Multi-page templates: one page on screen at a time, switched by the
+  // bottom navigator. Answers stay one map for the whole template.
+  int _pageIndex = 0;
+
   // Autosave: debounce writes so per-keystroke onChanged doesn't hammer the
   // store; flush pending edits on dispose so backing out never loses input.
   Timer? _saveTimer;
@@ -179,34 +183,74 @@ class _FillScreenState extends State<FillScreen> {
       // canvas still fits to width at 1×, and the user can zoom in (up to 5×)
       // to type, then pan around. No vertical ScrollView (it would steal taps);
       // InteractiveViewer's own pan handles moving around when zoomed.
-      body: Padding(
-        padding: const EdgeInsets.all(kCanvasPad),
-        child: LayoutBuilder(
-          builder: (context, constraints) => GestureDetector(
-            onDoubleTapDown: (d) => _doubleTapDetails = d,
-            onDoubleTap: _handleDoubleTap,
-            child: Listener(
-              onPointerSignal: (e) => _onPointerSignal(e, constraints.biggest),
-              child: InteractiveViewer(
-                transformationController: _tc,
-                minScale: 1.0,
-                maxScale: _maxScale,
-                // Desktop: wheel zoom/pan is handled in _onPointerSignal —
-                // IV's own scaling would also zoom on a bare wheel. Phone:
-                // pinch zoom stays IV's job.
-                scaleEnabled: !isDesktopPlatform,
-                child: Center(
-                  child: FillCanvas(
-                    template: widget.template,
-                    registry: widget.registry,
-                    data: _data,
-                    onChanged: _onChanged,
+      body: Column(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(kCanvasPad),
+              child: LayoutBuilder(
+                builder: (context, constraints) => GestureDetector(
+                  onDoubleTapDown: (d) => _doubleTapDetails = d,
+                  onDoubleTap: _handleDoubleTap,
+                  child: Listener(
+                    onPointerSignal: (e) =>
+                        _onPointerSignal(e, constraints.biggest),
+                    child: InteractiveViewer(
+                      transformationController: _tc,
+                      minScale: 1.0,
+                      maxScale: _maxScale,
+                      // Desktop: wheel zoom/pan is handled in
+                      // _onPointerSignal — IV's own scaling would also zoom
+                      // on a bare wheel. Phone: pinch zoom stays IV's job.
+                      scaleEnabled: !isDesktopPlatform,
+                      child: Center(
+                        child: FillCanvas(
+                          template: widget.template,
+                          pageIndex: _pageIndex,
+                          registry: widget.registry,
+                          data: _data,
+                          onChanged: _onChanged,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
+          if (widget.template.pages.length > 1) _pageBar(),
+        ],
+      ),
+    );
+  }
+
+  /// Bottom page switcher, only for multi-page templates. Switching resets
+  /// the zoom so the new page starts fully visible.
+  Widget _pageBar() {
+    final count = widget.template.pages.length;
+    void go(int i) => setState(() {
+          _pageIndex = i.clamp(0, count - 1);
+          _tc.value = Matrix4.identity();
+        });
+    return SafeArea(
+      top: false,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            key: const ValueKey('fill-page-prev'),
+            icon: const Icon(Icons.chevron_left),
+            onPressed: _pageIndex > 0 ? () => go(_pageIndex - 1) : null,
+          ),
+          Text('${_pageIndex + 1} / $count',
+              key: const ValueKey('fill-page-indicator')),
+          IconButton(
+            key: const ValueKey('fill-page-next'),
+            icon: const Icon(Icons.chevron_right),
+            onPressed:
+                _pageIndex < count - 1 ? () => go(_pageIndex + 1) : null,
+          ),
+        ],
       ),
     );
   }

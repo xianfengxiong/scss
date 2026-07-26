@@ -12,9 +12,14 @@ Template _empty() => Template(
       id: 'e',
       name: 'Empty',
       page: const PageSize.a4(),
-      grid: GridFrame.uniform(
-          xMm: 10, yMm: 10, cols: 12, rows: 16, colWidthMm: 15, rowHeightMm: 8),
-      cells: const [],
+      pages: [
+        TemplatePage(
+          grid: GridFrame.uniform(
+              xMm: 10, yMm: 10, cols: 12, rows: 16,
+              colWidthMm: 15, rowHeightMm: 8),
+          cells: const [],
+        ),
+      ],
     );
 
 void main() {
@@ -46,8 +51,8 @@ void main() {
     await tester.tap(find.byTooltip('Save'));
     await tester.pump();
     final saved = await store.get('e');
-    expect(saved!.cells.length, 1);
-    expect(saved.cells.single.type, 'text');
+    expect(saved!.pages[0].cells.length, 1);
+    expect(saved.pages[0].cells.single.type, 'text');
   });
 
   testWidgets('adding then deleting a control leaves the template empty',
@@ -64,6 +69,6 @@ void main() {
     await tester.tap(find.byTooltip('Save'));
     await tester.pump();
     final saved = await store.get('e');
-    expect(saved!.cells, isEmpty);
+    expect(saved!.pages[0].cells, isEmpty);
   });
 }
