@@ -7,10 +7,13 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../model/cell.dart';
 import '../services/image_service.dart';
+import '../services/media_paths.dart';
 import 'control_spec.dart';
 
 /// A single-photo value control. Fill mode: capture (camera/gallery) → compress
-/// → store; the value is the file path; shows the photo with a ✕ clear button.
+/// → store; the value is the image's file name in the shared store (legacy
+/// rows hold absolute paths — [MediaPaths.resolve] handles both); shows the
+/// photo with a ✕ clear button.
 /// PDF: embeds the photo (bytes resolved via [resolvePdfValue] before render).
 class ImageControl extends ControlSpec {
   /// Injected by the registry so fill mode can capture photos. Null → the
@@ -31,7 +34,7 @@ class ImageControl extends ControlSpec {
   @override
   Future<Object?> resolvePdfValue(Cell cell, Object? value) async {
     if (value is! String || value.isEmpty) return null;
-    final f = File(value);
+    final f = File(MediaPaths.resolve(value));
     if (!await f.exists()) return null;
     return f.readAsBytes();
   }
@@ -104,7 +107,7 @@ class _ImageField extends StatelessWidget {
       return Stack(
         fit: StackFit.expand,
         children: [
-          Image.file(File(path), fit: BoxFit.contain,
+          Image.file(File(MediaPaths.resolve(path)), fit: BoxFit.contain,
               errorBuilder: (_, __, ___) =>
                   const Center(child: Icon(Icons.broken_image, size: 16))),
           Positioned(

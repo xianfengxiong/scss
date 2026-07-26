@@ -1,4 +1,6 @@
 import '../model/template.dart';
+import '../model/tombstone.dart';
+import 'sync_meta_store.dart';
 
 /// Persistence boundary for templates. Screens depend on this, not on Drift,
 /// so the UI is testable with [InMemoryTemplateStore].
@@ -12,9 +14,16 @@ abstract class TemplateStore {
 class InMemoryTemplateStore implements TemplateStore {
   final Map<String, Template> _byId = {};
 
+  /// When given, delete/upsert keep tombstones in step, mirroring the Drift
+  /// store, so sync-engine tests see production semantics.
+  final InMemorySyncMetaStore? meta;
+
+  InMemoryTemplateStore({this.meta});
+
   @override
   Future<void> upsert(Template t) async {
     _byId[t.id] = t;
+    await meta?.removeTombstone(Tombstone.kindTemplate, t.id);
   }
 
   @override
@@ -26,5 +35,7 @@ class InMemoryTemplateStore implements TemplateStore {
   @override
   Future<void> delete(String id) async {
     _byId.remove(id);
+    await meta?.addTombstone(Tombstone(
+        kind: Tombstone.kindTemplate, id: id, deletedAt: DateTime.now()));
   }
 }

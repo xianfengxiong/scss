@@ -7,6 +7,7 @@ import '../fill/fill_screen.dart';
 import '../fill/survey_list_screen.dart';
 import '../fill/survey_name_dialog.dart';
 import '../fill/time_label.dart';
+import '../model/ids.dart';
 import '../model/survey.dart';
 import '../model/template.dart';
 import '../sample/sample_template.dart';
@@ -50,8 +51,9 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
 
   Future<void> _create() async {
     final t = sampleTemplate().copyWith(
-      id: 'tpl_${DateTime.now().millisecondsSinceEpoch}',
+      id: newTemplateId(),
       name: 'New Template',
+      updatedAt: DateTime.now(),
     );
     await widget.store.upsert(t);
     if (!mounted) return;
@@ -125,7 +127,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
         title: 'New survey', initial: '${t.name} ${dateStamp(DateTime.now())}');
     if (name == null || !mounted) return;
     final survey = Survey(
-      id: 'srv_${DateTime.now().millisecondsSinceEpoch}',
+      id: newSurveyId(),
       templateId: t.id,
       name: name,
       updatedAt: DateTime.now(),

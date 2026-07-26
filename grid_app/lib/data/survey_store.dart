@@ -1,4 +1,6 @@
 import '../model/survey.dart';
+import '../model/tombstone.dart';
+import 'sync_meta_store.dart';
 
 /// Persistence boundary for surveys. Screens depend on this, not on Drift,
 /// so the UI is testable with [InMemorySurveyStore]. Mirrors TemplateStore.
@@ -27,9 +29,16 @@ List<Survey> sortByUpdatedDesc(List<Survey> surveys) {
 class InMemorySurveyStore implements SurveyStore {
   final Map<String, Survey> _byId = {};
 
+  /// When given, delete/upsert keep tombstones in step, mirroring the Drift
+  /// store, so sync-engine tests see production semantics.
+  final InMemorySyncMetaStore? meta;
+
+  InMemorySurveyStore({this.meta});
+
   @override
   Future<void> upsert(Survey s) async {
     _byId[s.id] = s;
+    await meta?.removeTombstone(Tombstone.kindSurvey, s.id);
   }
 
   @override
@@ -45,5 +54,7 @@ class InMemorySurveyStore implements SurveyStore {
   @override
   Future<void> delete(String id) async {
     _byId.remove(id);
+    await meta?.addTombstone(Tombstone(
+        kind: Tombstone.kindSurvey, id: id, deletedAt: DateTime.now()));
   }
 }

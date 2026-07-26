@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../model/cell.dart';
 import '../services/image_service.dart';
+import '../services/media_paths.dart';
 import 'control_spec.dart';
 
 /// Grid rows needed to show [count] images in [cols] columns.
@@ -60,7 +61,7 @@ class MultiImageControl extends ControlSpec {
     final out = <Uint8List>[];
     for (final path in _paths(value)) {
       if (path.isEmpty) continue;
-      final f = File(path);
+      final f = File(MediaPaths.resolve(path));
       if (!await f.exists()) continue;
       out.add(await f.readAsBytes());
     }
@@ -251,7 +252,8 @@ class _MultiImageField extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(1),
-            child: Image.file(File(paths[i]), fit: BoxFit.contain,
+            child: Image.file(File(MediaPaths.resolve(paths[i])),
+                fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) =>
                     const Center(child: Icon(Icons.broken_image, size: 14))),
           ),

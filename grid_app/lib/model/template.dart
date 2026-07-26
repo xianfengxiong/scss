@@ -23,12 +23,17 @@ class Template {
   final GridFrame grid;
   final List<Cell> cells;
 
+  /// Last time this template was saved. Null on rows saved before sync
+  /// existed; merge logic treats null as epoch (loses against any real edit).
+  final DateTime? updatedAt;
+
   const Template({
     required this.id,
     required this.name,
     required this.page,
     required this.grid,
     required this.cells,
+    this.updatedAt,
   });
 
   Template copyWith({
@@ -37,6 +42,7 @@ class Template {
     PageSize? page,
     GridFrame? grid,
     List<Cell>? cells,
+    DateTime? updatedAt,
   }) =>
       Template(
         id: id ?? this.id,
@@ -44,6 +50,7 @@ class Template {
         page: page ?? this.page,
         grid: grid ?? this.grid,
         cells: cells ?? this.cells,
+        updatedAt: updatedAt ?? this.updatedAt,
       );
 
   Map<String, dynamic> toJson() => {
@@ -52,6 +59,7 @@ class Template {
         'page': page.toJson(),
         'grid': grid.toJson(),
         'cells': cells.map((c) => c.toJson()).toList(),
+        if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
       };
 
   factory Template.fromJson(Map<String, dynamic> j) => Template(
@@ -62,5 +70,8 @@ class Template {
         cells: (j['cells'] as List)
             .map((e) => Cell.fromJson(e as Map<String, dynamic>))
             .toList(),
+        updatedAt: j['updatedAt'] == null
+            ? null
+            : DateTime.parse(j['updatedAt'] as String),
       );
 }

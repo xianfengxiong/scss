@@ -497,17 +497,434 @@ class SurveyRowsCompanion extends UpdateCompanion<SurveyRow> {
   }
 }
 
+class $TombstoneRowsTable extends TombstoneRows
+    with TableInfo<$TombstoneRowsTable, TombstoneRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TombstoneRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+      'kind', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _deletedAtMeta =
+      const VerificationMeta('deletedAt');
+  @override
+  late final GeneratedColumn<String> deletedAt = GeneratedColumn<String>(
+      'deleted_at', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [kind, id, deletedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'tombstone_rows';
+  @override
+  VerificationContext validateIntegrity(Insertable<TombstoneRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('kind')) {
+      context.handle(
+          _kindMeta, kind.isAcceptableOrUnknown(data['kind']!, _kindMeta));
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(_deletedAtMeta,
+          deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta));
+    } else if (isInserting) {
+      context.missing(_deletedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {kind, id};
+  @override
+  TombstoneRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TombstoneRow(
+      kind: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}kind'])!,
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      deletedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}deleted_at'])!,
+    );
+  }
+
+  @override
+  $TombstoneRowsTable createAlias(String alias) {
+    return $TombstoneRowsTable(attachedDatabase, alias);
+  }
+}
+
+class TombstoneRow extends DataClass implements Insertable<TombstoneRow> {
+  final String kind;
+  final String id;
+  final String deletedAt;
+  const TombstoneRow(
+      {required this.kind, required this.id, required this.deletedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['kind'] = Variable<String>(kind);
+    map['id'] = Variable<String>(id);
+    map['deleted_at'] = Variable<String>(deletedAt);
+    return map;
+  }
+
+  TombstoneRowsCompanion toCompanion(bool nullToAbsent) {
+    return TombstoneRowsCompanion(
+      kind: Value(kind),
+      id: Value(id),
+      deletedAt: Value(deletedAt),
+    );
+  }
+
+  factory TombstoneRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TombstoneRow(
+      kind: serializer.fromJson<String>(json['kind']),
+      id: serializer.fromJson<String>(json['id']),
+      deletedAt: serializer.fromJson<String>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'kind': serializer.toJson<String>(kind),
+      'id': serializer.toJson<String>(id),
+      'deletedAt': serializer.toJson<String>(deletedAt),
+    };
+  }
+
+  TombstoneRow copyWith({String? kind, String? id, String? deletedAt}) =>
+      TombstoneRow(
+        kind: kind ?? this.kind,
+        id: id ?? this.id,
+        deletedAt: deletedAt ?? this.deletedAt,
+      );
+  TombstoneRow copyWithCompanion(TombstoneRowsCompanion data) {
+    return TombstoneRow(
+      kind: data.kind.present ? data.kind.value : this.kind,
+      id: data.id.present ? data.id.value : this.id,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TombstoneRow(')
+          ..write('kind: $kind, ')
+          ..write('id: $id, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(kind, id, deletedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TombstoneRow &&
+          other.kind == this.kind &&
+          other.id == this.id &&
+          other.deletedAt == this.deletedAt);
+}
+
+class TombstoneRowsCompanion extends UpdateCompanion<TombstoneRow> {
+  final Value<String> kind;
+  final Value<String> id;
+  final Value<String> deletedAt;
+  final Value<int> rowid;
+  const TombstoneRowsCompanion({
+    this.kind = const Value.absent(),
+    this.id = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TombstoneRowsCompanion.insert({
+    required String kind,
+    required String id,
+    required String deletedAt,
+    this.rowid = const Value.absent(),
+  })  : kind = Value(kind),
+        id = Value(id),
+        deletedAt = Value(deletedAt);
+  static Insertable<TombstoneRow> custom({
+    Expression<String>? kind,
+    Expression<String>? id,
+    Expression<String>? deletedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (kind != null) 'kind': kind,
+      if (id != null) 'id': id,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TombstoneRowsCompanion copyWith(
+      {Value<String>? kind,
+      Value<String>? id,
+      Value<String>? deletedAt,
+      Value<int>? rowid}) {
+    return TombstoneRowsCompanion(
+      kind: kind ?? this.kind,
+      id: id ?? this.id,
+      deletedAt: deletedAt ?? this.deletedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<String>(deletedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TombstoneRowsCompanion(')
+          ..write('kind: $kind, ')
+          ..write('id: $id, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $KvRowsTable extends KvRows with TableInfo<$KvRowsTable, KvRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $KvRowsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+      'key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+      'value', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [key, value];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'kv_rows';
+  @override
+  VerificationContext validateIntegrity(Insertable<KvRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key')) {
+      context.handle(
+          _keyMeta, key.isAcceptableOrUnknown(data['key']!, _keyMeta));
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+          _valueMeta, value.isAcceptableOrUnknown(data['value']!, _valueMeta));
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {key};
+  @override
+  KvRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return KvRow(
+      key: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}key'])!,
+      value: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}value'])!,
+    );
+  }
+
+  @override
+  $KvRowsTable createAlias(String alias) {
+    return $KvRowsTable(attachedDatabase, alias);
+  }
+}
+
+class KvRow extends DataClass implements Insertable<KvRow> {
+  final String key;
+  final String value;
+  const KvRow({required this.key, required this.value});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key'] = Variable<String>(key);
+    map['value'] = Variable<String>(value);
+    return map;
+  }
+
+  KvRowsCompanion toCompanion(bool nullToAbsent) {
+    return KvRowsCompanion(
+      key: Value(key),
+      value: Value(value),
+    );
+  }
+
+  factory KvRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return KvRow(
+      key: serializer.fromJson<String>(json['key']),
+      value: serializer.fromJson<String>(json['value']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'key': serializer.toJson<String>(key),
+      'value': serializer.toJson<String>(value),
+    };
+  }
+
+  KvRow copyWith({String? key, String? value}) => KvRow(
+        key: key ?? this.key,
+        value: value ?? this.value,
+      );
+  KvRow copyWithCompanion(KvRowsCompanion data) {
+    return KvRow(
+      key: data.key.present ? data.key.value : this.key,
+      value: data.value.present ? data.value.value : this.value,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KvRow(')
+          ..write('key: $key, ')
+          ..write('value: $value')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(key, value);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is KvRow && other.key == this.key && other.value == this.value);
+}
+
+class KvRowsCompanion extends UpdateCompanion<KvRow> {
+  final Value<String> key;
+  final Value<String> value;
+  final Value<int> rowid;
+  const KvRowsCompanion({
+    this.key = const Value.absent(),
+    this.value = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  KvRowsCompanion.insert({
+    required String key,
+    required String value,
+    this.rowid = const Value.absent(),
+  })  : key = Value(key),
+        value = Value(value);
+  static Insertable<KvRow> custom({
+    Expression<String>? key,
+    Expression<String>? value,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (key != null) 'key': key,
+      if (value != null) 'value': value,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  KvRowsCompanion copyWith(
+      {Value<String>? key, Value<String>? value, Value<int>? rowid}) {
+    return KvRowsCompanion(
+      key: key ?? this.key,
+      value: value ?? this.value,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KvRowsCompanion(')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TemplateRowsTable templateRows = $TemplateRowsTable(this);
   late final $SurveyRowsTable surveyRows = $SurveyRowsTable(this);
+  late final $TombstoneRowsTable tombstoneRows = $TombstoneRowsTable(this);
+  late final $KvRowsTable kvRows = $KvRowsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [templateRows, surveyRows];
+      [templateRows, surveyRows, tombstoneRows, kvRows];
 }
 
 typedef $$TemplateRowsTableCreateCompanionBuilder = TemplateRowsCompanion
@@ -803,6 +1220,269 @@ typedef $$SurveyRowsTableProcessedTableManager = ProcessedTableManager<
     (SurveyRow, BaseReferences<_$AppDatabase, $SurveyRowsTable, SurveyRow>),
     SurveyRow,
     PrefetchHooks Function()>;
+typedef $$TombstoneRowsTableCreateCompanionBuilder = TombstoneRowsCompanion
+    Function({
+  required String kind,
+  required String id,
+  required String deletedAt,
+  Value<int> rowid,
+});
+typedef $$TombstoneRowsTableUpdateCompanionBuilder = TombstoneRowsCompanion
+    Function({
+  Value<String> kind,
+  Value<String> id,
+  Value<String> deletedAt,
+  Value<int> rowid,
+});
+
+class $$TombstoneRowsTableFilterComposer
+    extends Composer<_$AppDatabase, $TombstoneRowsTable> {
+  $$TombstoneRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$TombstoneRowsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TombstoneRowsTable> {
+  $$TombstoneRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TombstoneRowsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TombstoneRowsTable> {
+  $$TombstoneRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+}
+
+class $$TombstoneRowsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TombstoneRowsTable,
+    TombstoneRow,
+    $$TombstoneRowsTableFilterComposer,
+    $$TombstoneRowsTableOrderingComposer,
+    $$TombstoneRowsTableAnnotationComposer,
+    $$TombstoneRowsTableCreateCompanionBuilder,
+    $$TombstoneRowsTableUpdateCompanionBuilder,
+    (
+      TombstoneRow,
+      BaseReferences<_$AppDatabase, $TombstoneRowsTable, TombstoneRow>
+    ),
+    TombstoneRow,
+    PrefetchHooks Function()> {
+  $$TombstoneRowsTableTableManager(_$AppDatabase db, $TombstoneRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TombstoneRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TombstoneRowsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TombstoneRowsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> kind = const Value.absent(),
+            Value<String> id = const Value.absent(),
+            Value<String> deletedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TombstoneRowsCompanion(
+            kind: kind,
+            id: id,
+            deletedAt: deletedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String kind,
+            required String id,
+            required String deletedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TombstoneRowsCompanion.insert(
+            kind: kind,
+            id: id,
+            deletedAt: deletedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TombstoneRowsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TombstoneRowsTable,
+    TombstoneRow,
+    $$TombstoneRowsTableFilterComposer,
+    $$TombstoneRowsTableOrderingComposer,
+    $$TombstoneRowsTableAnnotationComposer,
+    $$TombstoneRowsTableCreateCompanionBuilder,
+    $$TombstoneRowsTableUpdateCompanionBuilder,
+    (
+      TombstoneRow,
+      BaseReferences<_$AppDatabase, $TombstoneRowsTable, TombstoneRow>
+    ),
+    TombstoneRow,
+    PrefetchHooks Function()>;
+typedef $$KvRowsTableCreateCompanionBuilder = KvRowsCompanion Function({
+  required String key,
+  required String value,
+  Value<int> rowid,
+});
+typedef $$KvRowsTableUpdateCompanionBuilder = KvRowsCompanion Function({
+  Value<String> key,
+  Value<String> value,
+  Value<int> rowid,
+});
+
+class $$KvRowsTableFilterComposer
+    extends Composer<_$AppDatabase, $KvRowsTable> {
+  $$KvRowsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+      column: $table.key, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get value => $composableBuilder(
+      column: $table.value, builder: (column) => ColumnFilters(column));
+}
+
+class $$KvRowsTableOrderingComposer
+    extends Composer<_$AppDatabase, $KvRowsTable> {
+  $$KvRowsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+      column: $table.key, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get value => $composableBuilder(
+      column: $table.value, builder: (column) => ColumnOrderings(column));
+}
+
+class $$KvRowsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $KvRowsTable> {
+  $$KvRowsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+}
+
+class $$KvRowsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $KvRowsTable,
+    KvRow,
+    $$KvRowsTableFilterComposer,
+    $$KvRowsTableOrderingComposer,
+    $$KvRowsTableAnnotationComposer,
+    $$KvRowsTableCreateCompanionBuilder,
+    $$KvRowsTableUpdateCompanionBuilder,
+    (KvRow, BaseReferences<_$AppDatabase, $KvRowsTable, KvRow>),
+    KvRow,
+    PrefetchHooks Function()> {
+  $$KvRowsTableTableManager(_$AppDatabase db, $KvRowsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$KvRowsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$KvRowsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$KvRowsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> key = const Value.absent(),
+            Value<String> value = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              KvRowsCompanion(
+            key: key,
+            value: value,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String key,
+            required String value,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              KvRowsCompanion.insert(
+            key: key,
+            value: value,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$KvRowsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $KvRowsTable,
+    KvRow,
+    $$KvRowsTableFilterComposer,
+    $$KvRowsTableOrderingComposer,
+    $$KvRowsTableAnnotationComposer,
+    $$KvRowsTableCreateCompanionBuilder,
+    $$KvRowsTableUpdateCompanionBuilder,
+    (KvRow, BaseReferences<_$AppDatabase, $KvRowsTable, KvRow>),
+    KvRow,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -811,4 +1491,8 @@ class $AppDatabaseManager {
       $$TemplateRowsTableTableManager(_db, _db.templateRows);
   $$SurveyRowsTableTableManager get surveyRows =>
       $$SurveyRowsTableTableManager(_db, _db.surveyRows);
+  $$TombstoneRowsTableTableManager get tombstoneRows =>
+      $$TombstoneRowsTableTableManager(_db, _db.tombstoneRows);
+  $$KvRowsTableTableManager get kvRows =>
+      $$KvRowsTableTableManager(_db, _db.kvRows);
 }

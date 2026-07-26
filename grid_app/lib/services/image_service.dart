@@ -4,19 +4,22 @@ import 'dart:typed_data';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
-/// Captures a photo (camera/gallery), compresses it, stores it in the app
-/// documents directory, and returns the file path. Abstracted so controls can
-/// be tested with a fake (the image_picker impl is device-only).
+import 'media_paths.dart';
+
+/// Captures a photo (camera/gallery), compresses it, stores it in the shared
+/// image directory ([MediaPaths.dir]), and returns the saved **file name**
+/// (not a path — names stay valid across devices after sync; display resolves
+/// via [MediaPaths.resolve]). Abstracted so controls can be tested with a
+/// fake (the image_picker impl is device-only).
 abstract class ImageService {
-  /// Pick from [source], compress, store; returns the saved file path, or null
+  /// Pick from [source], compress, store; returns the saved file name, or null
   /// if the user cancelled.
   Future<String?> capture(ImageSource source);
 
   /// Persist raw [bytes] (e.g. a map screenshot) into shared storage and return
-  /// the absolute file path. [ext] is the file extension without the dot.
+  /// the saved file name. [ext] is the file extension without the dot.
   Future<String> saveBytes(Uint8List bytes, {String ext = 'png'});
 }
 
@@ -27,19 +30,11 @@ class ImagePickerImageService implements ImageService {
   final ImagePicker _picker = ImagePicker();
   final Uuid _uuid = const Uuid();
 
-  Future<Directory> _dir() async {
-    final docs = await getApplicationDocumentsDirectory();
-    final dir = Directory(p.join(docs.path, 'survey_images'));
-    if (!await dir.exists()) await dir.create(recursive: true);
-    return dir;
-  }
-
   @override
   Future<String?> capture(ImageSource source) async {
     final picked = await _picker.pickImage(source: source, imageQuality: 95);
     if (picked == null) return null;
-    final dir = await _dir();
-    final target = p.join(dir.path, '${_uuid.v4()}.jpg');
+    final target = p.join(MediaPaths.dir, '${_uuid.v4()}.jpg');
 
     final compressed = await FlutterImageCompress.compressAndGetFile(
       picked.path,
@@ -50,9 +45,9 @@ class ImagePickerImageService implements ImageService {
     );
     if (compressed == null) {
       await File(picked.path).copy(target);
-      return target;
+      return p.basename(target);
     }
-    return _ensureUnder500kb(compressed.path);
+    return p.basename(await _ensureUnder500kb(compressed.path));
   }
 
   /// Re-compress until the file is under 500 KB or the quality floor is hit.
@@ -88,9 +83,8 @@ class ImagePickerImageService implements ImageService {
 
   @override
   Future<String> saveBytes(Uint8List bytes, {String ext = 'png'}) async {
-    final dir = await _dir();
-    final target = p.join(dir.path, '${_uuid.v4()}.$ext');
-    await File(target).writeAsBytes(bytes, flush: true);
-    return target;
+    final name = '${_uuid.v4()}.$ext';
+    await File(p.join(MediaPaths.dir, name)).writeAsBytes(bytes, flush: true);
+    return name;
   }
 }

@@ -8,9 +8,13 @@ import 'data/template_store.dart';
 import 'builder/template_list_screen.dart';
 import 'services/image_service.dart';
 import 'services/location_service.dart';
+import 'services/media_paths.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Survey images resolve against this directory; must be ready before any
+  // control widget builds.
+  await MediaPaths.init();
   final db = AppDatabase.open();
   runApp(ScssGridApp(
     store: DriftTemplateStore(db),

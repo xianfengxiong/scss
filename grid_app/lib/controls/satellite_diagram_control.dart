@@ -10,6 +10,7 @@ import '../model/cell.dart';
 import '../model/pin.dart';
 import '../services/image_service.dart';
 import '../services/location_service.dart';
+import '../services/media_paths.dart';
 import 'control_spec.dart';
 
 /// The screen's return value: updated pins + camera state + the saved PNG path.
@@ -96,7 +97,7 @@ class SatelliteDiagramControl extends ControlSpec {
   Future<Object?> resolvePdfValue(Cell cell, Object? value) async {
     final path = diagramPath(value);
     if (path == null) return null;
-    final f = File(path);
+    final f = File(MediaPaths.resolve(path));
     if (!await f.exists()) return null;
     return f.readAsBytes();
   }
@@ -233,7 +234,7 @@ class _SatelliteField extends StatelessWidget {
           // ratio differs from the cell — may letterbox, but never crops a pin.
           GestureDetector(
             onTap: () => _openMap(context),
-            child: Image.file(File(p), fit: BoxFit.contain,
+            child: Image.file(File(MediaPaths.resolve(p)), fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) =>
                     const Center(child: Icon(Icons.broken_image, size: 16))),
           ),

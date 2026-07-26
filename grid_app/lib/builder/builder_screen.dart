@@ -96,6 +96,7 @@ class _BuilderScreenState extends State<BuilderScreen> {
   }
 
   Future<void> _save() async {
+    _t = _t.copyWith(updatedAt: DateTime.now());
     await widget.store.upsert(_t);
     if (mounted) {
       ScaffoldMessenger.of(context)
