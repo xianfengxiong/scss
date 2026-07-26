@@ -16,21 +16,25 @@ ScssGridApp app() => ScssGridApp(
     );
 
 void main() {
-  testWidgets('app boots to the survey list on phones (fill-first)',
+  // Both ends share one hierarchy (templates → surveys → fill); only the
+  // sync entry behaves differently (host vs client).
+  testWidgets('phone boots to the template list with a sync entry',
       (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
-    expect(find.text('SCSS Surveys'), findsOneWidget);
+    expect(find.text('SCSS Templates'), findsOneWidget);
+    expect(find.byKey(const ValueKey('open-sync')), findsOneWidget);
     debugDefaultTargetPlatformOverride = null;
   });
 
-  testWidgets('app boots to the template list on desktop (design-first)',
+  testWidgets('desktop boots to the template list with a sync entry',
       (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
     expect(find.text('SCSS Templates'), findsOneWidget);
+    expect(find.byKey(const ValueKey('open-sync')), findsOneWidget);
     debugDefaultTargetPlatformOverride = null;
   });
 }

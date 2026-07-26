@@ -48,6 +48,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.drag(find.text('Castle survey'), const Offset(-500, 0));
     await tester.pumpAndSettle();
+    // Swipe now asks first (same confirmation as the buttons).
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
     expect(await surveyStore.all(), isEmpty);
   });
 

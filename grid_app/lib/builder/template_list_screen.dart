@@ -12,6 +12,7 @@ import '../model/template.dart';
 import '../sample/sample_template.dart';
 import '../services/platform_info.dart';
 import '../sync/media_file_store.dart';
+import '../sync/sync_client_screen.dart';
 import '../sync/sync_host_screen.dart';
 import '../widgets/list_icons.dart';
 import 'builder_screen.dart';
@@ -116,12 +117,20 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
     final files = widget.files;
     if (meta == null || files == null) return;
     await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => SyncHostScreen(
-        templates: widget.store,
-        surveys: widget.surveyStore,
-        meta: meta,
-        files: files,
-      ),
+      // Desktop hosts the sync server; the phone connects to it.
+      builder: (_) => isDesktopPlatform
+          ? SyncHostScreen(
+              templates: widget.store,
+              surveys: widget.surveyStore,
+              meta: meta,
+              files: files,
+            )
+          : SyncClientScreen(
+              templates: widget.store,
+              surveys: widget.surveyStore,
+              meta: meta,
+              files: files,
+            ),
     ));
     await _reload();
   }
@@ -172,9 +181,9 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
       appBar: AppBar(
         title: const Text('SCSS Templates'),
         actions: [
-          if (_hasSync && isDesktopPlatform)
+          if (_hasSync)
             IconButton(
-              key: const ValueKey('open-sync-host'),
+              key: const ValueKey('open-sync'),
               icon: const Icon(Icons.sync),
               tooltip: '同步',
               onPressed: _openSync,

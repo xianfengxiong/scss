@@ -1,48 +1,30 @@
 import 'package:flutter/material.dart';
 
-import '../builder/template_list_screen.dart';
 import '../controls/registry.dart';
 import '../data/survey_store.dart';
-import '../data/sync_meta_store.dart';
 import '../data/template_store.dart';
 import '../model/survey.dart';
 import '../model/template.dart';
 import '../services/platform_info.dart';
-import '../sync/media_file_store.dart';
-import '../sync/sync_client_screen.dart';
-import '../sync/sync_host_screen.dart';
-import 'fill_screen.dart';
 import '../widgets/list_icons.dart';
+import 'fill_screen.dart';
 import 'survey_actions.dart';
 import 'time_label.dart';
 
-/// Lists saved surveys: resume one (loads its template, opens FillScreen),
-/// rename, or delete (swipe on phone, button on desktop).
-///
-/// As the phone's home screen ([asHome]) it also carries the survey-first
-/// workflow: a FAB that starts a new survey from a synced template, plus
-/// AppBar entries for sync (the primary phone action) and the template
-/// designer (kept, but secondary — designing happens on the desktop).
+/// All surveys across every template — the flat, most-recent-first view
+/// reached from the template list's AppBar. Day-to-day navigation goes
+/// template → its surveys (TemplateSurveysScreen); this list answers "what
+/// did I work on last", so each row names its template.
 class SurveyListScreen extends StatefulWidget {
   final SurveyStore surveyStore;
   final TemplateStore templateStore;
   final ControlRegistry registry;
-
-  /// Home-screen mode: FAB + templates entry.
-  final bool asHome;
-
-  /// Sync wiring; when either is null the sync entry is hidden.
-  final SyncMetaStore? meta;
-  final MediaFileStore? files;
 
   const SurveyListScreen({
     super.key,
     required this.surveyStore,
     required this.templateStore,
     required this.registry,
-    this.asHome = false,
-    this.meta,
-    this.files,
   });
 
   @override
@@ -92,12 +74,6 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
   }
 
   Future<void> _delete(Survey s) async {
-    await widget.surveyStore.delete(s.id);
-    if (!mounted) return;
-    await _reload();
-  }
-
-  Future<void> _confirmDelete(Survey s) async {
     final yes = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -112,7 +88,10 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
         ],
       ),
     );
-    if (yes == true) await _delete(s);
+    if (yes != true || !mounted) return;
+    await widget.surveyStore.delete(s.id);
+    if (!mounted) return;
+    await _reload();
   }
 
   Future<void> _rename(Survey s) async {
@@ -121,116 +100,15 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
     await _reload();
   }
 
-  /// FAB flow: pick a template, then the shared name→fill flow.
-  Future<void> _newSurvey() async {
-    final templates = await widget.templateStore.all();
-    if (!mounted) return;
-    if (templates.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('还没有模版——先在电脑端设计并同步过来,或到「模版」页新建。')));
-      return;
-    }
-    Template? picked;
-    await showModalBottomSheet<void>(
-      context: context,
-      builder: (sheetCtx) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            const ListTile(title: Text('选择模版', style: TextStyle(fontWeight: FontWeight.bold))),
-            const Divider(height: 1),
-            for (final t in templates)
-              ListTile(
-                key: ValueKey('pick-template-${t.id}'),
-                leading: templateListIcon(context),
-                title: Text(t.name),
-                subtitle: Text(
-                    '${t.pages.length} page(s) · ${t.allCells.length} cells'),
-                onTap: () {
-                  picked = t;
-                  Navigator.of(sheetCtx).pop();
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-    if (picked == null || !mounted) return;
-    await createAndOpenSurvey(context,
-        template: picked!,
-        surveyStore: widget.surveyStore,
-        registry: widget.registry);
-    if (!mounted) return;
-    await _reload();
-  }
-
-  Future<void> _openTemplates() async {
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => TemplateListScreen(
-        store: widget.templateStore,
-        surveyStore: widget.surveyStore,
-        registry: widget.registry,
-        meta: widget.meta,
-        files: widget.files,
-      ),
-    ));
-    await _reload();
-  }
-
-  Future<void> _openSync() async {
-    final meta = widget.meta;
-    final files = widget.files;
-    if (meta == null || files == null) return;
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => isDesktopPlatform
-          // Desktop reaches this list too; sync there means hosting.
-          ? SyncHostScreen(
-              templates: widget.templateStore,
-              surveys: widget.surveyStore,
-              meta: meta,
-              files: files,
-            )
-          : SyncClientScreen(
-              templates: widget.templateStore,
-              surveys: widget.surveyStore,
-              meta: meta,
-              files: files,
-            ),
-    ));
-    await _reload();
-  }
-
-  bool get _hasSync => widget.meta != null && widget.files != null;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.asHome ? 'SCSS Surveys' : 'Surveys'),
-        actions: [
-          if (_hasSync)
-            IconButton(
-              key: const ValueKey('open-sync-client'),
-              icon: const Icon(Icons.sync),
-              tooltip: '同步',
-              onPressed: _openSync,
-            ),
-          if (widget.asHome)
-            IconButton(
-              key: const ValueKey('open-templates'),
-              icon: const Icon(Icons.grid_view_outlined),
-              tooltip: 'Templates',
-              onPressed: _openTemplates,
-            ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('All Surveys')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _surveys.isEmpty
-              ? Center(
-                  child: Text(widget.asHome
-                      ? '还没有调查表。点 + 从模版新建,或先「同步」拉取电脑端的模版。'
-                      : 'No surveys yet. Fill a template to start one.'))
+              ? const Center(
+                  child: Text('No surveys yet. Open a template to start one.'))
               : ListView(
                   children: [
                     for (final s in _surveys)
@@ -246,7 +124,11 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
                           padding: const EdgeInsets.only(right: 16),
                           child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                        onDismissed: (_) => _delete(s),
+                        confirmDismiss: (_) async {
+                          await _delete(s);
+                          // _delete already removed + reloaded on confirm.
+                          return false;
+                        },
                         child: ListTile(
                           leading: surveyListIcon(context),
                           title: Text(s.name),
@@ -268,7 +150,7 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
                                   key: ValueKey('delete-${s.id}'),
                                   icon: const Icon(Icons.delete_outline),
                                   tooltip: 'Delete',
-                                  onPressed: () => _confirmDelete(s),
+                                  onPressed: () => _delete(s),
                                 ),
                             ],
                           ),
@@ -277,14 +159,6 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
                       ),
                   ],
                 ),
-      floatingActionButton: widget.asHome
-          ? FloatingActionButton(
-              key: const ValueKey('new-survey-fab'),
-              onPressed: _newSurvey,
-              tooltip: 'New survey',
-              child: const Icon(Icons.add),
-            )
-          : null,
     );
   }
 }

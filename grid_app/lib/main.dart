@@ -7,11 +7,9 @@ import 'data/survey_store.dart';
 import 'data/sync_meta_store.dart';
 import 'data/template_store.dart';
 import 'builder/template_list_screen.dart';
-import 'fill/survey_list_screen.dart';
 import 'services/image_service.dart';
 import 'services/location_service.dart';
 import 'services/media_paths.dart';
-import 'services/platform_info.dart';
 import 'sync/media_file_store.dart';
 
 Future<void> main() async {
@@ -52,23 +50,15 @@ class ScssGridApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
         title: 'SCSS Survey',
         theme: ThemeData(useMaterial3: true),
-        // Desktop designs (template list + sync host); the phone fills
-        // (survey list + sync client). Same app, platform-appropriate home.
-        home: isDesktopPlatform
-            ? TemplateListScreen(
-                store: store,
-                surveyStore: surveyStore,
-                registry: registry,
-                meta: meta,
-                files: files,
-              )
-            : SurveyListScreen(
-                surveyStore: surveyStore,
-                templateStore: store,
-                registry: registry,
-                asHome: true,
-                meta: meta,
-                files: files,
-              ),
+        // Both ends share one hierarchy: templates → that template's
+        // surveys → fill. Only the sync entry differs (desktop hosts, the
+        // phone connects) — TemplateListScreen picks by platform.
+        home: TemplateListScreen(
+          store: store,
+          surveyStore: surveyStore,
+          registry: registry,
+          meta: meta,
+          files: files,
+        ),
       );
 }
