@@ -83,4 +83,19 @@ void main() {
       expect(find.byKey(const ValueKey('cell-delete')), findsOneWidget);
     });
   });
+
+  testWidgets('grid steppers live in the AppBar title row and work',
+      (tester) async {
+    await onDesktop(tester, () async {
+      Finder inAppBar(Key key) => find.descendant(
+          of: find.byType(AppBar), matching: find.byKey(key));
+      expect(inAppBar(const ValueKey('cols-inc')), findsOneWidget);
+      expect(inAppBar(const ValueKey('rows-inc')), findsOneWidget);
+      expect(find.text('12'), findsOneWidget); // sample: 12 cols
+
+      await tester.tap(find.byKey(const ValueKey('rows-inc')));
+      await tester.pumpAndSettle();
+      expect(find.text('17'), findsOneWidget); // 16 rows + 1
+    });
+  });
 }

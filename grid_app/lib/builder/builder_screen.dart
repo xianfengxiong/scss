@@ -128,16 +128,34 @@ class _BuilderScreenState extends State<BuilderScreen> {
     final selected = _selected;
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_t.name),
-            Text('${_t.grid.cols} × ${_t.grid.rows} grid',
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.normal)),
-          ],
-        ),
+        // Desktop: the grid steppers share the title row (the window is wide
+        // and it frees a whole toolbar row for the canvas). Phone: keep the
+        // stacked title + separate controls row — the AppBar is too narrow.
+        title: isDesktopPlatform
+            ? Row(
+                children: [
+                  Flexible(
+                      child: Text(_t.name, overflow: TextOverflow.ellipsis)),
+                  const SizedBox(width: 24),
+                  _stepper('Cols', _t.grid.cols,
+                      () => _commit(setCols(_t, _t.grid.cols - 1)),
+                      () => _commit(setCols(_t, _t.grid.cols + 1)), 'cols'),
+                  const SizedBox(width: 12),
+                  _stepper('Rows', _t.grid.rows,
+                      () => _commit(setRows(_t, _t.grid.rows - 1)),
+                      () => _commit(setRows(_t, _t.grid.rows + 1)), 'rows'),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_t.name),
+                  Text('${_t.grid.cols} × ${_t.grid.rows} grid',
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.normal)),
+                ],
+              ),
         actions: [
           IconButton(
             key: const ValueKey('builder-rename'),
@@ -208,15 +226,9 @@ class _BuilderScreenState extends State<BuilderScreen> {
             ),
           ),
           const VerticalDivider(width: 1),
-          Expanded(
-            child: Column(
-              children: [
-                _gridControls(),
-                const Divider(height: 1),
-                Expanded(child: _canvasArea()),
-              ],
-            ),
-          ),
+          // Grid steppers live in the AppBar title row on desktop, so the
+          // middle column is all canvas.
+          Expanded(child: _canvasArea()),
           const VerticalDivider(width: 1),
           // Always present (fixed width) so selecting/deselecting never
           // resizes the canvas mid-drag.
@@ -258,26 +270,39 @@ class _BuilderScreenState extends State<BuilderScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: Row(
           children: [
-            const Text('Cols'),
-            _step(() => _commit(setCols(_t, _t.grid.cols - 1)),
+            _stepper('Cols', _t.grid.cols,
+                () => _commit(setCols(_t, _t.grid.cols - 1)),
                 () => _commit(setCols(_t, _t.grid.cols + 1)), 'cols'),
             const SizedBox(width: 16),
-            const Text('Rows'),
-            _step(() => _commit(setRows(_t, _t.grid.rows - 1)),
+            _stepper('Rows', _t.grid.rows,
+                () => _commit(setRows(_t, _t.grid.rows - 1)),
                 () => _commit(setRows(_t, _t.grid.rows + 1)), 'rows'),
           ],
         ),
       );
 
-  Widget _step(VoidCallback dec, VoidCallback inc, String key) => Row(
+  /// `Label − N +` — compact enough for the AppBar title row.
+  Widget _stepper(
+          String label, int value, VoidCallback dec, VoidCallback inc,
+          String key) =>
+      Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Text(label,
+              style:
+                  const TextStyle(fontSize: 13, fontWeight: FontWeight.normal)),
           IconButton(
               key: ValueKey('$key-dec'),
-              icon: const Icon(Icons.remove),
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.remove, size: 18),
               onPressed: dec),
+          Text('$value',
+              style:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
           IconButton(
               key: ValueKey('$key-inc'),
-              icon: const Icon(Icons.add),
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.add, size: 18),
               onPressed: inc),
         ],
       );
