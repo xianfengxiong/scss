@@ -1,8 +1,11 @@
 # 进度 — Smart City Survey System (Flutter Android)
 
-_最后更新:2026-07-15_
+_最后更新:2026-07-26_
 
-## 现状一句话
+## 现状一句话(2026-07-26)
+**双端形态已落地:macOS 桌面端(模版设计为主)+ Android 手机端(填写为主),同一代码库。** 局域网双向同步(LWW+墓碑,含图片,协议 v2)· 模版多页(pages[],页导航+滑动翻页动画)· 管理交互=层级导航(模版 → 该模版调查表 → 填写,双端首页统一模版列表)· 桌面 IDE 三栏设计器(左控件/右属性可折叠,Ctrl+滚轮缩放)· 批量增量导出 PDF(每调查表一个多页 PDF,manifest 签名跳过未变化)· 全面国际化(en/zh,跟随系统+App 内切换)。330 测试绿。本日全部工作见 git log(76e0564..HEAD)与 memory;下方为 2026-07-15 前的历史汇总。
+
+## 历史现状(2026-07-15)
 **greenfield 重写进行中,现场能力(Phase 3)基本收官。** A4 网格模版构建器。建模(网格/拖拽/VB 工具箱/边框合并)+ 填写闭环 + PDF 导出(WYSIWYG)均已合并 `main`;控件已覆盖 title / label / text / number / coordinate(GPS) / image / multiImage / **satelliteDiagram(卫星图打钉截图)**。**最新:Phase 3d satelliteDiagram 已 TDD 实现、真机 SM-A528B 验收过、合并 main @ `f1daeb4`,173 测试绿、analyze 0。** 工程在 `grid_app/`(包名 `scss_grid`)。**Phase 4 `deviceChecklist`(网格原生设备勾选表)经 SDD 9 任务 TDD 实现 + 真机 SM-A528B 验收(2026-07-01)修 7 项 UI 问题(PDF 对勾非 X / 勾选框溢出 / 列宽可调 / 标题竖切 / 文字竖向居中 等)并端到端(建模→填写→PDF WYSIWYG)验证通过;197 测试绿、analyze 0,Phase 4 已合并 main @ `2e1344d`(快进,分支已删)。**2026-07-15 决策:Phase 4 余下控件(select/date/checkbox/staticText/调色板)暂缓——当前业务用不到;NotoSansSC 取消——现场用不到中文(偶发中文在 PDF 显示为方框、不崩,可接受)。Phase 5 = 纯 release 构建**(正式签名 keystore 进 git(纯本地仓库)/ 显示名 SCSS Survey / split-per-abi arm64 交付,见 `docs/superpowers/specs/2026-07-15-phase5-release-build-design.md` 与 `grid_app/BUILD_NOTES.md`)。另:本机 Flutter 已升 3.44.6(Dart 3.12.2),工程随之适配 Gradle 8.7 / AGP 8.6 + 修 3 处 deprecation,197 测试绿、analyze 0。**
 
 > 注:本文件的逐阶段细节维护在 memory `scss-project-status.md`(更全更新);Phase 2 之后各阶段的完整设计/计划见 `docs/superpowers/specs/` 与 `docs/superpowers/plans/`,实现细节见 git 历史。下方为滚动汇总。

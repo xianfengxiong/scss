@@ -51,7 +51,7 @@ flutter build apk --release --split-per-abi
 
 - 升级 Flutter 后若构建报 "lower than Flutter's minimum supported version",按报错逐个抬 Gradle wrapper(`android/gradle/wrapper/gradle-wrapper.properties`)与 AGP(`android/settings.gradle`)。
 - `pubspec.yaml` 里 drift 2.28.2 / drift_dev 2.28.0 / build_runner 2.4.15 的钉版理由是"Dart 3.6.1 上限",**现已升 Dart 3.12.2,钉版可择机放开**(放开属独立工作,需跑全量测试);geolocator ^13 的钉版理由(14.x 需新 Flutter API)同样可能已失效。动版本前先全量 `flutter test`。
-- 旧 app 的钉版经验另见 `app/BUILD_NOTES.md`(share_plus/connectivity_plus 相关,grid_app 未引入)。
+- 旧 app 工程(含其 BUILD_NOTES 钉版经验,share_plus/connectivity_plus 相关)已于 2026-07-26 删除;需要时从 git 快照 `b8d431a` 找回。
 
 ## 安装(真机 SM-A528B)
 

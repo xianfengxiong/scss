@@ -1,5 +1,7 @@
 # Smart City Survey System — Android App (Flutter)
 
+> **⚠️ 历史文档(2026-06 立项背景)。** 现状与此已有很大出入:app 已是 macOS 桌面(设计)+ Android(填写)双端形态,局域网双向同步、模版多页、批量 PDF 导出、双语界面均已实现。当前进度见 `PROGRESS.md`,构建手册见 `grid_app/BUILD_NOTES.md`。
+
 ## Context（为什么做）
 
 团队目前用 Excel 记录现场工程勘测（真实样本见 `New Microsoft Excel Worksheet.xlsx`——Site **647**，阿尔巴尼亚 Gjirokastër），照片靠手工管理。目标是做一个**离线优先的 Android App**：现场采集 GPS + 照片 + 结构化工程数据，并导出标准化的 **A4 单页 PDF 报告**，取代"Excel + 手工拍照"的流程，沉淀标准化、可导出的数据资产。
