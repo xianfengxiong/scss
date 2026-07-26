@@ -13,7 +13,6 @@ import '../sync/sync_client_screen.dart';
 import '../sync/sync_host_screen.dart';
 import 'fill_screen.dart';
 import 'survey_actions.dart';
-import 'survey_name_dialog.dart';
 import 'time_label.dart';
 
 /// Lists saved surveys: resume one (loads its template, opens FillScreen),
@@ -116,14 +115,7 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
   }
 
   Future<void> _rename(Survey s) async {
-    final name = await promptForSurveyName(context,
-        title: 'Rename survey', initial: s.name);
-    if (name == null || !mounted) return;
-    // Re-read: the list snapshot can lag a just-disposed FillScreen's
-    // autosave flush; renaming the stale copy would clobber that edit.
-    final latest = await widget.surveyStore.get(s.id) ?? s;
-    await widget.surveyStore
-        .upsert(latest.copyWith(name: name, updatedAt: DateTime.now()));
+    await renameSurvey(context, widget.surveyStore, s);
     if (!mounted) return;
     await _reload();
   }

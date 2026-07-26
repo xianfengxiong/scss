@@ -4,9 +4,9 @@ import '../controls/registry.dart';
 import '../data/survey_store.dart';
 import '../data/sync_meta_store.dart';
 import '../data/template_store.dart';
-import '../fill/survey_actions.dart';
 import '../fill/survey_list_screen.dart';
 import '../fill/survey_name_dialog.dart';
+import '../fill/template_surveys_screen.dart';
 import '../model/ids.dart';
 import '../model/template.dart';
 import '../sample/sample_template.dart';
@@ -15,10 +15,10 @@ import '../sync/media_file_store.dart';
 import '../sync/sync_host_screen.dart';
 import 'builder_screen.dart';
 
-/// The design side's list (home screen on desktop): create a template
-/// (seeded from the sample layout), open one to edit, fill it, or delete.
-/// On desktop the AppBar also hosts the sync server screen, and a visible
-/// delete button replaces swipe-to-dismiss.
+/// The design side's list (home screen on desktop): tapping a template opens
+/// its surveys (fill side); the row's trailing buttons rename it, open the
+/// designer, or delete it. On desktop the AppBar also hosts the sync server
+/// screen.
 class TemplateListScreen extends StatefulWidget {
   final TemplateStore store;
   final SurveyStore surveyStore;
@@ -44,6 +44,7 @@ class TemplateListScreen extends StatefulWidget {
 
 class _TemplateListScreenState extends State<TemplateListScreen> {
   List<Template> _templates = [];
+  Map<String, int> _surveyCounts = {};
   bool _loading = true;
 
   @override
@@ -54,9 +55,14 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
 
   Future<void> _reload() async {
     final list = await widget.store.all();
+    final surveys = await widget.surveyStore.all();
     if (!mounted) return;
     setState(() {
       _templates = list;
+      _surveyCounts = {};
+      for (final s in surveys) {
+        _surveyCounts[s.templateId] = (_surveyCounts[s.templateId] ?? 0) + 1;
+      }
       _loading = false;
     });
   }
@@ -80,11 +86,15 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
     await _reload();
   }
 
-  Future<void> _fill(Template t) async {
-    await startSurveyForTemplate(context,
+  /// Row tap: into this template's surveys (the fill side).
+  Future<void> _openSurveysOf(Template t) async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => TemplateSurveysScreen(
         template: t,
         surveyStore: widget.surveyStore,
-        registry: widget.registry);
+        registry: widget.registry,
+      ),
+    ));
     if (!mounted) return;
     await _reload();
   }
@@ -182,51 +192,38 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
               : ListView(
                   children: [
                     for (final t in _templates)
-                      Dismissible(
+                      ListTile(
                         key: ValueKey(t.id),
-                        direction: isDesktopPlatform
-                            ? DismissDirection.none
-                            : DismissDirection.endToStart,
-                        background: const SizedBox.shrink(),
-                        secondaryBackground: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 16),
-                          child: const Icon(Icons.delete, color: Colors.white),
+                        title: Text(t.name),
+                        subtitle: Text(
+                            '${t.pages.length} page(s) · ${t.allCells.length} cells · '
+                            '${_surveyCounts[t.id] ?? 0} 份调查表'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              key: ValueKey('rename-${t.id}'),
+                              icon: const Icon(Icons.edit_outlined),
+                              tooltip: 'Rename',
+                              onPressed: () => _rename(t),
+                            ),
+                            IconButton(
+                              key: ValueKey('design-${t.id}'),
+                              icon: const Icon(Icons.design_services_outlined),
+                              tooltip: 'Edit design',
+                              onPressed: () => _open(t),
+                            ),
+                            IconButton(
+                              key: ValueKey('delete-${t.id}'),
+                              icon: const Icon(Icons.delete_outline),
+                              tooltip: 'Delete',
+                              onPressed: () => _confirmDelete(t),
+                            ),
+                          ],
                         ),
-                        onDismissed: (_) => _delete(t),
-                        child: ListTile(
-                          title: Text(t.name),
-                          subtitle: Text(
-                              '${t.pages.length} page(s) · ${t.allCells.length} cells'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                key: ValueKey('rename-${t.id}'),
-                                icon: const Icon(Icons.edit_outlined),
-                                tooltip: 'Rename',
-                                onPressed: () => _rename(t),
-                              ),
-                              IconButton(
-                                key: ValueKey('fill-${t.id}'),
-                                icon: const Icon(Icons.edit_note),
-                                tooltip: 'Fill',
-                                onPressed: () => _fill(t),
-                              ),
-                              // Swipe-to-delete is undiscoverable with a
-                              // mouse; desktop gets a visible button.
-                              if (isDesktopPlatform)
-                                IconButton(
-                                  key: ValueKey('delete-${t.id}'),
-                                  icon: const Icon(Icons.delete_outline),
-                                  tooltip: 'Delete',
-                                  onPressed: () => _confirmDelete(t),
-                                ),
-                            ],
-                          ),
-                          onTap: () => _open(t),
-                        ),
+                        // The row itself is the fill side: this template's
+                        // surveys, with the new-survey entry inside.
+                        onTap: () => _openSurveysOf(t),
                       ),
                   ],
                 ),

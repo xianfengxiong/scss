@@ -9,68 +9,17 @@ import 'fill_screen.dart';
 import 'survey_name_dialog.dart';
 import 'time_label.dart';
 
-/// Fill = resume-or-create for one template: no surveys yet → straight to
-/// the name dialog; otherwise a sheet lists this template's surveys (newest
-/// first) plus a "New survey" item. Shared by the template list's Fill
-/// action and the phone home's new-survey flow.
-Future<void> startSurveyForTemplate(
-  BuildContext context, {
-  required Template template,
-  required SurveyStore surveyStore,
-  required ControlRegistry registry,
-}) async {
-  final existing = await surveyStore.byTemplate(template.id);
-  if (!context.mounted) return;
-  if (existing.isEmpty) {
-    await createAndOpenSurvey(context,
-        template: template, surveyStore: surveyStore, registry: registry);
-    return;
-  }
-
-  Survey? resume;
-  var createNew = false;
-  await showModalBottomSheet<void>(
-    context: context,
-    builder: (sheetCtx) => SafeArea(
-      child: ListView(
-        shrinkWrap: true,
-        children: [
-          ListTile(
-            key: const ValueKey('fill-new'),
-            leading: const Icon(Icons.add),
-            title: const Text('New survey'),
-            onTap: () {
-              createNew = true;
-              Navigator.of(sheetCtx).pop();
-            },
-          ),
-          const Divider(height: 1),
-          for (final s in existing)
-            ListTile(
-              key: ValueKey('fill-resume-${s.id}'),
-              title: Text(s.name),
-              subtitle: Text(
-                  '${updatedLabel(s.updatedAt, DateTime.now())} · ${s.data.length} fields'),
-              onTap: () {
-                resume = s;
-                Navigator.of(sheetCtx).pop();
-              },
-            ),
-        ],
-      ),
-    ),
-  );
-  if (!context.mounted) return;
-  if (createNew) {
-    await createAndOpenSurvey(context,
-        template: template, surveyStore: surveyStore, registry: registry);
-  } else if (resume != null) {
-    await openFillScreen(context,
-        template: template,
-        survey: resume!,
-        surveyStore: surveyStore,
-        registry: registry);
-  }
+/// Rename with the shared dialog. Re-reads the latest row first: the caller's
+/// list snapshot can lag a just-disposed FillScreen's autosave flush, and
+/// renaming the stale copy would clobber that edit.
+Future<void> renameSurvey(
+    BuildContext context, SurveyStore surveyStore, Survey s) async {
+  final name = await promptForSurveyName(context,
+      title: 'Rename survey', initial: s.name);
+  if (name == null || !context.mounted) return;
+  final latest = await surveyStore.get(s.id) ?? s;
+  await surveyStore
+      .upsert(latest.copyWith(name: name, updatedAt: DateTime.now()));
 }
 
 /// Name dialog → persist immediately (a named empty survey is a legitimate

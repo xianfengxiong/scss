@@ -1,0 +1,322 @@
+<title>模版与调查表管理 — 交互原型</title>
+<style>
+  :root {
+    --ink: #22303a;          /* blueGrey-tinted near-black */
+    --ink-2: #5b6b76;        /* secondary text */
+    --ink-3: #8fa0ab;        /* tertiary / meta */
+    --ground: #f5f7f8;       /* app ground, cool grey */
+    --panel: #ffffff;        /* list panels */
+    --line: #dde4e8;         /* hairlines */
+    --accent: #00796b;       /* deep teal — survey/field-work tool */
+    --accent-ink: #ffffff;
+    --accent-soft: #e0f2ef;  /* selected row wash */
+    --danger: #c62828;
+    --shadow: 0 1px 3px rgba(34, 48, 58, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #e2e8ec; --ink-2: #a4b2bb; --ink-3: #6d7d88;
+      --ground: #171d21; --panel: #1f272c; --line: #303b42;
+      --accent: #4db6a5; --accent-ink: #0c1512; --accent-soft: #24393a;
+      --danger: #ef6e6e; --shadow: 0 1px 3px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e8ec; --ink-2: #a4b2bb; --ink-3: #6d7d88;
+    --ground: #171d21; --panel: #1f272c; --line: #303b42;
+    --accent: #4db6a5; --accent-ink: #0c1512; --accent-soft: #24393a;
+    --danger: #ef6e6e; --shadow: 0 1px 3px rgba(0,0,0,.4);
+  }
+  :root[data-theme="light"] {
+    --ink: #22303a; --ink-2: #5b6b76; --ink-3: #8fa0ab;
+    --ground: #f5f7f8; --panel: #ffffff; --line: #dde4e8;
+    --accent: #00796b; --accent-ink: #ffffff; --accent-soft: #e0f2ef;
+    --danger: #c62828; --shadow: 0 1px 3px rgba(34,48,58,.08);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font: 14px/1.45 -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    display: flex; flex-direction: column;
+  }
+  button { font: inherit; cursor: pointer; }
+
+  /* ── prototype note ─────────────────────────────── */
+  .note {
+    background: var(--accent-soft); color: var(--ink);
+    padding: 8px 16px; font-size: 12.5px; display: flex; gap: 8px; align-items: center;
+    border-bottom: 1px solid var(--line);
+  }
+  .note b { color: var(--accent); }
+  .note button { margin-left: auto; border: 0; background: none; color: var(--ink-2); font-size: 15px; }
+
+  /* ── app bar ────────────────────────────────────── */
+  .appbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  .appbar .logo {
+    width: 26px; height: 26px; border-radius: 6px; background: var(--accent);
+    color: var(--accent-ink); display: grid; place-items: center; font-size: 13px; font-weight: 700;
+  }
+  .appbar h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: .01em; }
+  .appbar .spacer { flex: 1; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+    border-radius: 7px; padding: 6px 12px; font-size: 13px;
+  }
+  .btn:hover { border-color: var(--ink-3); }
+  .btn:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.danger { color: var(--danger); }
+
+  /* ── two-pane layout ────────────────────────────── */
+  .main { flex: 1; display: flex; min-height: 0; }
+
+  .sidebar {
+    width: 264px; flex: none; display: flex; flex-direction: column;
+    background: var(--panel); border-right: 1px solid var(--line);
+  }
+  .sidebar .head {
+    padding: 12px 14px 6px; font-size: 11.5px; font-weight: 600;
+    color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em;
+  }
+  .sidebar .list { flex: 1; overflow-y: auto; padding: 0 8px; }
+  .row {
+    position: relative; display: flex; flex-direction: column; gap: 1px;
+    padding: 8px 10px; border-radius: 8px; cursor: pointer;
+  }
+  .row:hover { background: color-mix(in srgb, var(--line) 40%, transparent); }
+  .row.sel { background: var(--accent-soft); }
+  .row.sel::before {
+    content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+    border-radius: 2px; background: var(--accent);
+  }
+  .row .name { font-weight: 550; display: flex; align-items: center; gap: 6px; }
+  .row .meta { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .row .count {
+    margin-left: auto; font-size: 11.5px; font-variant-numeric: tabular-nums;
+    background: color-mix(in srgb, var(--ink-3) 18%, transparent);
+    color: var(--ink-2); border-radius: 99px; padding: 1px 8px;
+  }
+  .row.sel .count { background: var(--accent); color: var(--accent-ink); }
+  .row .acts { position: absolute; right: 8px; bottom: 6px; display: none; gap: 2px; }
+  .row:hover .acts { display: flex; }
+  .iconbtn {
+    border: 0; background: var(--panel); box-shadow: var(--shadow);
+    border-radius: 6px; width: 26px; height: 26px; font-size: 13px; color: var(--ink-2);
+    display: grid; place-items: center;
+  }
+  .iconbtn:hover { color: var(--ink); }
+  .iconbtn.danger:hover { color: var(--danger); }
+  .sidebar .foot { padding: 10px; border-top: 1px solid var(--line); }
+  .sidebar .foot .btn { width: 100%; justify-content: center; }
+
+  .all-surveys { margin: 6px 8px 2px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+  .all-surveys .row { flex-direction: row; align-items: center; }
+
+  /* ── detail pane ────────────────────────────────── */
+  .detail { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .detail .dhead {
+    padding: 18px 24px 14px; border-bottom: 1px solid var(--line); background: var(--panel);
+    display: flex; align-items: flex-start; gap: 16px;
+  }
+  .dhead .title { font-size: 19px; font-weight: 650; margin: 0 0 2px; text-wrap: balance; }
+  .dhead .sub { color: var(--ink-3); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .dhead .actions { margin-left: auto; display: flex; gap: 8px; flex: none; align-items: center; }
+
+  .survey-list { flex: 1; overflow-y: auto; padding: 14px 24px 24px; }
+  .group-label {
+    font-size: 11.5px; font-weight: 600; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: .08em; margin: 14px 2px 6px;
+  }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    overflow: hidden;
+  }
+  .srow {
+    display: flex; align-items: center; gap: 14px; padding: 11px 16px;
+    border-bottom: 1px solid var(--line); cursor: pointer; position: relative;
+  }
+  .card .srow:last-child { border-bottom: 0; }
+  .srow:hover { background: color-mix(in srgb, var(--line) 30%, transparent); }
+  .srow .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--accent); }
+  .srow .dot.empty { background: var(--ink-3); opacity: .45; }
+  .srow .sname { font-weight: 550; }
+  .srow .stpl { font-size: 12px; color: var(--accent); }
+  .srow .smeta { margin-left: auto; font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; flex: none; }
+  .srow .acts { display: none; gap: 2px; flex: none; }
+  .srow:hover .acts { display: flex; }
+  .srow:hover .smeta { display: none; }
+
+  .empty {
+    text-align: center; color: var(--ink-3); padding: 56px 20px;
+    border: 1.5px dashed var(--line); border-radius: 10px; margin-top: 14px;
+  }
+  .empty .btn { margin-top: 12px; }
+
+  /* toast */
+  #toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(80px);
+    background: var(--ink); color: var(--ground); padding: 9px 18px; border-radius: 8px;
+    font-size: 13px; transition: transform .25s; box-shadow: var(--shadow); max-width: 80vw;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+
+  .kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; font-size: 11px; }
+</style>
+
+<div class="note" id="note">
+  <span><b>交互原型</b> — 桌面端「双栏主从」管理界面。点击左栏切换模版,悬停行显示操作;所有按钮可点(以提示演示)。确认方向后按此实现到 app。</span>
+  <button onclick="document.getElementById('note').remove()" aria-label="关闭说明">✕</button>
+</div>
+
+<div class="appbar">
+  <div class="logo">S</div>
+  <h1>SCSS Survey</h1>
+  <div class="spacer"></div>
+  <button class="btn" onclick="toast('打开同步页(现有 SyncHostScreen)')">⇅ 同步</button>
+</div>
+
+<div class="main">
+  <nav class="sidebar">
+    <div class="all-surveys">
+      <div class="row" id="rowAll" tabindex="0" onclick="selectAll()">
+        <span class="name">全部调查表</span>
+        <span class="count" id="allCount"></span>
+      </div>
+    </div>
+    <div class="head">模版</div>
+    <div class="list" id="tplList"></div>
+    <div class="foot">
+      <button class="btn" onclick="toast('新建模版 → 直接进入设计器(现有流程)')">＋ 新建模版</button>
+    </div>
+  </nav>
+
+  <section class="detail" id="detail"></section>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+  const templates = [
+    { id: 't1', name: '铁塔站点勘测 v2', pages: 3, cells: 42, updated: '昨天 16:20' },
+    { id: 't2', name: '机房设备清点', pages: 1, cells: 18, updated: '3 天前' },
+    { id: 't3', name: '光缆路由巡检', pages: 2, cells: 27, updated: '上周五' },
+  ];
+  const surveys = [
+    { id: 's1', tpl: 't1', name: '铁塔站点勘测 v2 2026-07-25 北郊 A012', updated: '2 小时前', fields: 31 },
+    { id: 's2', tpl: 't1', name: '铁塔站点勘测 v2 2026-07-24 东湖 B003', updated: '昨天 18:04', fields: 42 },
+    { id: 's3', tpl: 't1', name: '铁塔站点勘测 v2 2026-07-24 东湖 B004', updated: '昨天 11:32', fields: 40 },
+    { id: 's4', tpl: 't1', name: '铁塔站点勘测 v2 2026-07-21 城南 C110', updated: '5 天前', fields: 42 },
+    { id: 's5', tpl: 't1', name: '试填(勿删)', updated: '上周三', fields: 6 },
+    { id: 's6', tpl: 't2', name: '机房设备清点 2026-07-23 一号机房', updated: '3 天前', fields: 18 },
+    { id: 's7', tpl: 't2', name: '机房设备清点 2026-07-23 二号机房', updated: '3 天前', fields: 12 },
+  ];
+  let sel = 't1';
+
+  const byTpl = id => surveys.filter(s => s.tpl === id);
+  const tplName = id => templates.find(t => t.id === id)?.name ?? id;
+
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = '原型:' + msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 2200);
+  }
+
+  function renderSidebar() {
+    document.getElementById('allCount').textContent = surveys.length;
+    document.getElementById('rowAll').classList.toggle('sel', sel === null);
+    const list = document.getElementById('tplList');
+    list.innerHTML = '';
+    for (const t of templates) {
+      const n = byTpl(t.id).length;
+      const row = document.createElement('div');
+      row.className = 'row' + (sel === t.id ? ' sel' : '');
+      row.tabIndex = 0;
+      row.innerHTML = `
+        <span class="name">${t.name} <span class="count">${n}</span></span>
+        <span class="meta">${t.pages} 页 · ${t.cells} 控件 · ${t.updated}</span>
+        <span class="acts">
+          <button class="iconbtn" title="改名" onclick="event.stopPropagation(); toast('改名「${t.name}」(对话框)')">✎</button>
+          <button class="iconbtn danger" title="删除" onclick="event.stopPropagation(); toast('删除「${t.name}」(确认对话框;其调查表保留)')">🗑</button>
+        </span>`;
+      row.onclick = () => { sel = t.id; render(); };
+      row.onkeydown = e => { if (e.key === 'Enter') { sel = t.id; render(); } };
+      list.appendChild(row);
+    }
+  }
+
+  function surveyRow(s, showTpl) {
+    return `
+      <div class="srow" tabindex="0" onclick="toast('打开填写「${s.name}」(FillScreen)')">
+        <span class="dot${s.fields < 10 ? ' empty' : ''}" title="${s.fields < 10 ? '刚开始填' : '填写中'}"></span>
+        <span>
+          <div class="sname">${s.name}</div>
+          ${showTpl ? `<div class="stpl">${tplName(s.tpl)}</div>` : ''}
+        </span>
+        <span class="smeta">${s.updated} · ${s.fields} 字段</span>
+        <span class="acts">
+          <button class="iconbtn" title="导出 PDF" onclick="event.stopPropagation(); toast('导出「${s.name}」PDF')">⎙</button>
+          <button class="iconbtn" title="改名" onclick="event.stopPropagation(); toast('改名「${s.name}」')">✎</button>
+          <button class="iconbtn danger" title="删除" onclick="event.stopPropagation(); toast('删除「${s.name}」(确认)')">🗑</button>
+        </span>
+      </div>`;
+  }
+
+  function renderDetail() {
+    const d = document.getElementById('detail');
+    if (sel === null) {
+      // All-surveys view: flat, grouped by template so从属关系一目了然.
+      const groups = templates
+        .map(t => ({ t, list: byTpl(t.id) }))
+        .filter(g => g.list.length > 0);
+      d.innerHTML = `
+        <div class="dhead">
+          <div>
+            <h2 class="title">全部调查表</h2>
+            <div class="sub">${surveys.length} 份,按模版分组 · 最近更新在前</div>
+          </div>
+        </div>
+        <div class="survey-list">
+          ${groups.map(g => `
+            <div class="group-label">${g.t.name}(${g.list.length})</div>
+            <div class="card">${g.list.map(s => surveyRow(s, false)).join('')}</div>
+          `).join('')}
+        </div>`;
+      return;
+    }
+    const t = templates.find(x => x.id === sel);
+    const list = byTpl(t.id);
+    d.innerHTML = `
+      <div class="dhead">
+        <div>
+          <h2 class="title">${t.name}</h2>
+          <div class="sub">${t.pages} 页 · ${t.cells} 控件 · 修改于 ${t.updated}</div>
+        </div>
+        <div class="actions">
+          <button class="btn" onclick="toast('导出空白模版 PDF')">⎙ 空白 PDF</button>
+          <button class="btn" onclick="toast('打开设计器 BuilderScreen(现有)')">✎ 编辑设计</button>
+          <button class="btn primary" onclick="toast('命名对话框 → 新建调查表并进入填写')">＋ 新建调查表</button>
+        </div>
+      </div>
+      <div class="survey-list">
+        <div class="group-label">调查表(${list.length})</div>
+        ${list.length === 0
+          ? `<div class="empty">这个模版还没有调查表。<br>
+               <button class="btn primary" onclick="toast('命名对话框 → 新建调查表')">＋ 新建调查表</button></div>`
+          : `<div class="card">${list.map(s => surveyRow(s, false)).join('')}</div>`}
+      </div>`;
+  }
+
+  function selectAll() { sel = null; render(); }
+  function render() { renderSidebar(); renderDetail(); }
+  render();
+</script>
