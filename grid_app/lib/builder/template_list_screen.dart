@@ -1,9 +1,14 @@
+import 'dart:io';
+
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as path;
 
 import '../controls/registry.dart';
 import '../data/survey_store.dart';
 import '../data/sync_meta_store.dart';
 import '../data/template_store.dart';
+import '../export/pdf_exporter.dart';
 import '../fill/survey_list_screen.dart';
 import '../fill/survey_name_dialog.dart';
 import '../fill/template_surveys_screen.dart';
@@ -175,12 +180,166 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
 
   bool get _hasSync => widget.meta != null && widget.files != null;
 
+  // ---- batch PDF export (desktop) ----
+
+  static String _defaultExportDir() {
+    final home = Platform.environment['HOME'] ??
+        Platform.environment['USERPROFILE'] ??
+        '';
+    return path.join(home, 'Desktop');
+  }
+
+  /// Confirm/adjust the target directory, run the incremental export with a
+  /// progress dialog, retry once via the directory picker when the sandbox
+  /// refuses the path, and report what was written vs skipped.
+  Future<void> _exportPdfs({String? onlyTemplateId}) async {
+    var dir =
+        (await widget.meta?.kvGet('export.dir')) ?? _defaultExportDir();
+    if (!mounted) return;
+    final confirmed = await _confirmExportDir(dir, onlyTemplateId);
+    if (confirmed == null || !mounted) return;
+    dir = confirmed;
+    await widget.meta?.kvSet('export.dir', dir);
+    if (!mounted) return;
+
+    final exporter = PdfExporter(
+      templates: widget.store,
+      surveys: widget.surveyStore,
+      registry: widget.registry,
+    );
+    final progress = ValueNotifier<(int, int)>((0, 0));
+    var progressOpen = true;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        content: ValueListenableBuilder<(int, int)>(
+          valueListenable: progress,
+          builder: (_, v, __) => Row(children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 16),
+            Text(v.$2 == 0 ? '准备中…' : '导出中 ${v.$1}/${v.$2}'),
+          ]),
+        ),
+      ),
+    ).whenComplete(() => progressOpen = false);
+
+    void closeProgress() {
+      if (progressOpen && mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
+
+    ExportReport report;
+    try {
+      report = await exporter.export(
+        rootDir: dir,
+        onlyTemplateId: onlyTemplateId,
+        onProgress: (d, t) => progress.value = (d, t),
+      );
+    } on FileSystemException {
+      // Sandbox refused the directory — picking it in the dialog grants
+      // access for this session.
+      closeProgress();
+      if (!mounted) return;
+      final picked = await getDirectoryPath(
+          initialDirectory: dir, confirmButtonText: '选择导出目录');
+      if (picked == null || !mounted) return;
+      await widget.meta?.kvSet('export.dir', picked);
+      if (!mounted) return;
+      progressOpen = true;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const AlertDialog(
+            content: Row(children: [
+          CircularProgressIndicator(),
+          SizedBox(width: 16),
+          Text('导出中…'),
+        ])),
+      ).whenComplete(() => progressOpen = false);
+      try {
+        report = await exporter.export(
+          rootDir: picked,
+          onlyTemplateId: onlyTemplateId,
+          onProgress: (d, t) => progress.value = (d, t),
+        );
+      } on FileSystemException catch (e) {
+        closeProgress();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('导出失败:目录不可写($e)')));
+        }
+        return;
+      }
+    }
+    closeProgress();
+    if (!mounted) return;
+    final parts = <String>[
+      '新导出 ${report.written} 份',
+      '跳过 ${report.skipped} 份(未变化)',
+      if (report.errors.isNotEmpty) '${report.errors.length} 份出错',
+    ];
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('导出完成:${parts.join(' · ')}')));
+  }
+
+  Future<String?> _confirmExportDir(String initial, String? onlyTemplateId) {
+    var dir = initial;
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(onlyTemplateId == null ? '导出全部 PDF' : '导出该模版 PDF'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('导出到:'),
+              SelectableText(dir,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13)),
+              TextButton.icon(
+                key: const ValueKey('export-change-dir'),
+                icon: const Icon(Icons.folder_open, size: 18),
+                label: const Text('更改目录…'),
+                onPressed: () async {
+                  final picked = await getDirectoryPath(initialDirectory: dir);
+                  if (picked != null) setDialogState(() => dir = picked);
+                },
+              ),
+              const SizedBox(height: 4),
+              Text('每个模版一个文件夹,每份调查表一个 PDF(多页加 _1/_2 后缀)。\n'
+                  '增量导出:内容未变化的调查表自动跳过。',
+                  style: Theme.of(ctx).textTheme.bodySmall),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel')),
+            FilledButton(
+                key: const ValueKey('export-start'),
+                onPressed: () => Navigator.pop(ctx, dir),
+                child: const Text('导出')),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('SCSS Templates'),
         actions: [
+          if (isDesktopPlatform)
+            IconButton(
+              key: const ValueKey('export-all-pdf'),
+              icon: const Icon(Icons.save_alt),
+              tooltip: '导出全部 PDF',
+              onPressed: () => _exportPdfs(),
+            ),
           if (_hasSync)
             IconButton(
               key: const ValueKey('open-sync'),
@@ -223,6 +382,14 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                               tooltip: 'Edit design',
                               onPressed: () => _open(t),
                             ),
+                            if (isDesktopPlatform)
+                              IconButton(
+                                key: ValueKey('export-${t.id}'),
+                                icon: const Icon(Icons.save_alt),
+                                tooltip: '导出该模版 PDF',
+                                onPressed: () =>
+                                    _exportPdfs(onlyTemplateId: t.id),
+                              ),
                             IconButton(
                               key: ValueKey('delete-${t.id}'),
                               icon: const Icon(Icons.delete_outline),
