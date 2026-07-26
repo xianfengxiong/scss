@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../builder/canvas_metrics.dart';
 import '../builder/pdf_preview_screen.dart';
@@ -8,6 +11,7 @@ import '../controls/registry.dart';
 import '../data/survey_store.dart';
 import '../model/survey.dart';
 import '../model/template.dart';
+import '../services/platform_info.dart';
 import 'fill_canvas.dart';
 
 /// Fill mode: render [template]'s grid with real inputs, edit values, save the
@@ -41,9 +45,12 @@ class _FillScreenState extends State<FillScreen> {
   static const _autosaveDelay = Duration(milliseconds: 500);
 
   // Zoom/pan transform for the fill canvas; double-tap toggles 1×/1.5×.
+  // Desktop adds Ctrl/Cmd+wheel zoom (mouse wheel alone pans) — see
+  // _onPointerSignal; the phone zooms by pinching.
   final TransformationController _tc = TransformationController();
   TapDownDetails? _doubleTapDetails;
   static const double _doubleTapScale = 1.5;
+  static const double _maxScale = 4.0;
 
   @override
   void dispose() {
@@ -64,6 +71,60 @@ class _FillScreenState extends State<FillScreen> {
       ..translateByDouble(
           -pos.dx * (_doubleTapScale - 1), -pos.dy * (_doubleTapScale - 1), 0, 1)
       ..scaleByDouble(_doubleTapScale, _doubleTapScale, _doubleTapScale, 1);
+  }
+
+  /// Desktop wheel handling. InteractiveViewer's own wheel behavior is
+  /// zoom-without-modifier (and it can't be intercepted — every Listener on
+  /// the hit path receives the signal), so on desktop IV's scaling is
+  /// disabled and the wheel is handled here: Ctrl/Cmd+wheel zooms at the
+  /// pointer, a bare mouse wheel pans. Trackpad scrolls are left to IV's
+  /// native pan (skipped here to avoid double-panning).
+  void _onPointerSignal(PointerSignalEvent e, Size viewport) {
+    if (e is! PointerScrollEvent) return;
+    final zoom = HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
+    if (zoom) {
+      _zoomAt(e.localPosition, math.exp(-e.scrollDelta.dy / 200), viewport);
+    } else if (e.kind != PointerDeviceKind.trackpad) {
+      _panBy(-e.scrollDelta, viewport);
+    }
+  }
+
+  void _zoomAt(Offset focal, double factor, Size viewport) {
+    final current = _tc.value.getMaxScaleOnAxis();
+    final target = (current * factor).clamp(1.0, _maxScale);
+    if ((target - current).abs() < 1e-9) return;
+    if (target <= 1.0 + 1e-9) {
+      _tc.value = Matrix4.identity();
+      return;
+    }
+    // Keep the scene point under the cursor fixed while scaling.
+    final scene = _tc.toScene(focal);
+    final m = Matrix4.identity()
+      ..translateByDouble(focal.dx, focal.dy, 0, 1)
+      ..scaleByDouble(target, target, target, 1)
+      ..translateByDouble(-scene.dx, -scene.dy, 0, 1);
+    _tc.value = _clampPan(m, viewport);
+  }
+
+  void _panBy(Offset delta, Size viewport) {
+    if (_tc.value.getMaxScaleOnAxis() <= 1.01) return; // 1×: whole page visible
+    final m = (Matrix4.identity()
+          ..translateByDouble(delta.dx, delta.dy, 0, 1)) *
+        _tc.value as Matrix4;
+    _tc.value = _clampPan(m, viewport);
+  }
+
+  /// Keep the (viewport-sized) scene covering the viewport — programmatic
+  /// transforms bypass InteractiveViewer's own boundary enforcement.
+  Matrix4 _clampPan(Matrix4 m, Size viewport) {
+    final scale = m.getMaxScaleOnAxis();
+    final t = m.getTranslation();
+    final minX = math.min(0.0, viewport.width * (1 - scale));
+    final minY = math.min(0.0, viewport.height * (1 - scale));
+    m.setTranslationRaw(
+        t.x.clamp(minX, 0.0), t.y.clamp(minY, 0.0), 0);
+    return m;
   }
 
   void _onChanged(String key, dynamic value) {
@@ -120,19 +181,28 @@ class _FillScreenState extends State<FillScreen> {
       // InteractiveViewer's own pan handles moving around when zoomed.
       body: Padding(
         padding: const EdgeInsets.all(kCanvasPad),
-        child: GestureDetector(
-          onDoubleTapDown: (d) => _doubleTapDetails = d,
-          onDoubleTap: _handleDoubleTap,
-          child: InteractiveViewer(
-            transformationController: _tc,
-            minScale: 1.0,
-            maxScale: 3.0,
-            child: Center(
-              child: FillCanvas(
-                template: widget.template,
-                registry: widget.registry,
-                data: _data,
-                onChanged: _onChanged,
+        child: LayoutBuilder(
+          builder: (context, constraints) => GestureDetector(
+            onDoubleTapDown: (d) => _doubleTapDetails = d,
+            onDoubleTap: _handleDoubleTap,
+            child: Listener(
+              onPointerSignal: (e) => _onPointerSignal(e, constraints.biggest),
+              child: InteractiveViewer(
+                transformationController: _tc,
+                minScale: 1.0,
+                maxScale: _maxScale,
+                // Desktop: wheel zoom/pan is handled in _onPointerSignal —
+                // IV's own scaling would also zoom on a bare wheel. Phone:
+                // pinch zoom stays IV's job.
+                scaleEnabled: !isDesktopPlatform,
+                child: Center(
+                  child: FillCanvas(
+                    template: widget.template,
+                    registry: widget.registry,
+                    data: _data,
+                    onChanged: _onChanged,
+                  ),
+                ),
               ),
             ),
           ),
