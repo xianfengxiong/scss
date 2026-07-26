@@ -75,6 +75,17 @@ Template? setRows(Template t, int rows) {
   return t.copyWith(grid: t.grid.copyWith(rowHeightsMm: heights));
 }
 
+/// Keep the grid frame horizontally centered on its page: xMm is derived
+/// from the total column width, so the side margins stay symmetric as
+/// columns are added, removed, or resized. Vertically the frame stays put —
+/// rows grow downward from the top margin by design. A frame wider than the
+/// page passes through unchanged (the add/resize guards reject it).
+Template centerGridX(Template t) {
+  final x = (t.page.widthMm - t.grid.frameWidthMm) / 2;
+  if (x < 0 || (x - t.grid.xMm).abs() < 1e-9) return t;
+  return t.copyWith(grid: t.grid.copyWith(xMm: x));
+}
+
 /// True if [t] is a valid layout (no overlap, no out-of-bounds cells).
 bool isValid(Template t) => validateLayout(t).isEmpty;
 

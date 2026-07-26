@@ -9,11 +9,11 @@ Template sampleTemplate() => Template(
       name: 'Site Survey (sample)',
       page: const PageSize.a4(),
       grid: GridFrame.uniform(
-        xMm: 10,
+        xMm: 15, // (210 - 12*15) / 2 — matches the centerGridX invariant
         yMm: 10,
         cols: 12,
         rows: 16,
-        colWidthMm: 15, // 12 * 15 = 180mm <= (210 - 10) usable
+        colWidthMm: 15, // 12 * 15 = 180mm wide
         rowHeightMm: 8, // 16 * 8 = 128mm <= (297 - 10) usable
       ),
       cells: const [

@@ -34,7 +34,9 @@ class BuilderScreen extends StatefulWidget {
 }
 
 class _BuilderScreenState extends State<BuilderScreen> {
-  late Template _t = widget.template;
+  // Templates saved before the centering invariant existed open off-center;
+  // normalize on entry so the canvas shows what the next save will persist.
+  late Template _t = centerGridX(widget.template);
   String? _selectedId;
   int _seq = 0;
 
@@ -48,8 +50,10 @@ class _BuilderScreenState extends State<BuilderScreen> {
   }
 
   void _commit(Template? candidate) {
-    if (candidate == null || !isValid(candidate)) return;
-    setState(() => _t = candidate);
+    if (candidate == null) return;
+    final centered = centerGridX(candidate);
+    if (!isValid(centered)) return;
+    setState(() => _t = centered);
   }
 
   void _addControl(ControlSpec spec) {
