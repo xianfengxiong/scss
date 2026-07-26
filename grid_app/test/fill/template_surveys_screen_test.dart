@@ -4,6 +4,7 @@ import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/data/survey_store.dart';
 import 'package:scss_grid/fill/fill_screen.dart';
 import 'package:scss_grid/fill/template_surveys_screen.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/survey.dart';
 import 'package:scss_grid/sample/sample_template.dart';
 
@@ -12,6 +13,8 @@ void main() {
 
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: TemplateSurveysScreen(
         template: sampleTemplate().copyWith(id: 'a', name: 'Alpha'),
         surveyStore: store,
@@ -31,7 +34,7 @@ void main() {
 
   testWidgets('empty state invites creating the first survey', (tester) async {
     await pump(tester);
-    expect(find.textContaining('还没有调查表'), findsOneWidget);
+    expect(find.textContaining('No surveys yet'), findsOneWidget);
     expect(find.byKey(const ValueKey('new-survey')), findsOneWidget);
   });
 
@@ -54,7 +57,7 @@ void main() {
   testWidgets('tapping a survey resumes it (no new row)', (tester) async {
     await seed();
     await pump(tester);
-    expect(find.textContaining('1 份调查表'), findsOneWidget);
+    expect(find.textContaining('1 survey(s)'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('survey-s1')));
     await tester.pumpAndSettle();
@@ -85,6 +88,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(await store.get('s1'), isNull);
-    expect(find.textContaining('还没有调查表'), findsOneWidget);
+    expect(find.textContaining('No surveys yet'), findsOneWidget);
   });
 }

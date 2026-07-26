@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../l10n/app_localizations.dart';
 import '../model/cell.dart';
 import '../services/image_service.dart';
 import '../services/media_paths.dart';
@@ -51,8 +52,8 @@ class MultiImageControl extends ControlSpec {
     final count = _paths(value).length;
     final min = _min(cell);
     final cap = _cap(cell);
-    if (count < min) return '至少 $min 张，当前 $count';
-    if (count > cap) return '最多 $cap 张，当前 $count';
+    if (count < min) return 'At least $min, now $count';
+    if (count > cap) return 'At most $cap, now $count';
     return null;
   }
 
@@ -122,7 +123,7 @@ class MultiImageControl extends ControlSpec {
         paths: _paths(value),
         cols: _cols(cell),
         cap: _cap(cell),
-        error: validate(cell, value),
+        min: _min(cell),
         onChanged: onChanged,
       );
 
@@ -169,7 +170,7 @@ class _MultiImageField extends StatelessWidget {
   final List<String> paths;
   final int cols;
   final int cap;
-  final String? error;
+  final int min;
   final void Function(Object? value) onChanged;
 
   const _MultiImageField({
@@ -177,24 +178,25 @@ class _MultiImageField extends StatelessWidget {
     required this.paths,
     required this.cols,
     required this.cap,
-    required this.error,
+    required this.min,
     required this.onChanged,
   });
 
   Future<void> _add(BuildContext context) async {
     final svc = image;
     if (svc == null) return;
+    final l10n = AppLocalizations.of(context)!;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       builder: (_) => SafeArea(
         child: Wrap(children: [
           ListTile(
               leading: const Icon(Icons.photo_camera),
-              title: const Text('Camera'),
+              title: Text(l10n.camera),
               onTap: () => Navigator.pop(context, ImageSource.camera)),
           ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
+              title: Text(l10n.gallery),
               onTap: () => Navigator.pop(context, ImageSource.gallery)),
         ]),
       ),
@@ -211,6 +213,12 @@ class _MultiImageField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final String? error = paths.length < min
+        ? l10n.atLeastNPhotos(min, paths.length)
+        : paths.length > cap
+            ? l10n.atMostNPhotos(cap, paths.length)
+            : null;
     final canAdd = paths.length < cap;
     final slots = paths.length + (canAdd ? 1 : 0);
     final rowCount = slots == 0 ? 0 : (slots + cols - 1) ~/ cols;
@@ -236,7 +244,7 @@ class _MultiImageField extends StatelessWidget {
         if (error != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: Text(error!,
+            child: Text(error,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 8, color: Colors.red)),
@@ -265,7 +273,7 @@ class _MultiImageField extends StatelessWidget {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
               iconSize: 14,
-              tooltip: 'Clear',
+              tooltip: AppLocalizations.of(context)!.clear,
               icon: const Icon(Icons.close),
               onPressed: () => _remove(i),
             ),
@@ -278,7 +286,7 @@ class _MultiImageField extends StatelessWidget {
         child: IconButton(
           key: const ValueKey('multi-image-add'),
           iconSize: 18,
-          tooltip: 'Add photo',
+          tooltip: AppLocalizations.of(context)!.addPhoto,
           icon: const Icon(Icons.add_a_photo_outlined),
           onPressed: () => _add(context),
         ),

@@ -3,11 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:scss_grid/data/survey_store.dart';
 import 'package:scss_grid/data/sync_meta_store.dart';
 import 'package:scss_grid/data/template_store.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/sync/media_file_store.dart';
 import 'package:scss_grid/sync/sync_client_screen.dart';
 import 'package:scss_grid/sync/sync_engine.dart';
 
 Widget app(InMemorySyncMetaStore meta, {SyncRunner? runner}) => MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: SyncClientScreen(
         templates: InMemoryTemplateStore(meta: meta),
         surveys: InMemorySurveyStore(meta: meta),
@@ -44,9 +47,9 @@ void main() {
     expect(seenHost, '192.168.1.5');
     expect(seenPort, 17423);
     expect(seenToken, '123456');
-    expect(find.textContaining('拉取模版 1'), findsOneWidget);
-    expect(find.textContaining('推送调查表 2'), findsOneWidget);
-    expect(find.textContaining('传输图片 3'), findsOneWidget);
+    expect(find.textContaining('1 template(s) pulled'), findsOneWidget);
+    expect(find.textContaining('2 survey(s) pushed'), findsOneWidget);
+    expect(find.textContaining('3 image(s) transferred'), findsOneWidget);
     expect(await meta.kvGet('sync.lastHost'), '192.168.1.5');
     expect(await meta.kvGet('sync.lastToken'), '123456');
   });
@@ -67,14 +70,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(seenPort, 9000);
-    expect(find.textContaining('已是最新'), findsOneWidget);
+    expect(find.textContaining('Already up to date'), findsOneWidget);
   });
 
   testWidgets('failure shows the error and keeps nothing saved',
       (tester) async {
     final meta = InMemorySyncMetaStore();
     await tester.pumpWidget(app(meta, runner: (host, port, token, _) async {
-      throw SyncException('配对码不正确');
+      throw SyncException('Wrong pairing code');
     }));
 
     await tester.enterText(
@@ -84,8 +87,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('sync-start')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('同步失败'), findsOneWidget);
-    expect(find.textContaining('配对码不正确'), findsOneWidget);
+    expect(find.textContaining('Sync failed'), findsOneWidget);
+    expect(find.textContaining('Wrong pairing code'), findsOneWidget);
     expect(await meta.kvGet('sync.lastHost'), isNull);
   });
 
@@ -114,6 +117,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(ran, isFalse);
-    expect(find.textContaining('请填写'), findsOneWidget);
+    expect(find.textContaining('Enter the computer address'), findsOneWidget);
   });
 }

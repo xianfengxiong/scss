@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../controls/control_spec.dart';
+import '../l10n/app_localizations.dart';
 import '../model/cell.dart';
 
 /// Edits the selected cell: its control props (via the control's `propEditor`),
@@ -48,6 +49,7 @@ class _CellInspectorState extends State<CellInspector> {
   @override
   Widget build(BuildContext context) {
     final cell = widget.cell;
+    final l10n = AppLocalizations.of(context)!;
     if (widget.docked) {
       return Padding(
         padding: const EdgeInsets.all(12),
@@ -63,7 +65,7 @@ class _CellInspectorState extends State<CellInspector> {
                 IconButton(
                   key: const ValueKey('cell-delete'),
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  tooltip: 'Delete',
+                  tooltip: l10n.delete,
                   onPressed: widget.onDelete,
                 ),
               ],
@@ -89,13 +91,13 @@ class _CellInspectorState extends State<CellInspector> {
               IconButton(
                 key: const ValueKey('inspector-toggle'),
                 icon: Icon(_expanded ? Icons.expand_more : Icons.expand_less),
-                tooltip: _expanded ? 'Collapse' : 'Expand',
+                tooltip: _expanded ? l10n.collapse : l10n.expand,
                 onPressed: () => setState(() => _expanded = !_expanded),
               ),
               IconButton(
                 key: const ValueKey('cell-delete'),
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
-                tooltip: 'Delete',
+                tooltip: l10n.delete,
                 onPressed: widget.onDelete,
               ),
             ],
@@ -128,7 +130,7 @@ class _CellInspectorState extends State<CellInspector> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Text('Width: ${cell.colSpan}'),
+              Text(AppLocalizations.of(context)!.widthLabel(cell.colSpan)),
               const Spacer(),
               IconButton(
                 key: const ValueKey('colspan-dec'),

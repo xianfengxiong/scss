@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:scss_grid/controls/satellite_diagram_control.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/cell.dart';
 import 'package:scss_grid/model/pin.dart';
 
@@ -146,6 +147,8 @@ void main() {
   });
 
   Widget host(Widget child) => MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
           body: SizedBox(width: 200, height: 200, child: child)));
 

@@ -5,6 +5,7 @@ import 'package:scss_grid/builder/editor_ops.dart';
 import 'package:scss_grid/builder/grid_canvas.dart';
 import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/data/template_store.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/grid_frame.dart';
 import 'package:scss_grid/sample/sample_template.dart';
 
@@ -41,6 +42,8 @@ void main() {
     await store.upsert(legacy);
 
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: BuilderScreen(
           template: legacy,
           registry: buildDefaultRegistry(),
@@ -59,6 +62,8 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: BuilderScreen(
         template: sampleTemplate().copyWith(id: 'tpl_1'),
         registry: buildDefaultRegistry(),

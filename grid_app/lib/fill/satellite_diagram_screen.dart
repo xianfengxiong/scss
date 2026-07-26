@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:screenshot/screenshot.dart';
 
 import '../controls/satellite_diagram_control.dart';
+import '../l10n/app_localizations.dart';
 import '../model/pin.dart';
 import '../services/location_service.dart';
 import 'pin_label_dialog.dart';
@@ -82,8 +83,8 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
     if (!mounted) return;
     setState(() => _locating = false);
     if (!res.ok) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('定位失败——请确认已开启定位权限与 GPS')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context)!.locateFailed)));
       return;
     }
     _mapController.move(
@@ -140,9 +141,10 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Satellite Diagram'),
+        title: Text(l10n.satelliteTitle),
         actions: [
           _saving
               ? const Padding(
@@ -154,7 +156,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                 )
               : IconButton(
                   icon: const Icon(Icons.save_outlined),
-                  tooltip: 'Save snapshot',
+                  tooltip: l10n.saveSnapshot,
                   onPressed: _saveAndExit,
                 ),
         ],
@@ -165,9 +167,9 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
             width: double.infinity,
             color: Colors.black87,
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-            child: const Text(
-              'Tap map to drop a pin · tap a pin to edit/delete · Save to snapshot.',
-              style: TextStyle(color: Colors.white, fontSize: 12),
+            child: Text(
+              l10n.mapHint,
+              style: const TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
           Expanded(
@@ -235,7 +237,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
           ? null
           : FloatingActionButton(
               key: const ValueKey('my-location'),
-              tooltip: '定位到当前位置',
+              tooltip: l10n.myLocation,
               onPressed: _goToMyLocation,
               child: _locating
                   ? const SizedBox(

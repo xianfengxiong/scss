@@ -6,6 +6,7 @@ import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/data/template_store.dart';
 import 'package:scss_grid/data/survey_store.dart';
 import 'package:scss_grid/fill/template_surveys_screen.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/survey.dart';
 import 'package:scss_grid/sample/sample_template.dart';
 
@@ -15,6 +16,8 @@ void main() {
 
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: TemplateListScreen(
           store: store,
           surveyStore: surveyStore,
@@ -50,7 +53,7 @@ void main() {
     await pump(tester);
 
     // 从属关系 in the list itself: the row states how many surveys it has.
-    expect(find.textContaining('1 份调查表'), findsOneWidget);
+    expect(find.textContaining('1 survey(s)'), findsOneWidget);
 
     await tester.tap(find.text('Alpha'));
     await tester.pumpAndSettle();

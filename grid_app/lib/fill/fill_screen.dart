@@ -9,6 +9,7 @@ import '../builder/canvas_metrics.dart';
 import '../builder/pdf_preview_screen.dart';
 import '../controls/registry.dart';
 import '../data/survey_store.dart';
+import '../l10n/app_localizations.dart';
 import '../model/survey.dart';
 import '../model/template.dart';
 import '../services/platform_info.dart';
@@ -206,7 +207,7 @@ class _FillScreenState extends State<FillScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.picture_as_pdf_outlined),
-            tooltip: 'Export',
+            tooltip: AppLocalizations.of(context)!.export,
             onPressed: _export,
           ),
         ],
@@ -284,7 +285,9 @@ class _FillScreenState extends State<FillScreen> {
             onPressed:
                 _pageIndex > 0 ? () => _goToPage(_pageIndex - 1) : null,
           ),
-          Text('${_pageIndex + 1} / $count',
+          Text(
+              AppLocalizations.of(context)!
+                  .pageIndicator(_pageIndex + 1, count),
               key: const ValueKey('fill-page-indicator')),
           IconButton(
             key: const ValueKey('fill-page-next'),

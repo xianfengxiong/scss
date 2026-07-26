@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/survey_store.dart';
 import '../data/sync_meta_store.dart';
 import '../data/template_store.dart';
+import '../l10n/app_localizations.dart';
 import 'http_transport.dart';
 import 'media_file_store.dart';
 import 'protocol.dart';
@@ -71,18 +72,21 @@ class _SyncClientScreenState extends State<SyncClientScreen> {
 
   Future<SyncReport> _realRun(String host, int port, String token,
       void Function(String) onProgress) async {
+    final l10n = AppLocalizations.of(context)!;
     final transport = HttpSyncTransport(
       base: Uri.parse('http://$host:$port'),
       token: token,
+      l10n: l10n,
     );
     try {
-      onProgress('连接 $host:$port…');
+      onProgress(l10n.connectingTo('$host:$port'));
       await transport.ping();
       final engine = SyncEngine(
         templates: widget.templates,
         surveys: widget.surveys,
         meta: widget.meta,
         files: widget.files,
+        l10n: l10n,
       );
       return await engine.run(transport, onProgress: onProgress);
     } finally {
@@ -91,12 +95,13 @@ class _SyncClientScreenState extends State<SyncClientScreen> {
   }
 
   Future<void> _sync() async {
+    final l10n = AppLocalizations.of(context)!;
     final rawHost = _hostController.text.trim();
     final token = _tokenController.text.trim();
     if (rawHost.isEmpty || token.isEmpty) {
       setState(() {
         _failed = true;
-        _result = '请填写电脑地址和配对码';
+        _result = l10n.fillAddressAndCode;
       });
       return;
     }
@@ -111,7 +116,7 @@ class _SyncClientScreenState extends State<SyncClientScreen> {
       _busy = true;
       _failed = false;
       _result = null;
-      _status = '开始同步…';
+      _status = l10n.syncing;
     });
     try {
       final run = widget.runnerOverride ?? _realRun;
@@ -124,7 +129,7 @@ class _SyncClientScreenState extends State<SyncClientScreen> {
       setState(() {
         _busy = false;
         _status = null;
-        _result = syncReportSummary(report);
+        _result = syncReportSummary(report, l10n);
       });
     } catch (e) {
       if (!mounted) return;
@@ -132,31 +137,31 @@ class _SyncClientScreenState extends State<SyncClientScreen> {
         _busy = false;
         _status = null;
         _failed = true;
-        _result = '同步失败:$e';
+        _result = l10n.syncFailedMsg(e.toString());
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('同步')),
+      appBar: AppBar(title: Text(l10n.sync)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('在电脑上打开「同步」页面,然后填入其显示的地址和配对码。'
-                '首次成功后会自动记住。'),
+            Text(l10n.syncClientIntro),
             const SizedBox(height: 16),
             TextField(
               key: const ValueKey('sync-host-field'),
               controller: _hostController,
               enabled: !_busy,
-              decoration: const InputDecoration(
-                labelText: '电脑地址',
-                hintText: '例如 192.168.1.5',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.computerAddress,
+                hintText: l10n.addressHint,
+                border: const OutlineInputBorder(),
               ),
               keyboardType: TextInputType.url,
             ),
@@ -165,9 +170,9 @@ class _SyncClientScreenState extends State<SyncClientScreen> {
               key: const ValueKey('sync-token-field'),
               controller: _tokenController,
               enabled: !_busy,
-              decoration: const InputDecoration(
-                labelText: '配对码',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.pairingCode,
+                border: const OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
             ),
@@ -181,7 +186,7 @@ class _SyncClientScreenState extends State<SyncClientScreen> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.sync),
-              label: Text(_busy ? '同步中…' : '开始同步'),
+              label: Text(_busy ? l10n.syncing : l10n.startSync),
             ),
             const SizedBox(height: 16),
             if (_status != null)
@@ -204,17 +209,17 @@ class _SyncClientScreenState extends State<SyncClientScreen> {
 }
 
 /// Human summary of a completed pass, e.g. "拉取模版 1 · 推送调查表 2 · 传输图片 3".
-String syncReportSummary(SyncReport r) {
-  if (r.isEmpty) return '已是最新,无需同步';
+String syncReportSummary(SyncReport r, AppLocalizations l10n) {
+  if (r.isEmpty) return l10n.upToDate;
   final parts = <String>[
-    if (r.pulledTemplates > 0) '拉取模版 ${r.pulledTemplates}',
-    if (r.pushedTemplates > 0) '推送模版 ${r.pushedTemplates}',
-    if (r.pulledSurveys > 0) '拉取调查表 ${r.pulledSurveys}',
-    if (r.pushedSurveys > 0) '推送调查表 ${r.pushedSurveys}',
+    if (r.pulledTemplates > 0) l10n.pulledTemplatesN(r.pulledTemplates),
+    if (r.pushedTemplates > 0) l10n.pushedTemplatesN(r.pushedTemplates),
+    if (r.pulledSurveys > 0) l10n.pulledSurveysN(r.pulledSurveys),
+    if (r.pushedSurveys > 0) l10n.pushedSurveysN(r.pushedSurveys),
     if (r.filesPulled + r.filesPushed > 0)
-      '传输图片 ${r.filesPulled + r.filesPushed}',
+      l10n.filesTransferredN(r.filesPulled + r.filesPushed),
     if (r.deletedLocal + r.deletedRemote > 0)
-      '同步删除 ${r.deletedLocal + r.deletedRemote}',
+      l10n.deletionsSyncedN(r.deletedLocal + r.deletedRemote),
   ];
-  return '同步完成:${parts.join(' · ')}';
+  return l10n.syncDone(parts.join(' · '));
 }

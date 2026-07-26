@@ -5,6 +5,7 @@ import 'package:scss_grid/data/survey_store.dart';
 import 'package:scss_grid/data/template_store.dart';
 import 'package:scss_grid/fill/fill_screen.dart';
 import 'package:scss_grid/fill/survey_list_screen.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/survey.dart';
 import 'package:scss_grid/sample/sample_template.dart';
 
@@ -19,6 +20,8 @@ void main() {
         data: {'site_name': 'Gjirokaster'}));
 
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: SurveyListScreen(
         surveyStore: surveyStore,
         templateStore: templateStore,
@@ -39,6 +42,8 @@ void main() {
         const Survey(id: 's1', templateId: 'sample', name: 'Castle survey'));
 
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: SurveyListScreen(
         surveyStore: surveyStore,
         templateStore: InMemoryTemplateStore(),
@@ -67,6 +72,8 @@ void main() {
         updatedAt: DateTime.now()));
 
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: SurveyListScreen(
         surveyStore: surveyStore,
         templateStore: templateStore,
@@ -92,6 +99,8 @@ void main() {
         updatedAt: DateTime.now()));
 
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: SurveyListScreen(
         surveyStore: surveyStore,
         templateStore: InMemoryTemplateStore(),
@@ -120,6 +129,8 @@ void main() {
         data: const {'k': 'old'}, updatedAt: DateTime.now()));
 
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: SurveyListScreen(
         surveyStore: surveyStore,
         templateStore: InMemoryTemplateStore(),

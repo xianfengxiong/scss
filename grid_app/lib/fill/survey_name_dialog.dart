@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 /// Prompts for a survey name. Returns the trimmed name, or null on cancel.
 Future<String?> promptForSurveyName(BuildContext context,
         {required String title, required String initial}) =>
@@ -43,20 +45,21 @@ class _SurveyNameDialogState extends State<SurveyNameDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       title: Text(widget.title),
       content: TextField(
         key: const ValueKey('survey-name-field'),
         controller: _ctrl,
         autofocus: true,
-        decoration: const InputDecoration(labelText: 'Name'),
+        decoration: InputDecoration(labelText: l10n.name),
         textInputAction: TextInputAction.done,
         onSubmitted: (_) => _submit(),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancel),
         ),
         ValueListenableBuilder<TextEditingValue>(
           valueListenable: _ctrl,
@@ -69,7 +72,7 @@ class _SurveyNameDialogState extends State<SurveyNameDialog> {
                 // in the same synchronous phase as an enterText() that
                 // hasn't triggered a rebuild yet.
                 : _submit,
-            child: const Text('OK'),
+            child: Text(l10n.ok),
           ),
         ),
       ],

@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../fill/satellite_diagram_screen.dart';
+import '../l10n/app_localizations.dart';
 import '../model/cell.dart';
 import '../model/pin.dart';
 import '../services/image_service.dart';
@@ -246,7 +247,7 @@ class _SatelliteField extends StatelessWidget {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
               iconSize: 16,
-              tooltip: 'Clear',
+              tooltip: AppLocalizations.of(context)!.clear,
               icon: const Icon(Icons.close),
               onPressed: () => onChanged(null),
             ),
@@ -258,7 +259,7 @@ class _SatelliteField extends StatelessWidget {
       child: IconButton(
         key: const ValueKey('satellite-open'),
         iconSize: 20,
-        tooltip: 'Open map',
+        tooltip: AppLocalizations.of(context)!.openMap,
         icon: const Icon(Icons.add_location_alt_outlined),
         onPressed: () => _openMap(context),
       ),

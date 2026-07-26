@@ -5,6 +5,7 @@ import 'package:scss_grid/builder/template_list_screen.dart';
 import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/data/survey_store.dart';
 import 'package:scss_grid/data/template_store.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/sample/sample_template.dart';
 
 void main() {
@@ -21,6 +22,8 @@ void main() {
   testWidgets('list rename persists the new name and stamps updatedAt',
       (tester) async {
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: TemplateListScreen(
         store: templates,
         surveyStore: surveys,
@@ -45,6 +48,8 @@ void main() {
 
   testWidgets('list rename cancel changes nothing', (tester) async {
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: TemplateListScreen(
         store: templates,
         surveyStore: surveys,
@@ -65,6 +70,8 @@ void main() {
       (tester) async {
     final t = await templates.get('tpl_1');
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: BuilderScreen(
         template: t!,
         registry: buildDefaultRegistry(),

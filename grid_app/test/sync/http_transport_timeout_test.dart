@@ -31,7 +31,7 @@ void main() {
       expect(caught, isNull, reason: 'not yet — ping allows 5s');
       async.elapse(const Duration(seconds: 2));
       expect(caught, isA<SyncException>());
-      expect(caught.toString(), contains('超时'));
+      expect(caught.toString(), contains('timed out'));
     });
   });
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:scss_grid/controls/image_control.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/cell.dart';
 import 'package:scss_grid/services/image_service.dart';
 
@@ -20,8 +21,10 @@ class _FakeImage implements ImageService {
 const _cell = Cell(id: 'i', col: 0, row: 0, colSpan: 4, rowSpan: 3, type: 'image',
     props: {'key': 'site_photo'});
 
-Widget _host(Widget child) =>
-    MaterialApp(home: Scaffold(body: SizedBox(width: 200, height: 200, child: child)));
+Widget _host(Widget child) => MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(body: SizedBox(width: 200, height: 200, child: child)));
 
 void main() {
   test('type, defaultProps, dataKey', () {

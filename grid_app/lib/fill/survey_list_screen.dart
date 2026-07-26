@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../controls/registry.dart';
 import '../data/survey_store.dart';
 import '../data/template_store.dart';
+import '../l10n/app_localizations.dart';
 import '../model/survey.dart';
 import '../model/template.dart';
 import '../services/platform_info.dart';
@@ -57,8 +58,8 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
     final template = await widget.templateStore.get(s.templateId);
     if (!mounted) return;
     if (template == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Template not found for this survey.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context)!.templateNotFound)));
       return;
     }
     await Navigator.of(context).push(MaterialPageRoute(
@@ -74,17 +75,18 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
   }
 
   Future<void> _delete(Survey s) async {
+    final l10n = AppLocalizations.of(context)!;
     final yes = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete "${s.name}"?'),
+        title: Text(l10n.confirmDeleteTitle(s.name)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(l10n.cancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete')),
+              child: Text(l10n.delete)),
         ],
       ),
     );
@@ -102,13 +104,13 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('All Surveys')),
+      appBar: AppBar(title: Text(l10n.allSurveysTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _surveys.isEmpty
-              ? const Center(
-                  child: Text('No surveys yet. Open a template to start one.'))
+              ? Center(child: Text(l10n.noSurveysYet))
               : ListView(
                   children: [
                     for (final s in _surveys)
@@ -134,22 +136,22 @@ class _SurveyListScreenState extends State<SurveyListScreen> {
                           title: Text(s.name),
                           subtitle: Text(
                               '${_tplNames[s.templateId] ?? s.templateId} · '
-                              '${updatedLabel(s.updatedAt, DateTime.now())} · '
-                              '${s.data.length} fields'),
+                              '${updatedLabel(s.updatedAt, DateTime.now(), l10n)} · '
+                              '${l10n.fieldsCount(s.data.length)}'),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
                                 key: ValueKey('rename-${s.id}'),
                                 icon: const Icon(Icons.edit_outlined),
-                                tooltip: 'Rename',
+                                tooltip: l10n.rename,
                                 onPressed: () => _rename(s),
                               ),
                               if (isDesktopPlatform)
                                 IconButton(
                                   key: ValueKey('delete-${s.id}'),
                                   icon: const Icon(Icons.delete_outline),
-                                  tooltip: 'Delete',
+                                  tooltip: l10n.delete,
                                   onPressed: () => _delete(s),
                                 ),
                             ],

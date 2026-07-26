@@ -5,6 +5,7 @@ import 'package:scss_grid/builder/grid_canvas.dart';
 import 'package:scss_grid/builder/control_palette.dart';
 import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/data/template_store.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/grid_frame.dart';
 import 'package:scss_grid/model/template.dart';
 
@@ -27,6 +28,8 @@ void main() {
     final store = InMemoryTemplateStore();
     final t = _empty();
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: BuilderScreen(
           template: t, registry: buildDefaultRegistry(), store: store),
     ));
@@ -43,6 +46,8 @@ void main() {
       (tester) async {
     final store = InMemoryTemplateStore();
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: BuilderScreen(
           template: _empty(), registry: buildDefaultRegistry(), store: store),
     ));
@@ -59,6 +64,8 @@ void main() {
       (tester) async {
     final store = InMemoryTemplateStore();
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: BuilderScreen(
           template: _empty(), registry: buildDefaultRegistry(), store: store),
     ));

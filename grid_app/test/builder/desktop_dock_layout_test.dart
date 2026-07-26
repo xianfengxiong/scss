@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:scss_grid/builder/builder_screen.dart';
 import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/data/template_store.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/sample/sample_template.dart';
 
 /// Desktop builder layout: palette docked left, properties docked right,
@@ -18,6 +19,8 @@ void main() {
     try {
       await tester.binding.setSurfaceSize(const Size(1280, 800));
       await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: BuilderScreen(
           template: sampleTemplate().copyWith(id: 'tpl_1'),
           registry: buildDefaultRegistry(),
@@ -39,7 +42,7 @@ void main() {
       expect(find.text('Properties'), findsOneWidget);
       // Palette tiles are present as full-width rows (vertical axis).
       expect(find.text('Image'), findsOneWidget);
-      expect(find.text('点击画布上的控件以编辑属性'), findsOneWidget);
+      expect(find.text('Click a control on the canvas to edit its properties'), findsOneWidget);
     });
   });
 
@@ -71,7 +74,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('dock-toggle-Properties')));
       await tester.pumpAndSettle();
-      expect(find.text('点击画布上的控件以编辑属性'), findsNothing);
+      expect(find.text('Click a control on the canvas to edit its properties'), findsNothing);
     });
   });
 

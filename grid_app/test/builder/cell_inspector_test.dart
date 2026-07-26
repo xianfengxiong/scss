@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scss_grid/builder/cell_inspector.dart';
 import 'package:scss_grid/controls/label_control.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/cell.dart';
 
 void main() {
@@ -10,6 +11,8 @@ void main() {
     int? newSpan;
     var deleted = false;
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: CellInspector(
           cell: const Cell(id: 'l', col: 0, row: 0, colSpan: 2, type: 'label',
@@ -38,6 +41,8 @@ void main() {
   testWidgets('starts collapsed (docked); toggle expands then collapses',
       (tester) async {
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: CellInspector(
           cell: const Cell(id: 'l', col: 0, row: 0, colSpan: 2, type: 'label',

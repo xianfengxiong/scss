@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../l10n/app_localizations.dart';
+import '../l10n/app_localizations_en.dart';
 import '../model/tombstone.dart';
 import 'protocol.dart';
 import 'sync_engine.dart';
@@ -24,18 +26,20 @@ class HttpSyncTransport implements SyncTransport {
   final String token;
   final http.Client _client;
 
+  /// User-facing error strings; English when not injected (tests).
+  final AppLocalizations l10n;
+
   HttpSyncTransport({required this.base, required this.token,
-      http.Client? client})
-      : _client = client ?? http.Client();
+      http.Client? client, AppLocalizations? l10n})
+      : _client = client ?? http.Client(),
+        l10n = l10n ?? AppLocalizationsEn();
 
   Map<String, String> get _headers => {'x-sync-token': token};
 
   Future<http.Response> _timed(
           Future<http.Response> request, Duration limit, String what) =>
       request.timeout(limit,
-          onTimeout: () =>
-              throw SyncException('$what 超时——请确认电脑上的同步页面开着、'
-                  '两台设备在同一 WiFi,且地址无误'));
+          onTimeout: () => throw SyncException(l10n.requestTimeout(what)));
 
   /// Token/reachability check for the pairing screen: server metadata, or
   /// throws with a readable message.
@@ -43,7 +47,7 @@ class HttpSyncTransport implements SyncTransport {
     final res = await _timed(
         _client.get(base.resolve('ping'), headers: _headers),
         _pingTimeout,
-        '连接');
+        l10n.reqConnect);
     _check(res, 'ping');
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
@@ -53,7 +57,7 @@ class HttpSyncTransport implements SyncTransport {
     final res = await _timed(
         _client.get(base.resolve('manifest'), headers: _headers),
         _jsonTimeout,
-        '获取清单');
+        l10n.reqManifest);
     _check(res, 'manifest');
     return SyncManifest.fromJson(
         jsonDecode(res.body) as Map<String, dynamic>);
@@ -82,7 +86,7 @@ class HttpSyncTransport implements SyncTransport {
             headers: {..._headers, 'content-type': 'application/json'},
             body: jsonEncode([for (final t in tombstones) t.toJson()])),
         _jsonTimeout,
-        '同步删除');
+        l10n.reqTombstones);
     _check(res, 'tombstones');
   }
 
@@ -91,7 +95,7 @@ class HttpSyncTransport implements SyncTransport {
     final res = await _timed(
         _client.get(base.resolve('files/$name'), headers: _headers),
         _fileTimeout,
-        '下载图片');
+        l10n.reqDownloadImage);
     if (res.statusCode == 404) return null;
     _check(res, 'file $name');
     return res.bodyBytes;
@@ -104,7 +108,7 @@ class HttpSyncTransport implements SyncTransport {
             headers: {..._headers, 'content-type': 'application/octet-stream'},
             body: bytes),
         _fileTimeout,
-        '上传图片');
+        l10n.reqUploadImage);
     _check(res, 'file $name');
   }
 
@@ -114,7 +118,7 @@ class HttpSyncTransport implements SyncTransport {
     final res = await _timed(
         _client.get(base.resolve(path), headers: _headers),
         _jsonTimeout,
-        '拉取数据');
+        l10n.reqPull);
     if (res.statusCode == 404) return null;
     _check(res, path);
     return jsonDecode(res.body) as Map<String, dynamic>;
@@ -126,7 +130,7 @@ class HttpSyncTransport implements SyncTransport {
             headers: {..._headers, 'content-type': 'application/json'},
             body: jsonEncode(json)),
         _jsonTimeout,
-        '推送数据');
+        l10n.reqPush);
     if (res.statusCode == 409) return false; // peer's copy is newer — fine
     _check(res, path);
     return true;
@@ -134,10 +138,10 @@ class HttpSyncTransport implements SyncTransport {
 
   void _check(http.Response res, String what) {
     if (res.statusCode == 401) {
-      throw SyncException('配对码不正确');
+      throw SyncException(l10n.wrongPairingCode);
     }
     if (res.statusCode >= 300) {
-      throw SyncException('$what 失败(HTTP ${res.statusCode})');
+      throw SyncException(l10n.requestFailed(what, res.statusCode));
     }
   }
 }

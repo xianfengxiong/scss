@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
 import '../controls/registry.dart';
+import '../l10n/app_localizations.dart';
 import '../model/template.dart';
 import '../pdf/resolve_pdf_data.dart';
 import '../pdf/template_pdf.dart';
@@ -24,7 +25,7 @@ class PdfPreviewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Preview')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.preview)),
       body: PdfPreview(
         build: (format) async {
           final resolved = await resolvePdfData(template, data, registry);

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/data/survey_store.dart';
 import 'package:scss_grid/fill/fill_screen.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/survey.dart';
 import 'package:scss_grid/sample/sample_template.dart';
 
@@ -19,6 +20,8 @@ void main() {
     try {
       await tester.binding.setSurfaceSize(const Size(1280, 800));
       await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: FillScreen(
           template: sampleTemplate().copyWith(id: 'tpl_1'),
           survey: const Survey(id: 'srv_1', templateId: 'tpl_1', name: 'S'),

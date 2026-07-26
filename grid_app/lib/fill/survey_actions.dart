@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../controls/registry.dart';
 import '../data/survey_store.dart';
+import '../l10n/app_localizations.dart';
 import '../model/ids.dart';
 import '../model/survey.dart';
 import '../model/template.dart';
@@ -15,7 +16,7 @@ import 'time_label.dart';
 Future<void> renameSurvey(
     BuildContext context, SurveyStore surveyStore, Survey s) async {
   final name = await promptForSurveyName(context,
-      title: 'Rename survey', initial: s.name);
+      title: AppLocalizations.of(context)!.renameSurvey, initial: s.name);
   if (name == null || !context.mounted) return;
   final latest = await surveyStore.get(s.id) ?? s;
   await surveyStore
@@ -31,7 +32,7 @@ Future<void> createAndOpenSurvey(
   required ControlRegistry registry,
 }) async {
   final name = await promptForSurveyName(context,
-      title: 'New survey',
+      title: AppLocalizations.of(context)!.newSurvey,
       initial: '${template.name} ${dateStamp(DateTime.now())}');
   if (name == null || !context.mounted) return;
   final survey = Survey(

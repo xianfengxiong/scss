@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 /// A desktop side panel: expanded it shows a titled column with [child];
 /// collapsed it shrinks to a thin rail with just the expand chevron and the
 /// title turned sideways, giving the canvas the width back.
@@ -38,7 +40,9 @@ class _CollapsibleDockState extends State<CollapsibleDock> {
     final toggle = IconButton(
       key: ValueKey('dock-toggle-${widget.title}'),
       icon: Icon(_chevron),
-      tooltip: _expanded ? 'Collapse ${widget.title}' : widget.title,
+      tooltip: _expanded
+          ? AppLocalizations.of(context)!.collapseDock(widget.title)
+          : widget.title,
       onPressed: () => setState(() => _expanded = !_expanded),
     );
     if (!_expanded) {

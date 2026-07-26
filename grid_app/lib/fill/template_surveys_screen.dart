@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../controls/registry.dart';
 import '../data/survey_store.dart';
+import '../l10n/app_localizations.dart';
 import '../model/survey.dart';
 import '../model/template.dart';
 import '../widgets/list_icons.dart';
@@ -73,17 +74,18 @@ class _TemplateSurveysScreenState extends State<TemplateSurveysScreen> {
   }
 
   Future<void> _delete(Survey s) async {
+    final l10n = AppLocalizations.of(context)!;
     final yes = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete "${s.name}"?'),
+        title: Text(l10n.confirmDeleteTitle(s.name)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(l10n.cancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete')),
+              child: Text(l10n.delete)),
         ],
       ),
     );
@@ -95,6 +97,7 @@ class _TemplateSurveysScreenState extends State<TemplateSurveysScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -102,7 +105,7 @@ class _TemplateSurveysScreenState extends State<TemplateSurveysScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(widget.template.name),
-            Text('${_surveys.length} 份调查表',
+            Text(l10n.surveysCount(_surveys.length),
                 style: const TextStyle(
                     fontSize: 12, fontWeight: FontWeight.normal)),
           ],
@@ -111,7 +114,7 @@ class _TemplateSurveysScreenState extends State<TemplateSurveysScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _surveys.isEmpty
-              ? const Center(child: Text('这个模版还没有调查表。点 + 新建一份。'))
+              ? Center(child: Text(l10n.noSurveysInTemplate))
               : ListView(
                   children: [
                     for (final s in _surveys)
@@ -120,21 +123,21 @@ class _TemplateSurveysScreenState extends State<TemplateSurveysScreen> {
                         leading: surveyListIcon(context),
                         title: Text(s.name),
                         subtitle: Text(
-                            '${updatedLabel(s.updatedAt, DateTime.now())} · '
-                            '${s.data.length} fields'),
+                            '${updatedLabel(s.updatedAt, DateTime.now(), l10n)} · '
+                            '${l10n.fieldsCount(s.data.length)}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
                               key: ValueKey('rename-${s.id}'),
                               icon: const Icon(Icons.edit_outlined),
-                              tooltip: 'Rename',
+                              tooltip: l10n.rename,
                               onPressed: () => _rename(s),
                             ),
                             IconButton(
                               key: ValueKey('delete-${s.id}'),
                               icon: const Icon(Icons.delete_outline),
-                              tooltip: 'Delete',
+                              tooltip: l10n.delete,
                               onPressed: () => _delete(s),
                             ),
                           ],
@@ -147,7 +150,7 @@ class _TemplateSurveysScreenState extends State<TemplateSurveysScreen> {
         key: const ValueKey('new-survey'),
         onPressed: _newSurvey,
         icon: const Icon(Icons.add),
-        label: const Text('新建调查表'),
+        label: Text(l10n.newSurvey),
       ),
     );
   }

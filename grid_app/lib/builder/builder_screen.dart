@@ -5,6 +5,7 @@ import '../controls/registry.dart';
 import '../data/template_store.dart';
 import '../fill/survey_name_dialog.dart';
 import '../grid/grid_resize.dart';
+import '../l10n/app_localizations.dart';
 import '../model/cell.dart';
 import '../model/template.dart';
 import '../services/platform_info.dart';
@@ -126,8 +127,8 @@ class _BuilderScreenState extends State<BuilderScreen> {
     _t = _t.copyWith(updatedAt: DateTime.now());
     await widget.store.upsert(_t);
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Template saved.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context)!.templateSaved)));
     }
   }
 
@@ -136,7 +137,7 @@ class _BuilderScreenState extends State<BuilderScreen> {
   /// progress, so backing out without Save must not revert it.
   Future<void> _rename() async {
     final name = await promptForSurveyName(context,
-        title: 'Rename template', initial: _t.name);
+        title: AppLocalizations.of(context)!.renameTemplate, initial: _t.name);
     if (name == null || !mounted) return;
     setState(
         () => _t = _t.copyWith(name: name, updatedAt: DateTime.now()));
@@ -161,18 +162,19 @@ class _BuilderScreenState extends State<BuilderScreen> {
     final removed = removePage(_t, _pageIndex);
     if (removed == null) return; // last page — button is disabled anyway
     if (_page.cells.isNotEmpty) {
+      final l10n = AppLocalizations.of(context)!;
       final yes = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text('删除第 ${_pageIndex + 1} 页?'),
-          content: Text('该页上的 ${_page.cells.length} 个控件将一并删除。'),
+          title: Text(l10n.deletePageTitle(_pageIndex + 1)),
+          content: Text(l10n.deletePageContent(_page.cells.length)),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel')),
+                child: Text(l10n.cancel)),
             FilledButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Delete')),
+                child: Text(l10n.delete)),
           ],
         ),
       );
@@ -189,6 +191,7 @@ class _BuilderScreenState extends State<BuilderScreen> {
   @override
   Widget build(BuildContext context) {
     final selected = _selected;
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         // Desktop: the grid steppers and page navigator share the title row
@@ -200,11 +203,11 @@ class _BuilderScreenState extends State<BuilderScreen> {
                   Flexible(
                       child: Text(_t.name, overflow: TextOverflow.ellipsis)),
                   const SizedBox(width: 24),
-                  _stepper('Cols', _page.grid.cols,
+                  _stepper(l10n.cols, _page.grid.cols,
                       () => _commitPage(setCols(_page, _t.page, _page.grid.cols - 1)),
                       () => _commitPage(setCols(_page, _t.page, _page.grid.cols + 1)), 'cols'),
                   const SizedBox(width: 12),
-                  _stepper('Rows', _page.grid.rows,
+                  _stepper(l10n.rows, _page.grid.rows,
                       () => _commitPage(setRows(_page, _t.page, _page.grid.rows - 1)),
                       () => _commitPage(setRows(_page, _t.page, _page.grid.rows + 1)), 'rows'),
                   const SizedBox(width: 12),
@@ -217,7 +220,8 @@ class _BuilderScreenState extends State<BuilderScreen> {
                 children: [
                   Text(_t.name),
                   Text(
-                      '${_page.grid.cols} × ${_page.grid.rows} grid · ${_t.pages.length} page(s)',
+                      l10n.builderSubtitle(
+                          _page.grid.cols, _page.grid.rows, _t.pages.length),
                       style: const TextStyle(
                           fontSize: 12, fontWeight: FontWeight.normal)),
                 ],
@@ -226,12 +230,12 @@ class _BuilderScreenState extends State<BuilderScreen> {
           IconButton(
             key: const ValueKey('builder-rename'),
             icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Rename',
+            tooltip: l10n.rename,
             onPressed: _rename,
           ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf_outlined),
-            tooltip: 'Preview',
+            tooltip: l10n.preview,
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
               builder: (_) =>
                   PdfPreviewScreen(template: _t, registry: widget.registry),
@@ -239,7 +243,7 @@ class _BuilderScreenState extends State<BuilderScreen> {
           ),
           IconButton(
               icon: const Icon(Icons.save_outlined),
-              tooltip: 'Save',
+              tooltip: l10n.save,
               onPressed: _save),
         ],
       ),
@@ -275,42 +279,45 @@ class _BuilderScreenState extends State<BuilderScreen> {
         ],
       );
 
-  Widget _desktopBody(Cell? selected) => Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          CollapsibleDock(
-            title: 'Controls',
-            onLeft: true,
-            width: 176,
-            child: ControlPalette(
-              registry: widget.registry,
-              onPick: _addControl,
-              axis: Axis.vertical,
-            ),
+  Widget _desktopBody(Cell? selected) {
+    final l10n = AppLocalizations.of(context)!;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CollapsibleDock(
+          title: l10n.controlsDock,
+          onLeft: true,
+          width: 176,
+          child: ControlPalette(
+            registry: widget.registry,
+            onPick: _addControl,
+            axis: Axis.vertical,
           ),
-          const VerticalDivider(width: 1),
-          // Grid steppers + page navigator live in the AppBar title row on
-          // desktop, so the middle column is all canvas.
-          Expanded(child: _canvasArea()),
-          const VerticalDivider(width: 1),
-          // Always present (fixed width) so selecting/deselecting never
-          // resizes the canvas mid-drag.
-          CollapsibleDock(
-            title: 'Properties',
-            onLeft: false,
-            width: 280,
-            child: selected == null
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('点击画布上的控件以编辑属性',
-                          textAlign: TextAlign.center),
-                    ),
-                  )
-                : _inspector(selected, docked: true),
-          ),
-        ],
-      );
+        ),
+        const VerticalDivider(width: 1),
+        // Grid steppers + page navigator live in the AppBar title row on
+        // desktop, so the middle column is all canvas.
+        Expanded(child: _canvasArea()),
+        const VerticalDivider(width: 1),
+        // Always present (fixed width) so selecting/deselecting never
+        // resizes the canvas mid-drag.
+        CollapsibleDock(
+          title: l10n.propertiesDock,
+          onLeft: false,
+          width: 280,
+          child: selected == null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(l10n.selectControlHint,
+                        textAlign: TextAlign.center),
+                  ),
+                )
+              : _inspector(selected, docked: true),
+        ),
+      ],
+    );
+  }
 
   Widget _inspector(Cell selected, {required bool docked}) => CellInspector(
         cell: selected,
@@ -331,68 +338,74 @@ class _BuilderScreenState extends State<BuilderScreen> {
 
   /// Phone: steppers + page navigator on one row above the palette. FittedBox
   /// keeps a narrow screen from overflowing.
-  Widget _gridControls() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Row(
-            children: [
-              _stepper('Cols', _page.grid.cols,
-                  () => _commitPage(setCols(_page, _t.page, _page.grid.cols - 1)),
-                  () => _commitPage(setCols(_page, _t.page, _page.grid.cols + 1)), 'cols'),
-              const SizedBox(width: 16),
-              _stepper('Rows', _page.grid.rows,
-                  () => _commitPage(setRows(_page, _t.page, _page.grid.rows - 1)),
-                  () => _commitPage(setRows(_page, _t.page, _page.grid.rows + 1)), 'rows'),
-              const SizedBox(width: 16),
-              _pageNav(),
-            ],
-          ),
+  Widget _gridControls() {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Row(
+          children: [
+            _stepper(l10n.cols, _page.grid.cols,
+                () => _commitPage(setCols(_page, _t.page, _page.grid.cols - 1)),
+                () => _commitPage(setCols(_page, _t.page, _page.grid.cols + 1)), 'cols'),
+            const SizedBox(width: 16),
+            _stepper(l10n.rows, _page.grid.rows,
+                () => _commitPage(setRows(_page, _t.page, _page.grid.rows - 1)),
+                () => _commitPage(setRows(_page, _t.page, _page.grid.rows + 1)), 'rows'),
+            const SizedBox(width: 16),
+            _pageNav(),
+          ],
         ),
-      );
+      ),
+    );
+  }
 
   /// `‹ 1/3 ›  +  🗑` — switch, append (inherits this page's grid, no
   /// controls), delete (disabled on the last page; confirms if not empty).
-  Widget _pageNav() => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            key: const ValueKey('page-prev'),
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.chevron_left, size: 20),
-            tooltip: 'Previous page',
-            onPressed: _pageIndex > 0 ? () => _goToPage(_pageIndex - 1) : null,
-          ),
-          Text('${_pageIndex + 1}/${_t.pages.length}',
-              key: const ValueKey('page-indicator'),
-              style:
-                  const TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
-          IconButton(
-            key: const ValueKey('page-next'),
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.chevron_right, size: 20),
-            tooltip: 'Next page',
-            onPressed: _pageIndex < _t.pages.length - 1
-                ? () => _goToPage(_pageIndex + 1)
-                : null,
-          ),
-          IconButton(
-            key: const ValueKey('page-add'),
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.post_add, size: 20),
-            tooltip: '新增页(沿用本页网格)',
-            onPressed: _addPage,
-          ),
-          IconButton(
-            key: const ValueKey('page-delete'),
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.delete_sweep_outlined, size: 20),
-            tooltip: '删除本页',
-            onPressed: _t.pages.length > 1 ? _deletePage : null,
-          ),
-        ],
-      );
+  Widget _pageNav() {
+    final l10n = AppLocalizations.of(context)!;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          key: const ValueKey('page-prev'),
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.chevron_left, size: 20),
+          tooltip: l10n.previousPage,
+          onPressed: _pageIndex > 0 ? () => _goToPage(_pageIndex - 1) : null,
+        ),
+        Text('${_pageIndex + 1}/${_t.pages.length}',
+            key: const ValueKey('page-indicator'),
+            style:
+                const TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
+        IconButton(
+          key: const ValueKey('page-next'),
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.chevron_right, size: 20),
+          tooltip: l10n.nextPage,
+          onPressed: _pageIndex < _t.pages.length - 1
+              ? () => _goToPage(_pageIndex + 1)
+              : null,
+        ),
+        IconButton(
+          key: const ValueKey('page-add'),
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.post_add, size: 20),
+          tooltip: l10n.addPageTooltip,
+          onPressed: _addPage,
+        ),
+        IconButton(
+          key: const ValueKey('page-delete'),
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.delete_sweep_outlined, size: 20),
+          tooltip: l10n.deletePageTooltip,
+          onPressed: _t.pages.length > 1 ? _deletePage : null,
+        ),
+      ],
+    );
+  }
 
   /// `Label − N +` — compact enough for the AppBar title row.
   Widget _stepper(

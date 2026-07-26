@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:scss_grid/fill/pin_label_dialog.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 
 /// Host widget that pops open [PinLabelDialog] and stores the returned result.
 class _Host extends StatefulWidget {
@@ -44,7 +45,11 @@ void main() {
   group('PinLabelDialog', () {
     Future<void> open(WidgetTester tester, {String initial = ''}) async {
       await tester.pumpWidget(
-        MaterialApp(home: _Host(initialLabel: initial)),
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: _Host(initialLabel: initial),
+        ),
       );
       await tester.tap(find.byKey(const Key('open')));
       await tester.pumpAndSettle();

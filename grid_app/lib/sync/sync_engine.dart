@@ -1,4 +1,6 @@
 import '../data/survey_store.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/app_localizations_en.dart';
 import '../data/sync_meta_store.dart';
 import '../data/template_store.dart';
 import '../model/survey.dart';
@@ -50,27 +52,31 @@ class SyncEngine {
   final SyncMetaStore meta;
   final MediaFileStore files;
 
+  /// User-facing progress/error strings; English when not injected (tests).
+  final AppLocalizations l10n;
+
   SyncEngine({
     required this.templates,
     required this.surveys,
     required this.meta,
     required this.files,
-  });
+    AppLocalizations? l10n,
+  }) : l10n = l10n ?? AppLocalizationsEn();
 
   Future<SyncReport> run(SyncTransport transport,
       {void Function(String message)? onProgress}) async {
     void progress(String m) => onProgress?.call(m);
 
-    progress('获取对方清单…');
+    progress(l10n.syncFetchingManifest);
     final remote = await transport.fetchManifest();
     if (remote.protocolVersion != syncProtocolVersion) {
-      throw SyncException(
-          '协议版本不匹配(本机 v$syncProtocolVersion,对方 v${remote.protocolVersion}),请把两端应用升到同一版本');
+      throw SyncException(l10n.protocolMismatch(
+          syncProtocolVersion, remote.protocolVersion));
     }
     final local = await _localManifest();
     final report = SyncReport();
 
-    progress('同步模版…');
+    progress(l10n.syncingTemplates);
     await _mergeKind(
       kind: Tombstone.kindTemplate,
       local: local,
@@ -79,7 +85,7 @@ class SyncEngine {
       transport: transport,
     );
 
-    progress('同步调查表…');
+    progress(l10n.syncingSurveys);
     await _mergeKind(
       kind: Tombstone.kindSurvey,
       local: local,
@@ -141,14 +147,14 @@ class SyncEngine {
         case MergeAction.none:
           break;
         case MergeAction.pullObject:
-          progress?.call('拉取 $id…');
+          progress?.call(l10n.pullingItem(id));
           if (await _pull(kind, id, remote, transport, report)) {
             kind == Tombstone.kindTemplate
                 ? report.pulledTemplates++
                 : report.pulledSurveys++;
           }
         case MergeAction.pushObject:
-          progress?.call('推送 $id…');
+          progress?.call(l10n.pushingItem(id));
           if (await _push(kind, id, remote, transport, report)) {
             kind == Tombstone.kindTemplate
                 ? report.pushedTemplates++

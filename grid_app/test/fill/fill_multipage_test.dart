@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/data/survey_store.dart';
 import 'package:scss_grid/fill/fill_screen.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/cell.dart';
 import 'package:scss_grid/model/grid_frame.dart';
 import 'package:scss_grid/model/survey.dart';
@@ -35,6 +36,8 @@ void main() {
   Future<InMemorySurveyStore> pump(WidgetTester tester) async {
     final store = InMemorySurveyStore();
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: FillScreen(
         template: _twoPages(),
         survey: const Survey(id: 'srv_1', templateId: 'tpl_1', name: 'S'),
@@ -70,6 +73,8 @@ void main() {
   testWidgets('single-page template shows no page bar', (tester) async {
     final one = _twoPages();
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: FillScreen(
         template: one.copyWith(pages: [one.pages.first]),
         survey: const Survey(id: 'srv_1', templateId: 'tpl_1', name: 'S'),

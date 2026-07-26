@@ -166,9 +166,9 @@ class DeviceChecklistControl extends ControlSpec {
           const SizedBox(width: 8),
           Expanded(child: textField('Remark label', 'remarkLabel')),
         ]),
-        colStepper('Number 列宽', 'numberCols', 'numbercols', numCols,
+        colStepper('Number width', 'numberCols', 'numbercols', numCols,
             cell.colSpan - remCols - 1),
-        colStepper('Remark 列宽', 'remarkCols', 'remarkcols', remCols,
+        colStepper('Remark width', 'remarkCols', 'remarkcols', remCols,
             cell.colSpan - numCols - 1),
         const SizedBox(height: 8),
         const Text('Device rows', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -180,8 +180,8 @@ class DeviceChecklistControl extends ControlSpec {
                 child: TextFormField(
                   key: ValueKey('devck-rowlabel-${rows[i]['key']}'),
                   initialValue: rows[i]['label'] as String? ?? '',
-                  decoration:
-                      const InputDecoration(isDense: true, hintText: '设备名'),
+                  decoration: const InputDecoration(
+                      isDense: true, hintText: 'Device name'),
                   onChanged: (v) {
                     final next = [
                       for (final r in rows) {...r}
@@ -208,7 +208,7 @@ class DeviceChecklistControl extends ControlSpec {
           child: TextButton.icon(
             key: const ValueKey('devck-addrow'),
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('加一行'),
+            label: const Text('Add row'),
             onPressed: () {
               final next = [
                 for (final r in rows) {...r},

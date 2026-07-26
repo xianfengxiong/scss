@@ -4,6 +4,7 @@ import 'package:scss_grid/builder/builder_screen.dart';
 import 'package:scss_grid/builder/editor_ops.dart';
 import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/data/template_store.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/template.dart';
 import 'package:scss_grid/sample/sample_template.dart';
 
@@ -41,6 +42,8 @@ void main() {
       final t = sampleTemplate().copyWith(id: 'tpl_1');
       await store.upsert(t);
       await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: BuilderScreen(
             template: t,
             registry: buildDefaultRegistry(),
@@ -98,7 +101,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('page-delete')));
       await tester.pumpAndSettle();
-      expect(find.textContaining('删除第 1 页'), findsOneWidget);
+      expect(find.textContaining('Delete page 1'), findsOneWidget);
 
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scss_grid/fill/survey_name_dialog.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 
 /// Pumps a button that opens the dialog, taps it, and settles — leaving the
 /// dialog open. The dialog's eventual result is delivered via [onResult]
@@ -9,6 +10,8 @@ import 'package:scss_grid/fill/survey_name_dialog.dart';
 Future<void> _pumpOpener(WidgetTester tester, void Function(String?) onResult,
     {String initial = 'Init'}) async {
   await tester.pumpWidget(MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: Builder(
       builder: (ctx) => TextButton(
         onPressed: () async {

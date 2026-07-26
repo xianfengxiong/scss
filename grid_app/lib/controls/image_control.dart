@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../l10n/app_localizations.dart';
 import '../model/cell.dart';
 import '../services/image_service.dart';
 import '../services/media_paths.dart';
@@ -80,17 +81,18 @@ class _ImageField extends StatelessWidget {
   Future<void> _add(BuildContext context) async {
     final svc = image;
     if (svc == null) return;
+    final l10n = AppLocalizations.of(context)!;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       builder: (_) => SafeArea(
         child: Wrap(children: [
           ListTile(
               leading: const Icon(Icons.photo_camera),
-              title: const Text('Camera'),
+              title: Text(l10n.camera),
               onTap: () => Navigator.pop(context, ImageSource.camera)),
           ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
+              title: Text(l10n.gallery),
               onTap: () => Navigator.pop(context, ImageSource.gallery)),
         ]),
       ),
@@ -102,6 +104,7 @@ class _ImageField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final path = value;
     if (path != null && path.isNotEmpty) {
       return Stack(
@@ -118,7 +121,7 @@ class _ImageField extends StatelessWidget {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
               iconSize: 16,
-              tooltip: 'Clear',
+              tooltip: l10n.clear,
               icon: const Icon(Icons.close),
               onPressed: () => onChanged(null),
             ),
@@ -130,7 +133,7 @@ class _ImageField extends StatelessWidget {
       child: IconButton(
         key: const ValueKey('image-add'),
         iconSize: 20,
-        tooltip: 'Add photo',
+        tooltip: l10n.addPhoto,
         icon: const Icon(Icons.add_a_photo_outlined),
         onPressed: () => _add(context),
       ),

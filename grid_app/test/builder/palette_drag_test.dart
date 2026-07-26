@@ -4,6 +4,7 @@ import 'package:scss_grid/builder/builder_screen.dart';
 import 'package:scss_grid/controls/control_spec.dart';
 import 'package:scss_grid/controls/default_controls.dart';
 import 'package:scss_grid/data/template_store.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/grid_frame.dart';
 import 'package:scss_grid/model/template.dart';
 
@@ -24,6 +25,8 @@ Template _empty() => Template(
 void main() {
   testWidgets('palette items are draggable', (tester) async {
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: BuilderScreen(
           template: _empty(),
           registry: buildDefaultRegistry(),
@@ -38,6 +41,8 @@ void main() {
       (tester) async {
     final store = InMemoryTemplateStore();
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: BuilderScreen(
           template: _empty(),
           registry: buildDefaultRegistry(),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 /// A dialog to edit/delete a map pin's label. Owns its [TextEditingController]
 /// and disposes it in [State.dispose] (called only after the route is fully
 /// removed) — disposing it synchronously after showDialog returns would corrupt
@@ -24,24 +26,28 @@ class _PinLabelDialogState extends State<PinLabelDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Pin'),
-        content: TextField(
-          controller: _ctrl,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Label (optional)'),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, ('delete', '')),
-              child: const Text('Delete', style: TextStyle(color: Colors.red))),
-          TextButton(
-              onPressed: () => Navigator.pop(context, ('cancel', '')),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () =>
-                  Navigator.pop(context, ('ok', _ctrl.text.trim())),
-              child: const Text('OK')),
-        ],
-      );
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(l10n.pinTitle),
+      content: TextField(
+        controller: _ctrl,
+        autofocus: true,
+        decoration: InputDecoration(labelText: l10n.pinLabelOptional),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context, ('delete', '')),
+            child: Text(l10n.delete,
+                style: const TextStyle(color: Colors.red))),
+        TextButton(
+            onPressed: () => Navigator.pop(context, ('cancel', '')),
+            child: Text(l10n.cancel)),
+        FilledButton(
+            onPressed: () =>
+                Navigator.pop(context, ('ok', _ctrl.text.trim())),
+            child: Text(l10n.ok)),
+      ],
+    );
+  }
 }

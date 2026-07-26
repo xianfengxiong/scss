@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../data/survey_store.dart';
+import '../l10n/app_localizations.dart';
 import '../data/sync_meta_store.dart';
 import '../data/template_store.dart';
 import 'media_file_store.dart';
@@ -93,15 +94,19 @@ class _SyncHostScreenState extends State<SyncHostScreen> {
         ];
       });
     } catch (e) {
-      if (mounted) setState(() => _error = '同步服务启动失败:$e');
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        setState(() => _error = l10n.syncServerStartFailed(e.toString()));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('同步(本机作为服务端)')),
+      appBar: AppBar(title: Text(l10n.syncHostTitle)),
       body: _error != null
           ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
           : _server == null
@@ -111,20 +116,19 @@ class _SyncHostScreenState extends State<SyncHostScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('手机与本机连接同一 WiFi,打开手机端「同步」页,'
-                          '输入以下地址和配对码:'),
+                      Text(l10n.syncHostIntro),
                       const SizedBox(height: 16),
-                      Text('本机地址', style: theme.textTheme.labelLarge),
+                      Text(l10n.thisMachineAddress,
+                          style: theme.textTheme.labelLarge),
                       for (final a in _addresses)
                         SelectableText(
                           '$a:$_boundPort',
                           key: ValueKey('sync-host-address-$a'),
                           style: theme.textTheme.headlineSmall,
                         ),
-                      if (_addresses.isEmpty)
-                        const Text('未发现局域网地址——请确认已连接 WiFi/网线'),
+                      if (_addresses.isEmpty) Text(l10n.noLanAddress),
                       const SizedBox(height: 16),
-                      Text('配对码', style: theme.textTheme.labelLarge),
+                      Text(l10n.pairingCode, style: theme.textTheme.labelLarge),
                       SelectableText(
                         _token ?? '',
                         key: const ValueKey('sync-host-token'),
@@ -135,14 +139,15 @@ class _SyncHostScreenState extends State<SyncHostScreen> {
                       Row(children: [
                         const Icon(Icons.circle, color: Colors.green, size: 12),
                         const SizedBox(width: 8),
-                        Text('服务运行中(端口 $_boundPort)——'
-                            '保持本页面打开,在手机上点「同步」'),
+                        // Expanded so the (long) English line wraps instead
+                        // of overflowing a narrow window.
+                        Expanded(child: Text(l10n.serverRunning(_boundPort!))),
                       ]),
                       const Divider(height: 32),
-                      Text('活动记录', style: theme.textTheme.labelLarge),
+                      Text(l10n.activityLog, style: theme.textTheme.labelLarge),
                       Expanded(
                         child: _activity.isEmpty
-                            ? const Center(child: Text('等待手机连接…'))
+                            ? Center(child: Text(l10n.waitingForPhone))
                             : ListView.builder(
                                 itemCount: _activity.length,
                                 itemBuilder: (_, i) => Text(

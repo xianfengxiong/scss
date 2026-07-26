@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:scss_grid/controls/multi_image_control.dart';
+import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/cell.dart';
 import 'package:scss_grid/services/image_service.dart';
 
@@ -29,6 +30,8 @@ class _FakeImage implements ImageService {
 }
 
 Widget _host(Widget child) => MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(body: SizedBox(width: 240, height: 240, child: child)));
 
 void main() {
@@ -49,12 +52,12 @@ void main() {
 
   test('validate: <min, in-range, >cap', () {
     final c = MultiImageControl();
-    expect(c.validate(_cell(), null), '至少 3 张，当前 0');
-    expect(c.validate(_cell(), ['a', 'b']), '至少 3 张，当前 2');
+    expect(c.validate(_cell(), null), 'At least 3, now 0');
+    expect(c.validate(_cell(), ['a', 'b']), 'At least 3, now 2');
     expect(c.validate(_cell(), ['a', 'b', 'c']), isNull);
     expect(c.validate(_cell(), ['a', 'b', 'c', 'd', 'e', 'f']), isNull);
     expect(c.validate(_cell(), ['a', 'b', 'c', 'd', 'e', 'f', 'g']),
-        '最多 6 张，当前 7'); // cap = rows2*cols3 = 6
+        'At most 6, now 7'); // cap = rows2*cols3 = 6
   });
 
   test('resolvePdfValue: paths → bytes, missing filtered, empty → null',
@@ -154,13 +157,13 @@ void main() {
       MultiImageControl(image: _FakeImage(null))
           .fillWidget(_cell(), ['/a.jpg'], (_) {}),
     ));
-    expect(find.text('至少 3 张，当前 1'), findsOneWidget);
+    expect(find.text('At least 3, now 1'), findsOneWidget);
 
     await tester.pumpWidget(_host(
       MultiImageControl(image: _FakeImage(null))
           .fillWidget(_cell(), ['/a.jpg', '/b.jpg', '/c.jpg'], (_) {}),
     ));
-    expect(find.textContaining('至少'), findsNothing);
+    expect(find.textContaining('At least'), findsNothing);
   });
 
   testWidgets('propEditor: editing Rows emits int prop', (tester) async {

@@ -12,6 +12,7 @@ import '../export/pdf_exporter.dart';
 import '../fill/survey_list_screen.dart';
 import '../fill/survey_name_dialog.dart';
 import '../fill/template_surveys_screen.dart';
+import '../l10n/app_localizations.dart';
 import '../model/ids.dart';
 import '../model/template.dart';
 import '../sample/sample_template.dart';
@@ -36,6 +37,10 @@ class TemplateListScreen extends StatefulWidget {
   final SyncMetaStore? meta;
   final MediaFileStore? files;
 
+  /// Change the app language ('en' / 'zh' / null = follow system); null
+  /// hides the language menu (tests).
+  final void Function(String? code)? onSetLocale;
+
   const TemplateListScreen({
     super.key,
     required this.store,
@@ -43,6 +48,7 @@ class TemplateListScreen extends StatefulWidget {
     required this.registry,
     this.meta,
     this.files,
+    this.onSetLocale,
   });
 
   @override
@@ -142,7 +148,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
 
   Future<void> _rename(Template t) async {
     final name = await promptForSurveyName(context,
-        title: 'Rename template', initial: t.name);
+        title: AppLocalizations.of(context)!.renameTemplate, initial: t.name);
     if (name == null || !mounted) return;
     // Re-read: the list snapshot can lag a just-closed BuilderScreen's save;
     // renaming the stale copy would clobber that edit. Mirrors survey rename.
@@ -160,18 +166,19 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
   }
 
   Future<void> _confirmDelete(Template t) async {
+    final l10n = AppLocalizations.of(context)!;
     final yes = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete "${t.name}"?'),
-        content: const Text('Surveys filled from it are kept.'),
+        title: Text(l10n.confirmDeleteTitle(t.name)),
+        content: Text(l10n.surveysAreKept),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(l10n.cancel)),
           FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete')),
+              child: Text(l10n.delete)),
         ],
       ),
     );
@@ -193,6 +200,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
   /// progress dialog, retry once via the directory picker when the sandbox
   /// refuses the path, and report what was written vs skipped.
   Future<void> _exportPdfs({String? onlyTemplateId}) async {
+    final l10n = AppLocalizations.of(context)!;
     var dir =
         (await widget.meta?.kvGet('export.dir')) ?? _defaultExportDir();
     if (!mounted) return;
@@ -218,7 +226,9 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
           builder: (_, v, __) => Row(children: [
             const CircularProgressIndicator(),
             const SizedBox(width: 16),
-            Text(v.$2 == 0 ? '准备中…' : '导出中 ${v.$1}/${v.$2}'),
+            Text(v.$2 == 0
+                ? l10n.preparing
+                : l10n.exportingProgress(v.$1, v.$2)),
           ]),
         ),
       ),
@@ -243,7 +253,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
       closeProgress();
       if (!mounted) return;
       final picked = await getDirectoryPath(
-          initialDirectory: dir, confirmButtonText: '选择导出目录');
+          initialDirectory: dir, confirmButtonText: l10n.chooseExportDirectory);
       if (picked == null || !mounted) return;
       await widget.meta?.kvSet('export.dir', picked);
       if (!mounted) return;
@@ -251,11 +261,11 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
       showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => const AlertDialog(
+        builder: (_) => AlertDialog(
             content: Row(children: [
-          CircularProgressIndicator(),
-          SizedBox(width: 16),
-          Text('导出中…'),
+          const CircularProgressIndicator(),
+          const SizedBox(width: 16),
+          Text(l10n.exporting),
         ])),
       ).whenComplete(() => progressOpen = false);
       try {
@@ -268,59 +278,59 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
         closeProgress();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('导出失败:目录不可写($e)')));
+              SnackBar(content: Text(l10n.exportDirUnwritable('$e'))));
         }
         return;
       }
     }
     closeProgress();
     if (!mounted) return;
-    final parts = <String>[
-      '新导出 ${report.written} 份',
-      '跳过 ${report.skipped} 份(未变化)',
-      if (report.errors.isNotEmpty) '${report.errors.length} 份出错',
-    ];
+    final msg = l10n.exportResult(report.written, report.skipped) +
+        (report.errors.isNotEmpty
+            ? l10n.exportErrors(report.errors.length)
+            : '');
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('导出完成:${parts.join(' · ')}')));
+        .showSnackBar(SnackBar(content: Text(msg)));
   }
 
   Future<String?> _confirmExportDir(String initial, String? onlyTemplateId) {
+    final l10n = AppLocalizations.of(context)!;
     var dir = initial;
     return showDialog<String>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(onlyTemplateId == null ? '导出全部 PDF' : '导出该模版 PDF'),
+          title: Text(
+              onlyTemplateId == null ? l10n.exportAllPdf : l10n.exportTemplatePdf),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('导出到:'),
+              Text(l10n.exportTo),
               SelectableText(dir,
                   style: const TextStyle(fontFamily: 'monospace', fontSize: 13)),
               TextButton.icon(
                 key: const ValueKey('export-change-dir'),
                 icon: const Icon(Icons.folder_open, size: 18),
-                label: const Text('更改目录…'),
+                label: Text(l10n.changeDirectory),
                 onPressed: () async {
                   final picked = await getDirectoryPath(initialDirectory: dir);
                   if (picked != null) setDialogState(() => dir = picked);
                 },
               ),
               const SizedBox(height: 4),
-              Text('每个模版一个文件夹,每份调查表一个 PDF(多页加 _1/_2 后缀)。\n'
-                  '增量导出:内容未变化的调查表自动跳过。',
+              Text(l10n.exportHint,
                   style: Theme.of(ctx).textTheme.bodySmall),
             ],
           ),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel')),
+                child: Text(l10n.cancel)),
             FilledButton(
                 key: const ValueKey('export-start'),
                 onPressed: () => Navigator.pop(ctx, dir),
-                child: const Text('导出')),
+                child: Text(l10n.export)),
           ],
         ),
       ),
@@ -329,35 +339,50 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SCSS Templates'),
+        title: Text(l10n.templatesTitle),
         actions: [
           if (isDesktopPlatform)
             IconButton(
               key: const ValueKey('export-all-pdf'),
               icon: const Icon(Icons.save_alt),
-              tooltip: '导出全部 PDF',
+              tooltip: l10n.exportAllPdf,
               onPressed: () => _exportPdfs(),
             ),
           if (_hasSync)
             IconButton(
               key: const ValueKey('open-sync'),
               icon: const Icon(Icons.sync),
-              tooltip: '同步',
+              tooltip: l10n.sync,
               onPressed: _openSync,
             ),
           IconButton(
             icon: const Icon(Icons.assignment_outlined),
-            tooltip: 'Surveys',
+            tooltip: l10n.surveysTooltip,
             onPressed: _openSurveys,
           ),
+          if (widget.onSetLocale != null)
+            PopupMenuButton<String>(
+              key: const ValueKey('language-menu'),
+              icon: const Icon(Icons.translate),
+              tooltip: '语言 / Language',
+              onSelected: (v) =>
+                  widget.onSetLocale!(v == 'system' ? null : v),
+              itemBuilder: (ctx) => const [
+                PopupMenuItem(
+                    value: 'system', child: Text('跟随系统 / System')),
+                PopupMenuItem(value: 'zh', child: Text('中文')),
+                PopupMenuItem(value: 'en', child: Text('English')),
+              ],
+            ),
         ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _templates.isEmpty
-              ? const Center(child: Text('No templates yet. Tap + to create one.'))
+              ? Center(child: Text(l10n.noTemplatesYet))
               : ListView(
                   children: [
                     for (final t in _templates)
@@ -365,35 +390,35 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                         key: ValueKey(t.id),
                         leading: templateListIcon(context),
                         title: Text(t.name),
-                        subtitle: Text(
-                            '${t.pages.length} 页 · ${_surveyCounts[t.id] ?? 0} 份调查表'),
+                        subtitle: Text(l10n.templateSubtitle(
+                            t.pages.length, _surveyCounts[t.id] ?? 0)),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
                               key: ValueKey('rename-${t.id}'),
                               icon: const Icon(Icons.edit_outlined),
-                              tooltip: 'Rename',
+                              tooltip: l10n.rename,
                               onPressed: () => _rename(t),
                             ),
                             IconButton(
                               key: ValueKey('design-${t.id}'),
                               icon: const Icon(Icons.design_services_outlined),
-                              tooltip: 'Edit design',
+                              tooltip: l10n.editDesign,
                               onPressed: () => _open(t),
                             ),
                             if (isDesktopPlatform)
                               IconButton(
                                 key: ValueKey('export-${t.id}'),
                                 icon: const Icon(Icons.save_alt),
-                                tooltip: '导出该模版 PDF',
+                                tooltip: l10n.exportTemplatePdf,
                                 onPressed: () =>
                                     _exportPdfs(onlyTemplateId: t.id),
                               ),
                             IconButton(
                               key: ValueKey('delete-${t.id}'),
                               icon: const Icon(Icons.delete_outline),
-                              tooltip: 'Delete',
+                              tooltip: l10n.delete,
                               onPressed: () => _confirmDelete(t),
                             ),
                           ],
@@ -406,7 +431,7 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: _create,
-        tooltip: 'New template',
+        tooltip: l10n.newTemplate,
         child: const Icon(Icons.add),
       ),
     );
