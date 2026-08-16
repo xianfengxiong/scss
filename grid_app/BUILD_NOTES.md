@@ -25,7 +25,7 @@ flutter run -d macos            # 开发调试
 
 代码同源:`isDesktopPlatform`(lib/services/platform_info.dart)把 Windows 一并当设计端,UI/同步/导出与 macOS 端完全一致。但 **Flutter 不支持交叉编译——必须在 Windows 机器上构建**:
 
-1. 装 Flutter SDK(版本对齐本仓库,见下方工具链表)+ Visual Studio 2022 的「使用 C++ 的桌面开发」工作负载(Community 版即可;只装 VS Code 不行,CMake/MSVC 来自 VS)。
+1. 装 Flutter SDK(版本对齐本仓库,见下方工具链表)+ MSVC 工具链:**Build Tools for Visual Studio 2022 即可**(免费无 IDE,~6-7GB;下载页「Tools for Visual Studio」区),勾「使用 C++ 的桌面开发」工作负载(自带 MSVC v143/Windows SDK/CMake)。完整 VS Community 只在要调试 windows/runner 原生 C++ 时才需要。只装 VS Code 不行(无编译器),MinGW/Clang 不支持。
 2. `flutter doctor` 确认 "Visual Studio" 一项打钩。
 3. 构建与运行:
 
@@ -40,6 +40,7 @@ flutter run -d windows            # 开发调试
 - **数据目录**:`%APPDATA%\com.example\scss_grid\`(scss_grid.sqlite + survey_images\)。Windows 走 ApplicationSupport 而非 Documents(lib/services/app_dirs.dart)——path_provider 在 Windows 的 Documents 是用户真实「文档」目录,不该往里倒库文件;macOS/Android 数据位置不变。
 - **图片压缩**:flutter_image_compress 无 Windows 实现,image_service 已兜底——压缩不可用时直接存原图(Windows 上填写拍照的图片会偏大,同步与 PDF 不受影响)。
 - **相机**:桌面 image_picker 无相机实现(macOS 同),图片控件走「相册」= 文件选择器。
+- **中文系统编码坑**:系统代码页 936(GBK)下 MSVC 编插件源码报 C4819(被 /WX 升为 C2220「警告被视为错误」)。已在 windows/CMakeLists.txt 顶层加 `/utf-8` 修复(对 runner+全部插件生效);别去改源文件编码,也别关系统的 UTF-8 beta 选项来碰运气。
 - 未做代码签名,别的机器首次运行 SmartScreen 可能拦「未知发布者」→「更多信息→仍要运行」。
 
 ## Release 构建与交付
