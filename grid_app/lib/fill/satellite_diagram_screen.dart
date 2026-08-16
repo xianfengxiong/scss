@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -97,21 +98,23 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
   }
 
   Future<void> _editPin(int index) async {
-    final result = await showDialog<(String, String, String)>(
+    final result = await showDialog<(String, String, String, double)>(
       context: context,
       builder: (_) => PinLabelDialog(
         initialLabel: _pins[index].label,
         initialIcon: _pins[index].icon,
+        initialRotation: _pins[index].rotation,
       ),
     );
     if (result == null || !mounted) return;
-    final (action, label, icon) = result;
+    final (action, label, icon, rotation) = result;
     if (action == 'delete') {
       setState(() => _pins = [..._pins]..removeAt(index));
     } else if (action == 'ok') {
       setState(() {
         final list = [..._pins];
-        list[index] = list[index].copyWith(label: label, icon: icon);
+        list[index] =
+            list[index].copyWith(label: label, icon: icon, rotation: rotation);
         _pins = list;
       });
     }
@@ -222,8 +225,16 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                                     child: Text(_pins[i].label,
                                         style: const TextStyle(fontSize: 10)),
                                   ),
-                                Icon(pinIconOf(_pins[i].icon),
-                                    color: Colors.red, size: 36),
+                                // Device icons rotate to their heading; the
+                                // classic pin never does — its tip marks the
+                                // coordinate and must stay on it.
+                                Transform.rotate(
+                                  angle: _pins[i].icon == 'pin'
+                                      ? 0
+                                      : _pins[i].rotation * math.pi / 180,
+                                  child: Icon(pinIconOf(_pins[i].icon),
+                                      color: Colors.red, size: 36),
+                                ),
                               ],
                             ),
                           ),

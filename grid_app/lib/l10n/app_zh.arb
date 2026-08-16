@@ -124,6 +124,7 @@
   "locateFailed": "定位失败——请确认已开启定位权限与 GPS",
   "pinTitle": "图钉",
   "pinLabelOptional": "标签(可选)",
+  "pinHeading": "朝向",
 
   "deviceNameHint": "设备名",
 

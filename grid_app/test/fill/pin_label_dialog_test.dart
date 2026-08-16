@@ -8,14 +8,18 @@ import 'package:scss_grid/l10n/app_localizations.dart';
 class _Host extends StatefulWidget {
   final String initialLabel;
   final String initialIcon;
-  const _Host({required this.initialLabel, this.initialIcon = 'pin'});
+  final double initialRotation;
+  const _Host(
+      {required this.initialLabel,
+      this.initialIcon = 'pin',
+      this.initialRotation = 0});
 
   @override
   State<_Host> createState() => _HostState();
 }
 
 class _HostState extends State<_Host> {
-  (String, String, String)? result;
+  (String, String, String, double)? result;
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +31,12 @@ class _HostState extends State<_Host> {
             return ElevatedButton(
               key: const Key('open'),
               onPressed: () async {
-                final r = await showDialog<(String, String, String)>(
+                final r = await showDialog<(String, String, String, double)>(
                   context: ctx,
                   builder: (_) => PinLabelDialog(
                       initialLabel: widget.initialLabel,
-                      initialIcon: widget.initialIcon),
+                      initialIcon: widget.initialIcon,
+                      initialRotation: widget.initialRotation),
                 );
                 setState(() => result = r);
               },
@@ -47,41 +52,47 @@ class _HostState extends State<_Host> {
 void main() {
   group('PinLabelDialog', () {
     Future<void> open(WidgetTester tester,
-        {String initial = '', String icon = 'pin'}) async {
+        {String initial = '', String icon = 'pin', double rotation = 0}) async {
       await tester.pumpWidget(
         MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: _Host(initialLabel: initial, initialIcon: icon),
+          home: _Host(
+              initialLabel: initial,
+              initialIcon: icon,
+              initialRotation: rotation),
         ),
       );
       await tester.tap(find.byKey(const Key('open')));
       await tester.pumpAndSettle();
     }
 
-    testWidgets('Cancel button pops (cancel, "", icon)', (tester) async {
+    testWidgets('Cancel button pops (cancel, "", icon, rotation)',
+        (tester) async {
       await open(tester, initial: 'hello');
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       final state = tester.state<_HostState>(find.byType(_Host));
-      expect(state.result, equals(('cancel', '', 'pin')));
+      expect(state.result, equals(('cancel', '', 'pin', 0.0)));
     });
 
-    testWidgets('Delete button pops (delete, "", icon)', (tester) async {
+    testWidgets('Delete button pops (delete, "", icon, rotation)',
+        (tester) async {
       await open(tester);
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
       final state = tester.state<_HostState>(find.byType(_Host));
-      expect(state.result, equals(('delete', '', 'pin')));
+      expect(state.result, equals(('delete', '', 'pin', 0.0)));
     });
 
-    testWidgets('OK button pops (ok, trimmed label, icon)', (tester) async {
+    testWidgets('OK button pops (ok, trimmed label, icon, rotation)',
+        (tester) async {
       await open(tester);
       await tester.enterText(find.byType(TextField), '  pole 7  ');
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
       final state = tester.state<_HostState>(find.byType(_Host));
-      expect(state.result, equals(('ok', 'pole 7', 'pin')));
+      expect(state.result, equals(('ok', 'pole 7', 'pin', 0.0)));
     });
 
     testWidgets('picking the bullet-camera icon pops it with OK',
@@ -92,17 +103,44 @@ void main() {
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
       final state = tester.state<_HostState>(find.byType(_Host));
-      expect(state.result, equals(('ok', '', 'bullet')));
+      expect(state.result, equals(('ok', '', 'bullet', 0.0)));
     });
 
     testWidgets('initialIcon pre-selects; unchanged when only label edited',
         (tester) async {
-      await open(tester, icon: 'radar');
+      await open(tester, icon: 'radar', rotation: 90);
       await tester.enterText(find.byType(TextField), 'P9');
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
       final state = tester.state<_HostState>(find.byType(_Host));
-      expect(state.result, equals(('ok', 'P9', 'radar')));
+      expect(state.result, equals(('ok', 'P9', 'radar', 90.0)));
+    });
+
+    testWidgets('heading slider hidden for the classic pin, shown for devices',
+        (tester) async {
+      await open(tester); // 'pin' selected
+      expect(find.byKey(const ValueKey('pin-rotation')), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('pin-icon-ptz')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('pin-rotation')), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('dragging the heading slider changes the popped rotation',
+        (tester) async {
+      await open(tester, icon: 'bullet');
+      // Drag the slider thumb from 0 to the right; exact value doesn't matter,
+      // only that a non-zero heading is popped.
+      await tester.drag(
+          find.byKey(const ValueKey('pin-rotation')), const Offset(80, 0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      final state = tester.state<_HostState>(find.byType(_Host));
+      expect(state.result!.$1, 'ok');
+      expect(state.result!.$3, 'bullet');
+      expect(state.result!.$4, greaterThan(0));
     });
 
     testWidgets('initialLabel pre-fills the text field', (tester) async {

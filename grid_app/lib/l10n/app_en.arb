@@ -158,6 +158,7 @@
   "locateFailed": "Location failed — check location permission and GPS",
   "pinTitle": "Pin",
   "pinLabelOptional": "Label (optional)",
+  "pinHeading": "Heading",
 
   "deviceNameHint": "Device name",
 

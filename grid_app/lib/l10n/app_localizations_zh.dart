@@ -413,6 +413,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pinLabelOptional => '标签(可选)';
 
   @override
+  String get pinHeading => '朝向';
+
+  @override
   String get deviceNameHint => '设备名';
 
   @override

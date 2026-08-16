@@ -421,6 +421,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pinLabelOptional => 'Label (optional)';
 
   @override
+  String get pinHeading => 'Heading';
+
+  @override
   String get deviceNameHint => 'Device name';
 
   @override

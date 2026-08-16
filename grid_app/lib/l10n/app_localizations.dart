@@ -770,6 +770,12 @@ abstract class AppLocalizations {
   /// **'Label (optional)'**
   String get pinLabelOptional;
 
+  /// No description provided for @pinHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading'**
+  String get pinHeading;
+
   /// No description provided for @deviceNameHint.
   ///
   /// In en, this message translates to:
