@@ -408,6 +408,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap map to drop a pin · tap a pin to edit/delete · long-press & drag to move · Save to snapshot.';
 
   @override
+  String get aimHint =>
+      'Drag the dot to aim the device · tap elsewhere to finish.';
+
+  @override
   String get myLocation => 'My location';
 
   @override
@@ -419,9 +423,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pinLabelOptional => 'Label (optional)';
-
-  @override
-  String get pinHeading => 'Heading';
 
   @override
   String get deviceNameHint => 'Device name';

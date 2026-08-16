@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:latlong2/latlong.dart' show LatLng;
 import 'package:screenshot/screenshot.dart';
 
 import '../controls/satellite_diagram_control.dart';
@@ -56,6 +56,12 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
   /// tracks the finger and renders enlarged as feedback.
   int? _dragging;
 
+  /// Index of the device pin in aim mode (heading adjustment), or null.
+  /// Entered automatically after the edit dialog confirms a device icon;
+  /// exited by tapping anywhere else. The aim handle is an edit control and
+  /// must never reach the snapshot — cleared before capture.
+  int? _aiming;
+
   @override
   void initState() {
     super.initState();
@@ -99,7 +105,32 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
   }
 
   void _addPin(LatLng pos) {
+    // In aim mode a map tap just finishes aiming — don't also drop a pin.
+    if (_aiming != null) {
+      setState(() => _aiming = null);
+      return;
+    }
     setState(() => _pins = [..._pins, Pin(lat: pos.latitude, lon: pos.longitude)]);
+  }
+
+  /// Aim-mode drag: point pin [index] at the finger. The heading is the
+  /// compass bearing (0° = north, clockwise) from the pin's on-screen position
+  /// to the finger, so the fan tracks the finger at any zoom/rotation of use.
+  void _aimPinAt(int index, Offset globalPosition) {
+    final box = _mapKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final local = box.globalToLocal(globalPosition);
+    final p = _pins[index];
+    final pinScreen =
+        _mapController.camera.latLngToScreenOffset(LatLng(p.lat, p.lon));
+    final v = local - pinScreen;
+    if (v.distance < 8) return; // too close to the pin: bearing is unstable
+    final deg = (math.atan2(v.dx, -v.dy) * 180 / math.pi + 360) % 360;
+    setState(() {
+      final list = [..._pins];
+      list[index] = list[index].copyWith(rotation: deg.roundToDouble());
+      _pins = list;
+    });
   }
 
   /// Long-press drag: move pin [index] under the finger. The global position
@@ -119,30 +150,37 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
   }
 
   Future<void> _editPin(int index) async {
-    final result = await showDialog<(String, String, String, double)>(
+    final result = await showDialog<(String, String, String)>(
       context: context,
       builder: (_) => PinLabelDialog(
         initialLabel: _pins[index].label,
         initialIcon: _pins[index].icon,
-        initialRotation: _pins[index].rotation,
       ),
     );
     if (result == null || !mounted) return;
-    final (action, label, icon, rotation) = result;
+    final (action, label, icon) = result;
     if (action == 'delete') {
-      setState(() => _pins = [..._pins]..removeAt(index));
+      setState(() {
+        _pins = [..._pins]..removeAt(index);
+        _aiming = null; // indices shifted; the aimed pin may be gone
+      });
     } else if (action == 'ok') {
       setState(() {
         final list = [..._pins];
-        list[index] =
-            list[index].copyWith(label: label, icon: icon, rotation: rotation);
+        list[index] = list[index].copyWith(label: label, icon: icon);
         _pins = list;
+        // Device confirmed → straight into on-map aim mode (WYSIWYG heading).
+        _aiming = icon == 'pin' ? null : index;
       });
     }
   }
 
   Future<void> _saveAndExit() async {
-    setState(() => _saving = true);
+    // The aim handle is an edit control — never bake it into the snapshot.
+    setState(() {
+      _aiming = null;
+      _saving = true;
+    });
     Uint8List? bytes;
     try {
       bytes = await _screenshotController.capture(
@@ -196,7 +234,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
             color: Colors.black87,
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
             child: Text(
-              l10n.mapHint,
+              _aiming == null ? l10n.mapHint : l10n.aimHint,
               style: const TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
@@ -219,6 +257,23 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                   ),
                   MarkerLayer(
                     markers: [
+                      // Field-of-view fans (under the pins): every device pin
+                      // shows its heading as a translucent sector — standard
+                      // security-survey drawing, and baked into the snapshot.
+                      for (final p in _pins)
+                        if (p.icon != 'pin')
+                          Marker(
+                            point: LatLng(p.lat, p.lon),
+                            width: 120,
+                            height: 120,
+                            alignment: Alignment.center,
+                            child: IgnorePointer(
+                              child: CustomPaint(
+                                size: const Size(120, 120),
+                                painter: _FovPainter(p.rotation),
+                              ),
+                            ),
+                          ),
                       for (int i = 0; i < _pins.length; i++)
                         Marker(
                           point: LatLng(_pins[i].lat, _pins[i].lon),
@@ -259,19 +314,32 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                                     child: Text(_pins[i].label,
                                         style: const TextStyle(fontSize: 10)),
                                   ),
-                                // Device icons rotate to their heading; the
-                                // classic pin never does — its tip marks the
-                                // coordinate and must stay on it. The dragged
-                                // pin renders enlarged as pickup feedback.
-                                Transform.rotate(
-                                  angle: _pins[i].icon == 'pin'
-                                      ? 0
-                                      : _pins[i].rotation * math.pi / 180,
-                                  child: Icon(pinIconOf(_pins[i].icon),
-                                      color: Colors.red,
-                                      size: _dragging == i ? 44 : 36),
-                                ),
+                                // Icons stay upright (readability; the FOV fan
+                                // carries the heading). The dragged pin renders
+                                // enlarged as pickup feedback.
+                                Icon(pinIconOf(_pins[i].icon),
+                                    color: Colors.red,
+                                    size: _dragging == i ? 44 : 36),
                               ],
+                            ),
+                          ),
+                        ),
+                      // Aim handle (top layer, edit-only): a dot on the heading
+                      // ray; dragging anywhere in its box re-aims the device.
+                      if (_aiming case final ai?)
+                        Marker(
+                          point: LatLng(_pins[ai].lat, _pins[ai].lon),
+                          width: 200,
+                          height: 200,
+                          alignment: Alignment.center,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => setState(() => _aiming = null),
+                            onPanUpdate: (d) =>
+                                _aimPinAt(ai, d.globalPosition),
+                            child: CustomPaint(
+                              size: const Size(200, 200),
+                              painter: _AimHandlePainter(_pins[ai].rotation),
                             ),
                           ),
                         ),
@@ -299,4 +367,64 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
             ),
     );
   }
+}
+
+/// Translucent field-of-view sector for a device pin. [headingDeg] is the
+/// compass bearing (0° = north/up, clockwise); canvas angles are measured
+/// from +x, so north is -90°.
+class _FovPainter extends CustomPainter {
+  final double headingDeg;
+  const _FovPainter(this.headingDeg);
+
+  static const _spanDeg = 60.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width / 2 - 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    final start = (headingDeg - 90 - _spanDeg / 2) * math.pi / 180;
+    final sweep = _spanDeg * math.pi / 180;
+    final path = Path()
+      ..moveTo(center.dx, center.dy)
+      ..arcTo(rect, start, sweep, false)
+      ..close();
+    canvas.drawPath(
+        path, Paint()..color = Colors.red.withValues(alpha: 0.18));
+    canvas.drawPath(
+        path,
+        Paint()
+          ..color = Colors.red.withValues(alpha: 0.55)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1);
+  }
+
+  @override
+  bool shouldRepaint(_FovPainter old) => old.headingDeg != headingDeg;
+}
+
+/// Aim-mode gizmo: a ray from the pin along the heading with a grab dot at
+/// the end. Purely visual — the enclosing GestureDetector handles the drag.
+class _AimHandlePainter extends CustomPainter {
+  final double headingDeg;
+  const _AimHandlePainter(this.headingDeg);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final rad = (headingDeg - 90) * math.pi / 180;
+    final dir = Offset(math.cos(rad), math.sin(rad));
+    final tip = center + dir * (size.width / 2 - 16);
+    canvas.drawLine(
+        center,
+        tip,
+        Paint()
+          ..color = Colors.white
+          ..strokeWidth = 2);
+    canvas.drawCircle(tip, 11, Paint()..color = Colors.white);
+    canvas.drawCircle(tip, 8, Paint()..color = Colors.red);
+  }
+
+  @override
+  bool shouldRepaint(_AimHandlePainter old) => old.headingDeg != headingDeg;
 }

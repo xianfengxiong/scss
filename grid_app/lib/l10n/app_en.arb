@@ -154,11 +154,11 @@
   "satelliteTitle": "Satellite Diagram",
   "saveSnapshot": "Save snapshot",
   "mapHint": "Tap map to drop a pin · tap a pin to edit/delete · long-press & drag to move · Save to snapshot.",
+  "aimHint": "Drag the dot to aim the device · tap elsewhere to finish.",
   "myLocation": "My location",
   "locateFailed": "Location failed — check location permission and GPS",
   "pinTitle": "Pin",
   "pinLabelOptional": "Label (optional)",
-  "pinHeading": "Heading",
 
   "deviceNameHint": "Device name",
 

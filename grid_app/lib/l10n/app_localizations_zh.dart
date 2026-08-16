@@ -401,6 +401,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mapHint => '点地图落钉 · 点钉编辑/删除 · 长按拖动移钉 · 保存生成快照。';
 
   @override
+  String get aimHint => '拖动圆点调整设备朝向 · 点其他位置完成。';
+
+  @override
   String get myLocation => '定位到当前位置';
 
   @override
@@ -411,9 +414,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pinLabelOptional => '标签(可选)';
-
-  @override
-  String get pinHeading => '朝向';
 
   @override
   String get deviceNameHint => '设备名';

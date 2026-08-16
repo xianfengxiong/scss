@@ -746,6 +746,12 @@ abstract class AppLocalizations {
   /// **'Tap map to drop a pin · tap a pin to edit/delete · long-press & drag to move · Save to snapshot.'**
   String get mapHint;
 
+  /// No description provided for @aimHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag the dot to aim the device · tap elsewhere to finish.'**
+  String get aimHint;
+
   /// No description provided for @myLocation.
   ///
   /// In en, this message translates to:
@@ -769,12 +775,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Label (optional)'**
   String get pinLabelOptional;
-
-  /// No description provided for @pinHeading.
-  ///
-  /// In en, this message translates to:
-  /// **'Heading'**
-  String get pinHeading;
 
   /// No description provided for @deviceNameHint.
   ///
