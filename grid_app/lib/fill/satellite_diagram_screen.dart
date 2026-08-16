@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
@@ -45,13 +46,22 @@ class SatelliteDiagramScreen extends StatefulWidget {
   State<SatelliteDiagramScreen> createState() => _SatelliteDiagramScreenState();
 }
 
-class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
+class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
+    with SingleTickerProviderStateMixin {
   final _screenshotController = ScreenshotController();
   final _mapController = MapController();
   final _mapKey = GlobalKey();
   late List<Pin> _pins;
   bool _saving = false;
   bool _locating = false;
+
+  /// After the my-location button centers the map, a pulsing blue dot marks
+  /// the position for a few seconds — otherwise it's hard to tell which point
+  /// of the imagery you are.
+  LatLng? _myLocation;
+  Timer? _myLocationTimer;
+  late final AnimationController _pulse = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 500));
 
   /// Index of the pin being long-press dragged, or null. While set, the pin
   /// tracks the finger and renders enlarged as feedback.
@@ -76,6 +86,8 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
 
   @override
   void dispose() {
+    _myLocationTimer?.cancel();
+    _pulse.dispose();
     // We own this MapController (passed to FlutterMap), so we dispose it — the
     // map only disposes controllers it created internally.
     _mapController.dispose();
@@ -105,7 +117,17 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
           SnackBar(content: Text(AppLocalizations.of(context)!.locateFailed)));
       return;
     }
-    _mapController.move(LatLng(res.lat!, res.lon!), _mapController.camera.zoom);
+    final here = LatLng(res.lat!, res.lon!);
+    _mapController.move(here, _mapController.camera.zoom);
+    // Pulse a blue dot on the position for 3 s so it's findable on imagery.
+    _pulse.repeat(reverse: true);
+    setState(() => _myLocation = here);
+    _myLocationTimer?.cancel();
+    _myLocationTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      _pulse.stop();
+      setState(() => _myLocation = null);
+    });
   }
 
   void _addPin(LatLng pos) {
@@ -182,9 +204,13 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
   }
 
   Future<void> _saveAndExit() async {
-    // The aim handle is an edit control — never bake it into the snapshot.
+    // The aim handle and the my-location pulse are edit aids — never bake
+    // them into the snapshot.
+    _myLocationTimer?.cancel();
+    _pulse.stop();
     setState(() {
       _aiming = null;
+      _myLocation = null;
       _saving = true;
     });
     Uint8List? bytes;
@@ -325,6 +351,41 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                                           size: _dragging == i ? 44 : 36),
                                     ),
                                   ],
+                                ),
+                              ),
+                            ),
+                          // Transient my-location pulse (edit aid; cleared
+                          // before snapshot and 3 s after locating).
+                          if (_myLocation case final loc?)
+                            Marker(
+                              point: loc,
+                              width: 48,
+                              height: 48,
+                              alignment: Alignment.center,
+                              child: IgnorePointer(
+                                child: FadeTransition(
+                                  opacity: _pulse
+                                      .drive(Tween(begin: 0.15, end: 1.0)),
+                                  child: Center(
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: const Color(0xff2979ff),
+                                        border: Border.all(
+                                            color: Colors.white, width: 3),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xff2979ff)
+                                                .withValues(alpha: 0.55),
+                                            blurRadius: 12,
+                                            spreadRadius: 5,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
