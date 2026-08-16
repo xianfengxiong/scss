@@ -374,7 +374,13 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                   child: _CompassButton(
                     rotationDeg: _mapRotation,
                     tooltip: l10n.resetNorth,
-                    onDoubleTap: () => _mapController.rotate(0),
+                    onDoubleTap: () {
+                      _mapController.rotate(0);
+                      // Programmatic rotate doesn't fire onPositionChanged —
+                      // sync the needle ourselves or it stays stale until the
+                      // next gesture.
+                      setState(() => _mapRotation = 0);
+                    },
                   ),
                 ),
               ],
