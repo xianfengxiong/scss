@@ -36,7 +36,7 @@ class ImagePickerImageService implements ImageService {
     if (picked == null) return null;
     final target = p.join(MediaPaths.dir, '${_uuid.v4()}.jpg');
 
-    final compressed = await FlutterImageCompress.compressAndGetFile(
+    final compressed = await _tryCompress(
       picked.path,
       target,
       quality: 82,
@@ -47,7 +47,32 @@ class ImagePickerImageService implements ImageService {
       await File(picked.path).copy(target);
       return p.basename(target);
     }
-    return p.basename(await _ensureUnder500kb(compressed.path));
+    return p.basename(await _ensureUnder500kb(compressed));
+  }
+
+  /// Compress [src] into [target]; returns the written path, or null when
+  /// compression is unavailable. flutter_image_compress has no Windows
+  /// implementation (throws MissingPluginException there), so any failure is
+  /// treated as "couldn't compress" and callers fall back to the original.
+  Future<String?> _tryCompress(
+    String src,
+    String target, {
+    required int quality,
+    required int minWidth,
+    required int minHeight,
+  }) async {
+    try {
+      final out = await FlutterImageCompress.compressAndGetFile(
+        src,
+        target,
+        quality: quality,
+        minWidth: minWidth,
+        minHeight: minHeight,
+      );
+      return out?.path;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Re-compress until the file is under 500 KB or the quality floor is hit.
@@ -59,7 +84,7 @@ class ImagePickerImageService implements ImageService {
     var quality = 68;
     while (await File(current).length() > 500 * 1024 && quality >= 30) {
       final out = p.join(dir, '${base}_q$quality.jpg');
-      final res = await FlutterImageCompress.compressAndGetFile(
+      final res = await _tryCompress(
         current,
         out,
         quality: quality,
@@ -68,7 +93,7 @@ class ImagePickerImageService implements ImageService {
       );
       if (res == null) break;
       if (current != path) await _safeDelete(current);
-      current = res.path;
+      current = res;
       quality -= 16;
     }
     return current;

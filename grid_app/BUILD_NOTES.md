@@ -20,7 +20,27 @@ flutter run -d macos            # 开发调试
 - 部署目标 10.15(Podfile + pbxproj,flutter build 自动迁移过)。
 - bundle id 仍为 `com.example.scssGrid`(个人工具不上店;沙箱容器路径 `~/Library/Containers/com.example.scssGrid/` 含本机库与图片,改 id = 换容器丢数据)。
 - 分发给他人需 Developer ID 签名+公证(未配置);本机自用 `flutter run`/直接 open .app 即可。
-- Windows 端代码同源,但需在 Windows 机器构建,且 flutter_image_compress 无 Windows 实现(桌面只做设计影响不大,做填写需旁路)。
+
+## Windows 桌面端构建(2026-08-16)
+
+代码同源:`isDesktopPlatform`(lib/services/platform_info.dart)把 Windows 一并当设计端,UI/同步/导出与 macOS 端完全一致。但 **Flutter 不支持交叉编译——必须在 Windows 机器上构建**:
+
+1. 装 Flutter SDK(版本对齐本仓库,见下方工具链表)+ Visual Studio 2022 的「使用 C++ 的桌面开发」工作负载(Community 版即可;只装 VS Code 不行,CMake/MSVC 来自 VS)。
+2. `flutter doctor` 确认 "Visual Studio" 一项打钩。
+3. 构建与运行:
+
+```powershell
+cd grid_app
+flutter build windows --release   # 产物 build\windows\x64\runner\Release\
+flutter run -d windows            # 开发调试
+```
+
+- **交付物**:`Release\` 整个目录就是免安装绿色版(scss_grid.exe + data\ + 若干 dll),整目录拷贝即可在别的 Windows 上运行;单拷 exe 跑不起来。窗口标题/产品名为 SCSS Survey。
+- **防火墙**:首次打开「同步」页(监听 17423)Windows 会弹防火墙授权,勾选**专用网络**允许;错过弹窗手机就连不上,去「Windows 安全中心→防火墙→允许应用通过防火墙」补勾 scss_grid。
+- **数据目录**:`%APPDATA%\com.example\scss_grid\`(scss_grid.sqlite + survey_images\)。Windows 走 ApplicationSupport 而非 Documents(lib/services/app_dirs.dart)——path_provider 在 Windows 的 Documents 是用户真实「文档」目录,不该往里倒库文件;macOS/Android 数据位置不变。
+- **图片压缩**:flutter_image_compress 无 Windows 实现,image_service 已兜底——压缩不可用时直接存原图(Windows 上填写拍照的图片会偏大,同步与 PDF 不受影响)。
+- **相机**:桌面 image_picker 无相机实现(macOS 同),图片控件走「相册」= 文件选择器。
+- 未做代码签名,别的机器首次运行 SmartScreen 可能拦「未知发布者」→「更多信息→仍要运行」。
 
 ## Release 构建与交付
 

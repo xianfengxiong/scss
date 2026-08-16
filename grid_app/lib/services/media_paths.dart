@@ -2,10 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+
+import 'app_dirs.dart';
 
 /// Central resolver for survey image files. Every image lives in one flat
-/// directory (documents/survey_images) with a UUID file name; answer values
+/// directory (app data dir/survey_images) with a UUID file name; answer values
 /// store only that file name, so a survey row stays valid when synced to
 /// another device. [init] runs once at startup; static so control widgets can
 /// resolve synchronously during build.
@@ -13,7 +14,7 @@ class MediaPaths {
   static String? _dir;
 
   static Future<void> init() async {
-    final docs = await getApplicationDocumentsDirectory();
+    final docs = await appDataDirectory();
     final dir = Directory(p.join(docs.path, 'survey_images'));
     if (!await dir.exists()) await dir.create(recursive: true);
     _dir = dir.path;
