@@ -170,8 +170,9 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
         final list = [..._pins];
         list[index] = list[index].copyWith(label: label, icon: icon);
         _pins = list;
-        // Device confirmed → straight into on-map aim mode (WYSIWYG heading).
-        _aiming = icon == 'pin' ? null : index;
+        // Directional device confirmed → straight into on-map aim mode
+        // (WYSIWYG heading). Pin and PTZ have no heading to aim.
+        _aiming = pinRotates(icon) ? index : null;
       });
     }
   }
@@ -298,15 +299,15 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                                     child: Text(_pins[i].label,
                                         style: const TextStyle(fontSize: 10)),
                                   ),
-                                // Device icons rotate with the aim handle so
-                                // the glyph itself shows the heading; the
-                                // classic pin never rotates (its tip marks the
-                                // coordinate). The dragged pin renders enlarged
-                                // as pickup feedback.
+                                // Directional icons rotate with the aim handle
+                                // so the glyph itself shows the heading; the
+                                // classic pin and the omnidirectional PTZ stay
+                                // upright (pinRotates). The dragged pin renders
+                                // enlarged as pickup feedback.
                                 Transform.rotate(
-                                  angle: _pins[i].icon == 'pin'
-                                      ? 0
-                                      : _pins[i].rotation * math.pi / 180,
+                                  angle: pinRotates(_pins[i].icon)
+                                      ? _pins[i].rotation * math.pi / 180
+                                      : 0,
                                   child: pinGlyph(_pins[i].icon,
                                       color: Colors.red,
                                       size: _dragging == i ? 44 : 36),

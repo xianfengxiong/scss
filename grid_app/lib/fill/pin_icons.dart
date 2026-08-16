@@ -13,12 +13,20 @@ import 'package:flutter/material.dart';
 /// upright — heading is applied by the caller via Transform.rotate.
 const pinIconKeys = ['pin', 'bullet', 'ptz', 'anpr', 'radar'];
 
+/// Whether a pin of [key] has an adjustable heading. The classic pin's tip
+/// marks the coordinate, and the PTZ (omnidirectional, drawn from its product
+/// photo) stays upright — neither rotates nor enters aim mode.
+bool pinRotates(String key) => key != 'pin' && key != 'ptz';
+
 /// Renders the glyph for [key] at [size] in [color] ([color] doesn't apply to
 /// the PTZ photo asset).
 Widget pinGlyph(String key, {required double size, required Color color}) {
   if (key == 'ptz') {
     return Image.asset('assets/pin_icons/ptz.png',
-        width: size, height: size, filterQuality: FilterQuality.medium);
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium);
   }
   final painter = switch (key) {
     'anpr' => _AnprCameraPainter(color),
