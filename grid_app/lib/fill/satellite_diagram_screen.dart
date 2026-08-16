@@ -374,7 +374,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                   child: _CompassButton(
                     rotationDeg: _mapRotation,
                     tooltip: l10n.resetNorth,
-                    onTap: () => _mapController.rotate(0),
+                    onDoubleTap: () => _mapController.rotate(0),
                   ),
                 ),
               ],
@@ -405,9 +405,11 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
 class _CompassButton extends StatelessWidget {
   final double rotationDeg;
   final String tooltip;
-  final VoidCallback onTap;
+  final VoidCallback onDoubleTap;
   const _CompassButton(
-      {required this.rotationDeg, required this.tooltip, required this.onTap});
+      {required this.rotationDeg,
+      required this.tooltip,
+      required this.onDoubleTap});
 
   @override
   Widget build(BuildContext context) {
@@ -419,7 +421,9 @@ class _CompassButton extends StatelessWidget {
         elevation: 2,
         child: InkWell(
           customBorder: const CircleBorder(),
-          onTap: onTap,
+          // Double-tap only: a single tap was too easy to hit by accident
+          // while panning near the corner.
+          onDoubleTap: onDoubleTap,
           child: SizedBox(
             width: 44,
             height: 44,
