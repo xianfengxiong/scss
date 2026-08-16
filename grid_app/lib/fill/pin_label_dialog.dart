@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import 'pin_icons.dart';
 
-/// A dialog to edit/delete a map pin's label. Owns its [TextEditingController]
-/// and disposes it in [State.dispose] (called only after the route is fully
-/// removed) — disposing it synchronously after showDialog returns would corrupt
-/// the element lifecycle while the route is still animating out.
-/// Pops `(action, label)` where action is 'delete' | 'cancel' | 'ok'.
+/// A dialog to edit/delete a map pin's label and pick its marker icon. Owns
+/// its [TextEditingController] and disposes it in [State.dispose] (called only
+/// after the route is fully removed) — disposing it synchronously after
+/// showDialog returns would corrupt the element lifecycle while the route is
+/// still animating out.
+/// Pops `(action, label, icon)` where action is 'delete' | 'cancel' | 'ok'.
 class PinLabelDialog extends StatefulWidget {
   final String initialLabel;
-  const PinLabelDialog({super.key, required this.initialLabel});
+  final String initialIcon;
+  const PinLabelDialog(
+      {super.key, required this.initialLabel, this.initialIcon = 'pin'});
 
   @override
   State<PinLabelDialog> createState() => _PinLabelDialogState();
@@ -18,6 +22,7 @@ class PinLabelDialog extends StatefulWidget {
 class _PinLabelDialogState extends State<PinLabelDialog> {
   late final TextEditingController _ctrl =
       TextEditingController(text: widget.initialLabel);
+  late String _icon = widget.initialIcon;
 
   @override
   void dispose() {
@@ -30,22 +35,46 @@ class _PinLabelDialogState extends State<PinLabelDialog> {
     final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       title: Text(l10n.pinTitle),
-      content: TextField(
-        controller: _ctrl,
-        autofocus: true,
-        decoration: InputDecoration(labelText: l10n.pinLabelOptional),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _ctrl,
+            autofocus: true,
+            decoration: InputDecoration(labelText: l10n.pinLabelOptional),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              for (final entry in pinIconChoices.entries)
+                IconButton(
+                  key: ValueKey('pin-icon-${entry.key}'),
+                  icon: Icon(entry.value),
+                  isSelected: _icon == entry.key,
+                  selectedIcon: Icon(entry.value, color: Colors.red),
+                  style: IconButton.styleFrom(
+                    backgroundColor: _icon == entry.key
+                        ? Theme.of(context).colorScheme.surfaceContainerHighest
+                        : null,
+                  ),
+                  onPressed: () => setState(() => _icon = entry.key),
+                ),
+            ],
+          ),
+        ],
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context, ('delete', '')),
+            onPressed: () => Navigator.pop(context, ('delete', '', _icon)),
             child: Text(l10n.delete,
                 style: const TextStyle(color: Colors.red))),
         TextButton(
-            onPressed: () => Navigator.pop(context, ('cancel', '')),
+            onPressed: () => Navigator.pop(context, ('cancel', '', _icon)),
             child: Text(l10n.cancel)),
         FilledButton(
             onPressed: () =>
-                Navigator.pop(context, ('ok', _ctrl.text.trim())),
+                Navigator.pop(context, ('ok', _ctrl.text.trim(), _icon)),
             child: Text(l10n.ok)),
       ],
     );

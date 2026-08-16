@@ -9,6 +9,7 @@ import '../controls/satellite_diagram_control.dart';
 import '../l10n/app_localizations.dart';
 import '../model/pin.dart';
 import '../services/location_service.dart';
+import 'pin_icons.dart';
 import 'pin_label_dialog.dart';
 
 /// Esri World Imagery — free satellite tiles, no API key (attribution required).
@@ -96,18 +97,21 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
   }
 
   Future<void> _editPin(int index) async {
-    final result = await showDialog<(String, String)>(
+    final result = await showDialog<(String, String, String)>(
       context: context,
-      builder: (_) => PinLabelDialog(initialLabel: _pins[index].label),
+      builder: (_) => PinLabelDialog(
+        initialLabel: _pins[index].label,
+        initialIcon: _pins[index].icon,
+      ),
     );
     if (result == null || !mounted) return;
-    final (action, label) = result;
+    final (action, label, icon) = result;
     if (action == 'delete') {
       setState(() => _pins = [..._pins]..removeAt(index));
     } else if (action == 'ok') {
       setState(() {
         final list = [..._pins];
-        list[index] = list[index].copyWith(label: label);
+        list[index] = list[index].copyWith(label: label, icon: icon);
         _pins = list;
       });
     }
@@ -218,7 +222,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                                     child: Text(_pins[i].label,
                                         style: const TextStyle(fontSize: 10)),
                                   ),
-                                const Icon(Icons.location_on,
+                                Icon(pinIconOf(_pins[i].icon),
                                     color: Colors.red, size: 36),
                               ],
                             ),
