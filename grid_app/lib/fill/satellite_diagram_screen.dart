@@ -258,23 +258,6 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                   ),
                   MarkerLayer(
                     markers: [
-                      // Field-of-view fans (under the pins): every device pin
-                      // shows its heading as a translucent sector — standard
-                      // security-survey drawing, and baked into the snapshot.
-                      for (final p in _pins)
-                        if (p.icon != 'pin')
-                          Marker(
-                            point: LatLng(p.lat, p.lon),
-                            width: 120,
-                            height: 120,
-                            alignment: Alignment.center,
-                            child: IgnorePointer(
-                              child: CustomPaint(
-                                size: const Size(120, 120),
-                                painter: _FovPainter(p.rotation),
-                              ),
-                            ),
-                          ),
                       for (int i = 0; i < _pins.length; i++)
                         Marker(
                           point: LatLng(_pins[i].lat, _pins[i].lon),
@@ -315,12 +298,19 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                                     child: Text(_pins[i].label,
                                         style: const TextStyle(fontSize: 10)),
                                   ),
-                                // Icons stay upright (readability; the FOV fan
-                                // carries the heading). The dragged pin renders
-                                // enlarged as pickup feedback.
-                                Icon(pinIconOf(_pins[i].icon),
-                                    color: Colors.red,
-                                    size: _dragging == i ? 44 : 36),
+                                // Device icons rotate with the aim handle so
+                                // the glyph itself shows the heading; the
+                                // classic pin never rotates (its tip marks the
+                                // coordinate). The dragged pin renders enlarged
+                                // as pickup feedback.
+                                Transform.rotate(
+                                  angle: _pins[i].icon == 'pin'
+                                      ? 0
+                                      : _pins[i].rotation * math.pi / 180,
+                                  child: Icon(pinIconOf(_pins[i].icon),
+                                      color: Colors.red,
+                                      size: _dragging == i ? 44 : 36),
+                                ),
                               ],
                             ),
                           ),
@@ -381,40 +371,6 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
             ),
     );
   }
-}
-
-/// Translucent field-of-view sector for a device pin. [headingDeg] is the
-/// compass bearing (0° = north/up, clockwise); canvas angles are measured
-/// from +x, so north is -90°.
-class _FovPainter extends CustomPainter {
-  final double headingDeg;
-  const _FovPainter(this.headingDeg);
-
-  static const _spanDeg = 60.0;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = size.width / 2 - 2;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    final start = (headingDeg - 90 - _spanDeg / 2) * math.pi / 180;
-    final sweep = _spanDeg * math.pi / 180;
-    final path = Path()
-      ..moveTo(center.dx, center.dy)
-      ..arcTo(rect, start, sweep, false)
-      ..close();
-    canvas.drawPath(
-        path, Paint()..color = Colors.red.withValues(alpha: 0.18));
-    canvas.drawPath(
-        path,
-        Paint()
-          ..color = Colors.red.withValues(alpha: 0.55)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1);
-  }
-
-  @override
-  bool shouldRepaint(_FovPainter old) => old.headingDeg != headingDeg;
 }
 
 /// Aim-mode gizmo: a ray from the pin along the heading with a grab dot at
