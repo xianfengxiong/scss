@@ -84,24 +84,25 @@ void main() {
       expect(state.result, equals(('ok', 'pole 7', 'pin')));
     });
 
-    testWidgets('picking the camera icon pops it with OK', (tester) async {
+    testWidgets('picking the bullet-camera icon pops it with OK',
+        (tester) async {
       await open(tester);
-      await tester.tap(find.byKey(const ValueKey('pin-icon-camera')));
+      await tester.tap(find.byKey(const ValueKey('pin-icon-bullet')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
       final state = tester.state<_HostState>(find.byType(_Host));
-      expect(state.result, equals(('ok', '', 'camera')));
+      expect(state.result, equals(('ok', '', 'bullet')));
     });
 
     testWidgets('initialIcon pre-selects; unchanged when only label edited',
         (tester) async {
-      await open(tester, icon: 'bolt');
+      await open(tester, icon: 'radar');
       await tester.enterText(find.byType(TextField), 'P9');
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
       final state = tester.state<_HostState>(find.byType(_Host));
-      expect(state.result, equals(('ok', 'P9', 'bolt')));
+      expect(state.result, equals(('ok', 'P9', 'radar')));
     });
 
     testWidgets('initialLabel pre-fills the text field', (tester) async {

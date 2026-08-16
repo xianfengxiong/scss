@@ -11,12 +11,12 @@ void main() {
   });
 
   test('toJson / fromJson round-trips', () {
-    const p = Pin(lat: 40.5, lon: 20.1, label: 'P1', icon: 'camera');
+    const p = Pin(lat: 40.5, lon: 20.1, label: 'P1', icon: 'ptz');
     final back = Pin.fromJson(p.toJson());
     expect(back.lat, 40.5);
     expect(back.lon, 20.1);
     expect(back.label, 'P1');
-    expect(back.icon, 'camera');
+    expect(back.icon, 'ptz');
   });
 
   test('fromJson defaults missing label to empty', () {
@@ -36,12 +36,12 @@ void main() {
   });
 
   test('copyWith overrides only given fields', () {
-    const p = Pin(lat: 1, lon: 2, label: 'a', icon: 'bolt');
+    const p = Pin(lat: 1, lon: 2, label: 'a', icon: 'radar');
     final q = p.copyWith(label: 'b');
     expect(q.lat, 1);
     expect(q.lon, 2);
     expect(q.label, 'b');
-    expect(q.icon, 'bolt');
-    expect(p.copyWith(icon: 'camera').icon, 'camera');
+    expect(q.icon, 'radar');
+    expect(p.copyWith(icon: 'anpr').icon, 'anpr');
   });
 }

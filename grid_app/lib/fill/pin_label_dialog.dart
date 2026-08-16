@@ -45,7 +45,7 @@ class _PinLabelDialogState extends State<PinLabelDialog> {
             decoration: InputDecoration(labelText: l10n.pinLabelOptional),
           ),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
             children: [
               for (final entry in pinIconChoices.entries)
                 IconButton(
