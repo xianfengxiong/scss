@@ -164,12 +164,6 @@ abstract class AppLocalizations {
   /// **'Sync'**
   String get sync;
 
-  /// No description provided for @surveysTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Surveys'**
-  String get surveysTooltip;
-
   /// No description provided for @noTemplatesYet.
   ///
   /// In en, this message translates to:
@@ -307,24 +301,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rename survey'**
   String get renameSurvey;
-
-  /// No description provided for @allSurveysTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'All Surveys'**
-  String get allSurveysTitle;
-
-  /// No description provided for @noSurveysYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No surveys yet. Open a template to start one.'**
-  String get noSurveysYet;
-
-  /// No description provided for @templateNotFound.
-  ///
-  /// In en, this message translates to:
-  /// **'Template not found for this survey.'**
-  String get templateNotFound;
 
   /// No description provided for @fieldsCount.
   ///

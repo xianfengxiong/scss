@@ -42,9 +42,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sync => '同步';
 
   @override
-  String get surveysTooltip => '全部调查表';
-
-  @override
   String get noTemplatesYet => '还没有模版。点 + 新建一个。';
 
   @override
@@ -126,15 +123,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get renameSurvey => '调查表改名';
-
-  @override
-  String get allSurveysTitle => '全部调查表';
-
-  @override
-  String get noSurveysYet => '还没有调查表。打开一个模版新建。';
-
-  @override
-  String get templateNotFound => '找不到这份调查表对应的模版。';
 
   @override
   String fieldsCount(int count) {

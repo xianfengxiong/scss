@@ -9,7 +9,6 @@ import '../data/survey_store.dart';
 import '../data/sync_meta_store.dart';
 import '../data/template_store.dart';
 import '../export/pdf_exporter.dart';
-import '../fill/survey_list_screen.dart';
 import '../fill/survey_name_dialog.dart';
 import '../fill/template_surveys_screen.dart';
 import '../l10n/app_localizations.dart';
@@ -109,17 +108,6 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
       ),
     ));
     if (!mounted) return;
-    await _reload();
-  }
-
-  Future<void> _openSurveys() async {
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => SurveyListScreen(
-        surveyStore: widget.surveyStore,
-        templateStore: widget.store,
-        registry: widget.registry,
-      ),
-    ));
     await _reload();
   }
 
@@ -358,11 +346,6 @@ class _TemplateListScreenState extends State<TemplateListScreen> {
               tooltip: l10n.sync,
               onPressed: _openSync,
             ),
-          IconButton(
-            icon: const Icon(Icons.assignment_outlined),
-            tooltip: l10n.surveysTooltip,
-            onPressed: _openSurveys,
-          ),
           if (widget.onSetLocale != null)
             PopupMenuButton<String>(
               key: const ValueKey('language-menu'),

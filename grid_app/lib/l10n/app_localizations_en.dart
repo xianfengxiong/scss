@@ -42,9 +42,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sync => 'Sync';
 
   @override
-  String get surveysTooltip => 'Surveys';
-
-  @override
   String get noTemplatesYet => 'No templates yet. Tap + to create one.';
 
   @override
@@ -128,15 +125,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get renameSurvey => 'Rename survey';
-
-  @override
-  String get allSurveysTitle => 'All Surveys';
-
-  @override
-  String get noSurveysYet => 'No surveys yet. Open a template to start one.';
-
-  @override
-  String get templateNotFound => 'Template not found for this survey.';
 
   @override
   String fieldsCount(int count) {

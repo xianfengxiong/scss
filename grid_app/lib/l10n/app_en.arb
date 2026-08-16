@@ -13,7 +13,6 @@
   "exportAllPdf": "Export all PDFs",
   "exportTemplatePdf": "Export this template's PDFs",
   "sync": "Sync",
-  "surveysTooltip": "Surveys",
   "noTemplatesYet": "No templates yet. Tap + to create one.",
   "templateSubtitle": "{pages} page(s) · {surveys} survey(s)",
   "@templateSubtitle": { "placeholders": { "pages": { "type": "int" }, "surveys": { "type": "int" } } },
@@ -46,9 +45,6 @@
   "noSurveysInTemplate": "No surveys yet for this template. Tap + to create one.",
   "newSurvey": "New survey",
   "renameSurvey": "Rename survey",
-  "allSurveysTitle": "All Surveys",
-  "noSurveysYet": "No surveys yet. Open a template to start one.",
-  "templateNotFound": "Template not found for this survey.",
   "fieldsCount": "{count} fields",
   "@fieldsCount": { "placeholders": { "count": { "type": "int" } } },
 

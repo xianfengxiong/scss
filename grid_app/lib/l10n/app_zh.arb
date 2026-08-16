@@ -13,7 +13,6 @@
   "exportAllPdf": "导出全部 PDF",
   "exportTemplatePdf": "导出该模版 PDF",
   "sync": "同步",
-  "surveysTooltip": "全部调查表",
   "noTemplatesYet": "还没有模版。点 + 新建一个。",
   "templateSubtitle": "{pages} 页 · {surveys} 份调查表",
   "editDesign": "编辑设计",
@@ -39,9 +38,6 @@
   "noSurveysInTemplate": "这个模版还没有调查表。点 + 新建一份。",
   "newSurvey": "新建调查表",
   "renameSurvey": "调查表改名",
-  "allSurveysTitle": "全部调查表",
-  "noSurveysYet": "还没有调查表。打开一个模版新建。",
-  "templateNotFound": "找不到这份调查表对应的模版。",
   "fieldsCount": "{count} 项已填",
 
   "justNow": "刚刚",
