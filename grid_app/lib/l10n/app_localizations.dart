@@ -752,6 +752,12 @@ abstract class AppLocalizations {
   /// **'Drag the dot to aim the device · tap elsewhere to finish.'**
   String get aimHint;
 
+  /// No description provided for @resetNorth.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to north'**
+  String get resetNorth;
+
   /// No description provided for @myLocation.
   ///
   /// In en, this message translates to:

@@ -412,6 +412,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Drag the dot to aim the device · tap elsewhere to finish.';
 
   @override
+  String get resetNorth => 'Reset to north';
+
+  @override
   String get myLocation => 'My location';
 
   @override

@@ -404,6 +404,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aimHint => '拖动圆点调整设备朝向 · 点其他位置完成。';
 
   @override
+  String get resetNorth => '回正北';
+
+  @override
   String get myLocation => '定位到当前位置';
 
   @override

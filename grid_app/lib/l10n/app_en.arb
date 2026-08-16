@@ -155,6 +155,7 @@
   "saveSnapshot": "Save snapshot",
   "mapHint": "Tap map to drop a pin · tap a pin to edit/delete · long-press & drag to move · Save to snapshot.",
   "aimHint": "Drag the dot to aim the device · tap elsewhere to finish.",
+  "resetNorth": "Reset to north",
   "myLocation": "My location",
   "locateFailed": "Location failed — check location permission and GPS",
   "pinTitle": "Pin",

@@ -57,6 +57,10 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
   /// tracks the finger and renders enlarged as feedback.
   int? _dragging;
 
+  /// Current map rotation in degrees — drives the compass so north stays
+  /// readable after the user two-finger-rotates the map.
+  double _mapRotation = 0;
+
   /// Index of the device pin in aim mode (heading adjustment), or null.
   /// Entered automatically after the edit dialog confirms a device icon;
   /// exited by tapping anywhere else. The aim handle is an edit control and
@@ -97,12 +101,11 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
     if (!mounted) return;
     setState(() => _locating = false);
     if (!res.ok) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AppLocalizations.of(context)!.locateFailed)));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.locateFailed)));
       return;
     }
-    _mapController.move(
-        LatLng(res.lat!, res.lon!), _mapController.camera.zoom);
+    _mapController.move(LatLng(res.lat!, res.lon!), _mapController.camera.zoom);
   }
 
   void _addPin(LatLng pos) {
@@ -111,7 +114,8 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
       setState(() => _aiming = null);
       return;
     }
-    setState(() => _pins = [..._pins, Pin(lat: pos.latitude, lon: pos.longitude)]);
+    setState(
+        () => _pins = [..._pins, Pin(lat: pos.latitude, lon: pos.longitude)]);
   }
 
   /// Aim-mode drag: point pin [index] at the finger. The heading is the
@@ -203,8 +207,8 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
     }
     if (!mounted) return;
     final cam = _mapController.camera;
-    Navigator.pop<SatelliteResult>(context,
-        (pins: _pins, center: cam.center, zoom: cam.zoom, path: path));
+    Navigator.pop<SatelliteResult>(
+        context, (pins: _pins, center: cam.center, zoom: cam.zoom, path: path));
   }
 
   @override
@@ -241,117 +245,139 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
             ),
           ),
           Expanded(
-            child: Screenshot(
-              controller: _screenshotController,
-              child: FlutterMap(
-                key: _mapKey,
-                mapController: _mapController,
-                options: MapOptions(
-                  initialCenter: widget.initialCenter ?? _fallbackCenter,
-                  initialZoom: widget.initialZoom,
-                  onTap: (_, latlng) => _addPin(latlng),
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate: _esriUrl,
-                    userAgentPackageName: 'com.scss.scss',
-                    maxNativeZoom: 19,
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      for (int i = 0; i < _pins.length; i++)
-                        Marker(
-                          point: LatLng(_pins[i].lat, _pins[i].lon),
-                          width: 120,
-                          height: 60,
-                          // Anchor the geographic point at the box's bottom edge;
-                          // push content down (icon last) so the pin's TIP sits on
-                          // the point. The 36px icon in a 60px box was top-aligned
-                          // before, leaving the tip ~24px above the tapped
-                          // coordinate — the offset seen on device.
-                          alignment: Alignment.topCenter,
-                          child: GestureDetector(
-                            // Opaque: the whole marker box is tappable and the tap
-                            // is consumed, so selecting a pin can't also drop a new
-                            // one on the map below.
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => _editPin(i),
-                            // Long-press then drag moves the pin; winning the
-                            // long-press arena keeps the map from panning.
-                            onLongPressStart: (_) {
-                              HapticFeedback.mediumImpact();
-                              setState(() => _dragging = i);
-                            },
-                            onLongPressMoveUpdate: (d) =>
-                                _dragPinTo(i, d.globalPosition),
-                            onLongPressEnd: (_) =>
-                                setState(() => _dragging = null),
-                            onLongPressCancel: () =>
-                                setState(() => _dragging = null),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                if (_pins[i].label.isNotEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4),
-                                    color: Colors.white70,
-                                    child: Text(_pins[i].label,
-                                        style: const TextStyle(fontSize: 10)),
-                                  ),
-                                // Directional icons rotate with the aim handle
-                                // so the glyph itself shows the heading; the
-                                // classic pin and the omnidirectional PTZ stay
-                                // upright (pinRotates). The dragged pin renders
-                                // enlarged as pickup feedback.
-                                Transform.rotate(
-                                  angle: pinRotates(_pins[i].icon)
-                                      ? _pins[i].rotation * math.pi / 180
-                                      : 0,
-                                  child: pinGlyph(_pins[i].icon,
-                                      color: Colors.red,
-                                      size: _dragging == i ? 44 : 36),
+            child: Stack(
+              children: [
+                Screenshot(
+                  controller: _screenshotController,
+                  child: FlutterMap(
+                    key: _mapKey,
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: widget.initialCenter ?? _fallbackCenter,
+                      initialZoom: widget.initialZoom,
+                      onTap: (_, latlng) => _addPin(latlng),
+                      onPositionChanged: (camera, _) {
+                        if (camera.rotation != _mapRotation) {
+                          setState(() => _mapRotation = camera.rotation);
+                        }
+                      },
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: _esriUrl,
+                        userAgentPackageName: 'com.scss.scss',
+                        maxNativeZoom: 19,
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          for (int i = 0; i < _pins.length; i++)
+                            Marker(
+                              point: LatLng(_pins[i].lat, _pins[i].lon),
+                              width: 120,
+                              height: 60,
+                              // Anchor the geographic point at the box's bottom edge;
+                              // push content down (icon last) so the pin's TIP sits on
+                              // the point. The 36px icon in a 60px box was top-aligned
+                              // before, leaving the tip ~24px above the tapped
+                              // coordinate — the offset seen on device.
+                              alignment: Alignment.topCenter,
+                              child: GestureDetector(
+                                // Opaque: the whole marker box is tappable and the tap
+                                // is consumed, so selecting a pin can't also drop a new
+                                // one on the map below.
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => _editPin(i),
+                                // Long-press then drag moves the pin; winning the
+                                // long-press arena keeps the map from panning.
+                                onLongPressStart: (_) {
+                                  HapticFeedback.mediumImpact();
+                                  setState(() => _dragging = i);
+                                },
+                                onLongPressMoveUpdate: (d) =>
+                                    _dragPinTo(i, d.globalPosition),
+                                onLongPressEnd: (_) =>
+                                    setState(() => _dragging = null),
+                                onLongPressCancel: () =>
+                                    setState(() => _dragging = null),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    if (_pins[i].label.isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 4),
+                                        color: Colors.white70,
+                                        child: Text(_pins[i].label,
+                                            style:
+                                                const TextStyle(fontSize: 10)),
+                                      ),
+                                    // Directional icons rotate with the aim handle
+                                    // so the glyph itself shows the heading; the
+                                    // classic pin and the omnidirectional PTZ stay
+                                    // upright (pinRotates). The dragged pin renders
+                                    // enlarged as pickup feedback.
+                                    Transform.rotate(
+                                      angle: pinRotates(_pins[i].icon)
+                                          ? _pins[i].rotation * math.pi / 180
+                                          : 0,
+                                      child: pinGlyph(_pins[i].icon,
+                                          color: Colors.red,
+                                          size: _dragging == i ? 44 : 36),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      // Aim handle (top layer, edit-only): a dot on the heading
-                      // ray; dragging anywhere in its box re-aims the device.
-                      // A plain GestureDetector pan loses the arena to the
-                      // map's own drag recognizer (pan needs slop to claim,
-                      // the map claims first), so an EagerGestureRecognizer
-                      // wins the arena on pointer-down and a raw Listener
-                      // drives the aiming from move events.
-                      if (_aiming case final ai?)
-                        Marker(
-                          point: LatLng(_pins[ai].lat, _pins[ai].lon),
-                          width: 200,
-                          height: 200,
-                          alignment: Alignment.center,
-                          child: RawGestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            gestures: {
-                              EagerGestureRecognizer:
-                                  GestureRecognizerFactoryWithHandlers<
-                                          EagerGestureRecognizer>(
-                                      EagerGestureRecognizer.new, (_) {}),
-                            },
-                            child: Listener(
-                              behavior: HitTestBehavior.opaque,
-                              onPointerMove: (e) => _aimPinAt(ai, e.position),
-                              child: CustomPaint(
-                                size: const Size(200, 200),
-                                painter:
-                                    _AimHandlePainter(_pins[ai].rotation),
                               ),
                             ),
-                          ),
-                        ),
+                          // Aim handle (top layer, edit-only): a dot on the heading
+                          // ray; dragging anywhere in its box re-aims the device.
+                          // A plain GestureDetector pan loses the arena to the
+                          // map's own drag recognizer (pan needs slop to claim,
+                          // the map claims first), so an EagerGestureRecognizer
+                          // wins the arena on pointer-down and a raw Listener
+                          // drives the aiming from move events.
+                          if (_aiming case final ai?)
+                            Marker(
+                              point: LatLng(_pins[ai].lat, _pins[ai].lon),
+                              width: 200,
+                              height: 200,
+                              alignment: Alignment.center,
+                              child: RawGestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                gestures: {
+                                  EagerGestureRecognizer:
+                                      GestureRecognizerFactoryWithHandlers<
+                                              EagerGestureRecognizer>(
+                                          EagerGestureRecognizer.new, (_) {}),
+                                },
+                                child: Listener(
+                                  behavior: HitTestBehavior.opaque,
+                                  onPointerMove: (e) =>
+                                      _aimPinAt(ai, e.position),
+                                  child: CustomPaint(
+                                    size: const Size(200, 200),
+                                    painter:
+                                        _AimHandlePainter(_pins[ai].rotation),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                // Compass: outside the Screenshot subtree (edit aid, never in
+                // the snapshot). Tracks the map rotation; tap resets to north.
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: _CompassButton(
+                    rotationDeg: _mapRotation,
+                    tooltip: l10n.resetNorth,
+                    onTap: () => _mapController.rotate(0),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -372,6 +398,69 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
             ),
     );
   }
+}
+
+/// Round compass button: the needle tracks the map rotation (red half =
+/// north); tapping resets the map to north-up.
+class _CompassButton extends StatelessWidget {
+  final double rotationDeg;
+  final String tooltip;
+  final VoidCallback onTap;
+  const _CompassButton(
+      {required this.rotationDeg, required this.tooltip, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.white.withValues(alpha: 0.92),
+        shape: const CircleBorder(),
+        elevation: 2,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Transform.rotate(
+              angle: rotationDeg * math.pi / 180,
+              child: const CustomPaint(painter: _CompassNeedlePainter()),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CompassNeedlePainter extends CustomPainter {
+  const _CompassNeedlePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final len = size.width * 0.30;
+    final w = size.width * 0.115;
+    canvas.drawPath(
+        Path()
+          ..moveTo(c.dx, c.dy - len)
+          ..lineTo(c.dx - w, c.dy)
+          ..lineTo(c.dx + w, c.dy)
+          ..close(),
+        Paint()..color = const Color(0xffd3312c));
+    canvas.drawPath(
+        Path()
+          ..moveTo(c.dx, c.dy + len)
+          ..lineTo(c.dx - w, c.dy)
+          ..lineTo(c.dx + w, c.dy)
+          ..close(),
+        Paint()..color = const Color(0xff9e9e9e));
+    canvas.drawCircle(c, 1.6, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(_CompassNeedlePainter old) => false;
 }
 
 /// Aim-mode gizmo: a ray from the pin along the heading with a grab dot at
