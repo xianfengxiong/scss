@@ -53,6 +53,31 @@ void main() {
       expect(pins[1].label, '');
     });
 
+    // Regression: save → re-enter lost icon/rotation because diagramPins
+    // rebuilt Pin from lat/lon/label only (device icons vanished).
+    test('diagramPins keeps icon and rotation; defaults when absent', () {
+      final pins = diagramPins({
+        'pins': [
+          {'lat': 1, 'lon': 2, 'icon': 'ptz', 'rotation': 135},
+          {'lat': 3, 'lon': 4}, // pre-icon row
+        ],
+      });
+      expect(pins[0].icon, 'ptz');
+      expect(pins[0].rotation, 135.0);
+      expect(pins[1].icon, 'pin');
+      expect(pins[1].rotation, 0);
+    });
+
+    test('pins round-trip through toJson → diagramPins unchanged', () {
+      const p = Pin(lat: 9, lon: 8, label: 'cam', icon: 'bullet', rotation: 270);
+      final back = diagramPins({
+        'pins': [p.toJson()]
+      }).single;
+      expect(back.icon, 'bullet');
+      expect(back.rotation, 270.0);
+      expect(back.label, 'cam');
+    });
+
     test('diagramPins on missing/wrong-typed pins → empty', () {
       expect(diagramPins(null), isEmpty);
       expect(diagramPins({'pins': 'nope'}), isEmpty);

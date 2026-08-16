@@ -44,6 +44,10 @@ List<Pin> diagramPins(Object? v) {
         lat: (e['lat'] as num).toDouble(),
         lon: (e['lon'] as num).toDouble(),
         label: e['label'] is String ? e['label'] as String : '',
+        // Same defaults as Pin.fromJson — dropping these here made device
+        // icons/headings vanish on re-entry after save (fixed 2026-08-16).
+        icon: e['icon'] is String ? e['icon'] as String : 'pin',
+        rotation: e['rotation'] is num ? (e['rotation'] as num).toDouble() : 0,
       ));
     }
   }
