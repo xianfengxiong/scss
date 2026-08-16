@@ -307,7 +307,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                                   angle: _pins[i].icon == 'pin'
                                       ? 0
                                       : _pins[i].rotation * math.pi / 180,
-                                  child: Icon(pinIconOf(_pins[i].icon),
+                                  child: pinGlyph(_pins[i].icon,
                                       color: Colors.red,
                                       size: _dragging == i ? 44 : 36),
                                 ),

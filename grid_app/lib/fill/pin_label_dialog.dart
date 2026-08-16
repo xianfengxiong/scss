@@ -49,18 +49,21 @@ class _PinLabelDialogState extends State<PinLabelDialog> {
           const SizedBox(height: 12),
           Wrap(
             children: [
-              for (final entry in pinIconChoices.entries)
+              for (final key in pinIconKeys)
                 IconButton(
-                  key: ValueKey('pin-icon-${entry.key}'),
-                  icon: Icon(entry.value),
-                  isSelected: _icon == entry.key,
+                  key: ValueKey('pin-icon-$key'),
+                  icon: pinGlyph(key,
+                      size: 24,
+                      color: _icon == key
+                          ? Colors.red
+                          : Theme.of(context).colorScheme.onSurfaceVariant),
+                  isSelected: _icon == key,
                   style: IconButton.styleFrom(
-                    backgroundColor: _icon == entry.key
+                    backgroundColor: _icon == key
                         ? Theme.of(context).colorScheme.surfaceContainerHighest
                         : null,
-                    foregroundColor: _icon == entry.key ? Colors.red : null,
                   ),
-                  onPressed: () => setState(() => _icon = entry.key),
+                  onPressed: () => setState(() => _icon = key),
                 ),
             ],
           ),
