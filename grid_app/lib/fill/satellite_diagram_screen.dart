@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -326,20 +327,33 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                         ),
                       // Aim handle (top layer, edit-only): a dot on the heading
                       // ray; dragging anywhere in its box re-aims the device.
+                      // A plain GestureDetector pan loses the arena to the
+                      // map's own drag recognizer (pan needs slop to claim,
+                      // the map claims first), so an EagerGestureRecognizer
+                      // wins the arena on pointer-down and a raw Listener
+                      // drives the aiming from move events.
                       if (_aiming case final ai?)
                         Marker(
                           point: LatLng(_pins[ai].lat, _pins[ai].lon),
                           width: 200,
                           height: 200,
                           alignment: Alignment.center,
-                          child: GestureDetector(
+                          child: RawGestureDetector(
                             behavior: HitTestBehavior.opaque,
-                            onTap: () => setState(() => _aiming = null),
-                            onPanUpdate: (d) =>
-                                _aimPinAt(ai, d.globalPosition),
-                            child: CustomPaint(
-                              size: const Size(200, 200),
-                              painter: _AimHandlePainter(_pins[ai].rotation),
+                            gestures: {
+                              EagerGestureRecognizer:
+                                  GestureRecognizerFactoryWithHandlers<
+                                          EagerGestureRecognizer>(
+                                      EagerGestureRecognizer.new, (_) {}),
+                            },
+                            child: Listener(
+                              behavior: HitTestBehavior.opaque,
+                              onPointerMove: (e) => _aimPinAt(ai, e.position),
+                              child: CustomPaint(
+                                size: const Size(200, 200),
+                                painter:
+                                    _AimHandlePainter(_pins[ai].rotation),
+                              ),
                             ),
                           ),
                         ),
