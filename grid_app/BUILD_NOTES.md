@@ -52,7 +52,7 @@ flutter build apk --release --split-per-abi
 ```
 
 - **交付物**:`build/app/outputs/flutter-apk/app-arm64-v8a-release.apk`(现代安卓机基本全是 arm64;SM-A528B 即是)。实测 22.1MB(2026-07-15,Flutter 3.44.6)。
-- **版本号**:`pubspec.yaml` 的 `version: 1.0.0+N`。每次对外交付把 build number `+N` 递增(或临时用 `--build-number=N` 覆盖);Android 拒绝同号/降号覆盖安装。
+- **版本号**:`pubspec.yaml` 的 `version: 1.0.0+N` 保持不动,交付用 `--build-number=N` 覆盖;Android 拒绝同号/降号覆盖安装。**注意 `--split-per-abi` 会给 versionCode 加 ABI 偏移**(arm64 = 2000+N):早期交付 N=17→versionCode 2017;2026-08-16 误传 N=2018 装出 4018,用户决定不卸载回退——**此后交付 N 从 2019 起**(arm64 实际 versionCode = 2000+N ≥ 4019,才能覆盖已装的 4018)。
 - **勿用 debug 包交付**(fat debug APK ~240MB 且是 debug 签名)。
 
 ## 签名
