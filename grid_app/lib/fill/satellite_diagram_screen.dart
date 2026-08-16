@@ -1,7 +1,7 @@
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:screenshot/screenshot.dart';
@@ -47,9 +47,14 @@ class SatelliteDiagramScreen extends StatefulWidget {
 class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
   final _screenshotController = ScreenshotController();
   final _mapController = MapController();
+  final _mapKey = GlobalKey();
   late List<Pin> _pins;
   bool _saving = false;
   bool _locating = false;
+
+  /// Index of the pin being long-press dragged, or null. While set, the pin
+  /// tracks the finger and renders enlarged as feedback.
+  int? _dragging;
 
   @override
   void initState() {
@@ -95,6 +100,22 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
 
   void _addPin(LatLng pos) {
     setState(() => _pins = [..._pins, Pin(lat: pos.latitude, lon: pos.longitude)]);
+  }
+
+  /// Long-press drag: move pin [index] under the finger. The global position
+  /// is mapped into the FlutterMap render box, then through the camera to a
+  /// LatLng — so it stays correct at any zoom/pan.
+  void _dragPinTo(int index, Offset globalPosition) {
+    final box = _mapKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final local = box.globalToLocal(globalPosition);
+    final latlng = _mapController.camera.screenOffsetToLatLng(local);
+    setState(() {
+      final list = [..._pins];
+      list[index] =
+          list[index].copyWith(lat: latlng.latitude, lon: latlng.longitude);
+      _pins = list;
+    });
   }
 
   Future<void> _editPin(int index) async {
@@ -183,6 +204,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
             child: Screenshot(
               controller: _screenshotController,
               child: FlutterMap(
+                key: _mapKey,
                 mapController: _mapController,
                 options: MapOptions(
                   initialCenter: widget.initialCenter ?? _fallbackCenter,
@@ -214,6 +236,18 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                             // one on the map below.
                             behavior: HitTestBehavior.opaque,
                             onTap: () => _editPin(i),
+                            // Long-press then drag moves the pin; winning the
+                            // long-press arena keeps the map from panning.
+                            onLongPressStart: (_) {
+                              HapticFeedback.mediumImpact();
+                              setState(() => _dragging = i);
+                            },
+                            onLongPressMoveUpdate: (d) =>
+                                _dragPinTo(i, d.globalPosition),
+                            onLongPressEnd: (_) =>
+                                setState(() => _dragging = null),
+                            onLongPressCancel: () =>
+                                setState(() => _dragging = null),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
@@ -227,13 +261,15 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen> {
                                   ),
                                 // Device icons rotate to their heading; the
                                 // classic pin never does — its tip marks the
-                                // coordinate and must stay on it.
+                                // coordinate and must stay on it. The dragged
+                                // pin renders enlarged as pickup feedback.
                                 Transform.rotate(
                                   angle: _pins[i].icon == 'pin'
                                       ? 0
                                       : _pins[i].rotation * math.pi / 180,
                                   child: Icon(pinIconOf(_pins[i].icon),
-                                      color: Colors.red, size: 36),
+                                      color: Colors.red,
+                                      size: _dragging == i ? 44 : 36),
                                 ),
                               ],
                             ),

@@ -743,7 +743,7 @@ abstract class AppLocalizations {
   /// No description provided for @mapHint.
   ///
   /// In en, this message translates to:
-  /// **'Tap map to drop a pin · tap a pin to edit/delete · Save to snapshot.'**
+  /// **'Tap map to drop a pin · tap a pin to edit/delete · long-press & drag to move · Save to snapshot.'**
   String get mapHint;
 
   /// No description provided for @myLocation.

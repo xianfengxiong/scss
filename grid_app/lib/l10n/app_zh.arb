@@ -119,7 +119,7 @@
 
   "satelliteTitle": "卫星示意图",
   "saveSnapshot": "保存快照",
-  "mapHint": "点地图落钉 · 点钉编辑/删除 · 保存生成快照。",
+  "mapHint": "点地图落钉 · 点钉编辑/删除 · 长按拖动移钉 · 保存生成快照。",
   "myLocation": "定位到当前位置",
   "locateFailed": "定位失败——请确认已开启定位权限与 GPS",
   "pinTitle": "图钉",

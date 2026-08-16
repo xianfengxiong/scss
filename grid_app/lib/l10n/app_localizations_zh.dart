@@ -398,7 +398,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get saveSnapshot => '保存快照';
 
   @override
-  String get mapHint => '点地图落钉 · 点钉编辑/删除 · 保存生成快照。';
+  String get mapHint => '点地图落钉 · 点钉编辑/删除 · 长按拖动移钉 · 保存生成快照。';
 
   @override
   String get myLocation => '定位到当前位置';

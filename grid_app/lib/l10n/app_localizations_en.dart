@@ -405,7 +405,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mapHint =>
-      'Tap map to drop a pin · tap a pin to edit/delete · Save to snapshot.';
+      'Tap map to drop a pin · tap a pin to edit/delete · long-press & drag to move · Save to snapshot.';
 
   @override
   String get myLocation => 'My location';
