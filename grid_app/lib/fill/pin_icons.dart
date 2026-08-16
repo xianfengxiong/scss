@@ -6,17 +6,21 @@ import 'package:flutter/material.dart';
 /// string stored in [Pin.icon]. Keys are wire/DB values — never rename one,
 /// only add. Unknown keys (from a newer peer) fall back to the classic pin.
 ///
-/// 'pin' (neutral default) and 'bullet' are Material icons; 'ptz'/'anpr'/
-/// 'radar' are custom-drawn (user-approved designs 2026-08-16: spherical PTZ
-/// dome, bullet body with an "A", radar source + waves) since Material has no
-/// security-industry glyphs. All are drawn upright — heading is applied by
-/// the caller via Transform.rotate.
+/// 'pin' (neutral default) and 'bullet' are Material icons; 'ptz' is the
+/// real product photo (user-provided PNG asset, 2026-08-16); 'anpr'/'radar'
+/// are custom-drawn (user-approved designs: bullet body with an "A", radar
+/// source + waves) since Material has no security-industry glyphs. All are
+/// upright — heading is applied by the caller via Transform.rotate.
 const pinIconKeys = ['pin', 'bullet', 'ptz', 'anpr', 'radar'];
 
-/// Renders the glyph for [key] at [size] in [color].
+/// Renders the glyph for [key] at [size] in [color] ([color] doesn't apply to
+/// the PTZ photo asset).
 Widget pinGlyph(String key, {required double size, required Color color}) {
+  if (key == 'ptz') {
+    return Image.asset('assets/pin_icons/ptz.png',
+        width: size, height: size, filterQuality: FilterQuality.medium);
+  }
   final painter = switch (key) {
-    'ptz' => _PtzDomePainter(color),
     'anpr' => _AnprCameraPainter(color),
     'radar' => _RadarWavesPainter(color),
     _ => null,
@@ -56,20 +60,6 @@ abstract class _GlyphPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _GlyphPainter old) => old.color != color;
-}
-
-/// PTZ: ceiling bracket + full spherical dome + lens window.
-class _PtzDomePainter extends _GlyphPainter {
-  const _PtzDomePainter(super.color);
-
-  @override
-  void paintGlyph(Canvas canvas) {
-    final s = stroke();
-    canvas.drawLine(const Offset(5, 3), const Offset(19, 3), s);
-    canvas.drawLine(const Offset(12, 3), const Offset(12, 5.5), s);
-    canvas.drawCircle(const Offset(12, 13), 7.5, s);
-    canvas.drawCircle(const Offset(12, 15), 2, fill);
-  }
 }
 
 /// ANPR: bullet-camera body + trapezoid lens, an "A" on the body.
