@@ -25,9 +25,10 @@ flutter run -d macos            # 开发调试
 
 代码同源:`isDesktopPlatform`(lib/services/platform_info.dart)把 Windows 一并当设计端,UI/同步/导出与 macOS 端完全一致。但 **Flutter 不支持交叉编译——必须在 Windows 机器上构建**:
 
-1. 装 Flutter SDK(版本对齐本仓库,见下方工具链表)+ MSVC 工具链:**Build Tools for Visual Studio 2022 即可**(免费无 IDE,~6-7GB;下载页「Tools for Visual Studio」区),勾「使用 C++ 的桌面开发」工作负载(自带 MSVC v143/Windows SDK/CMake)。完整 VS Community 只在要调试 windows/runner 原生 C++ 时才需要。只装 VS Code 不行(无编译器),MinGW/Clang 不支持。
-2. `flutter doctor` 确认 "Visual Studio" 一项打钩。
-3. 构建与运行:
+1. 装 Flutter SDK(版本对齐本仓库,见下方工具链表)+ MSVC 工具链:**Build Tools for Visual Studio 2022 即可**(免费无 IDE,~6-7GB;下载页「Tools for Visual Studio」区,直链 aka.ms/vs/17/release/vs_BuildTools.exe),勾「使用 C++ 的桌面开发」工作负载(自带 MSVC v143/Windows SDK/CMake)。完整 VS Community 只在要调试 windows/runner 原生 C++ 时才需要。只装 VS Code 不行(无编译器),MinGW/Clang 不支持。
+2. 装 **nuget.exe**(`winget install Microsoft.NuGet`,或手动下载 dist.nuget.org/win-x86-commandline/latest/nuget.exe 放入 PATH):geolocator_windows 的 CMake 用它拉 Microsoft.Windows.CppWinRT 包,PATH 没有就每次 build 提示 "Nuget.exe not found" 并临时下载;`flutter clean` 后重拉该包需联网(nuget.org)。
+3. `flutter doctor` 确认 "Visual Studio" 一项打钩(Android toolchain 报叉可无视)。
+4. 构建与运行:
 
 ```powershell
 cd grid_app
