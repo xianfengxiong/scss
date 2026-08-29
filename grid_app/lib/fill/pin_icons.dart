@@ -1,17 +1,22 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 /// The marker glyphs a satellite-diagram pin can use, keyed by the stable
 /// string stored in [Pin.icon]. Keys are wire/DB values — never rename one,
 /// only add. Unknown keys (from a newer peer) fall back to the classic pin.
 ///
-/// 'pin' (neutral default) and 'bullet' are Material icons; 'ptz' is the
-/// real product photo (user-provided PNG asset, 2026-08-16); 'anpr'/'radar'
-/// are custom-drawn (user-approved designs: bullet body with an "A", radar
-/// source + waves) since Material has no security-industry glyphs. All are
-/// upright — heading is applied by the caller via Transform.rotate.
+/// 'pin' (neutral default) is a Material icon; 'ptz'/'bullet'/'radar' are
+/// real product photos (user-provided PNGs; bullet/radar de-checkerboarded
+/// from their originals, 2026-08-29); 'anpr' is custom-drawn (user-approved:
+/// bullet body with an "A") since Material has no security-industry glyphs.
+/// All are upright — heading is applied by the caller via Transform.rotate.
 const pinIconKeys = ['pin', 'bullet', 'ptz', 'anpr', 'radar'];
+
+/// Product-photo assets, by key.
+const _photoAssets = {
+  'ptz': 'assets/pin_icons/ptz.png',
+  'bullet': 'assets/pin_icons/bullet.png',
+  'radar': 'assets/pin_icons/radar.png',
+};
 
 /// Whether a pin of [key] has an adjustable heading. The classic pin's tip
 /// marks the coordinate, and the PTZ (omnidirectional, drawn from its product
@@ -19,64 +24,44 @@ const pinIconKeys = ['pin', 'bullet', 'ptz', 'anpr', 'radar'];
 bool pinRotates(String key) => key != 'pin' && key != 'ptz';
 
 /// Renders the glyph for [key] at [size] in [color] ([color] doesn't apply to
-/// the PTZ photo asset).
+/// the photo assets).
 Widget pinGlyph(String key, {required double size, required Color color}) {
-  if (key == 'ptz') {
-    return Image.asset('assets/pin_icons/ptz.png',
+  final asset = _photoAssets[key];
+  if (asset != null) {
+    return Image.asset(asset,
         width: size,
         height: size,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.medium);
   }
-  final painter = switch (key) {
-    'anpr' => _AnprCameraPainter(color),
-    'radar' => _RadarWavesPainter(color),
-    _ => null,
-  };
-  if (painter != null) {
+  if (key == 'anpr') {
     return SizedBox(
         width: size,
         height: size,
-        child: CustomPaint(size: Size.square(size), painter: painter));
+        child: CustomPaint(
+            size: Size.square(size), painter: _AnprCameraPainter(color)));
   }
-  return Icon(key == 'bullet' ? Icons.videocam : Icons.location_on,
-      size: size, color: color);
+  return Icon(Icons.location_on, size: size, color: color);
 }
 
-/// Base for the custom glyphs: paints in a 24×24 design space (mirroring the
-/// approved SVGs) scaled to the actual size, Material-style round strokes.
-abstract class _GlyphPainter extends CustomPainter {
+/// ANPR: bullet-camera body + trapezoid lens, an "A" on the body. Paints in a
+/// 24×24 design space (mirroring the approved SVG) scaled to the actual size,
+/// Material-style round strokes.
+class _AnprCameraPainter extends CustomPainter {
   final Color color;
-  const _GlyphPainter(this.color);
+  const _AnprCameraPainter(this.color);
 
-  Paint stroke([double width = 2]) => Paint()
+  Paint _stroke(double width) => Paint()
     ..color = color
     ..style = PaintingStyle.stroke
     ..strokeWidth = width
     ..strokeCap = StrokeCap.round
     ..strokeJoin = StrokeJoin.round;
 
-  Paint get fill => Paint()..color = color;
-
-  void paintGlyph(Canvas canvas);
-
   @override
   void paint(Canvas canvas, Size size) {
     canvas.scale(size.width / 24);
-    paintGlyph(canvas);
-  }
-
-  @override
-  bool shouldRepaint(covariant _GlyphPainter old) => old.color != color;
-}
-
-/// ANPR: bullet-camera body + trapezoid lens, an "A" on the body.
-class _AnprCameraPainter extends _GlyphPainter {
-  const _AnprCameraPainter(super.color);
-
-  @override
-  void paintGlyph(Canvas canvas) {
-    final s = stroke();
+    final s = _stroke(2);
     canvas.drawRRect(
         RRect.fromRectAndRadius(
             const Rect.fromLTWH(2, 7, 13, 10), const Radius.circular(2)),
@@ -88,7 +73,7 @@ class _AnprCameraPainter extends _GlyphPainter {
           ..lineTo(21, 16.5)
           ..lineTo(15, 13.5),
         s);
-    final a = stroke(1.7);
+    final a = _stroke(1.7);
     canvas.drawPath(
         Path()
           ..moveTo(6.4, 14.6)
@@ -97,20 +82,7 @@ class _AnprCameraPainter extends _GlyphPainter {
         a);
     canvas.drawLine(const Offset(7.2, 12.9), const Offset(9.8, 12.9), a);
   }
-}
-
-/// Radar: source dot + three quarter-circle waves fanning up-right.
-class _RadarWavesPainter extends _GlyphPainter {
-  const _RadarWavesPainter(super.color);
 
   @override
-  void paintGlyph(Canvas canvas) {
-    final s = stroke();
-    const center = Offset(5, 19);
-    canvas.drawCircle(center, 1.8, fill);
-    for (final r in const [5.0, 9.0, 13.0]) {
-      canvas.drawArc(Rect.fromCircle(center: center, radius: r), 0,
-          -math.pi / 2, false, s);
-    }
-  }
+  bool shouldRepaint(covariant _AnprCameraPainter old) => old.color != color;
 }
