@@ -23,6 +23,8 @@ flutter run -d macos            # 开发调试
 
 ## Windows 桌面端构建(2026-08-16)
 
+**给不熟悉命令行的人:一键脚本(2026-09-20)**——装好下面第 1、2 步的环境后,双击 `grid_app\build_windows.bat` 即可。脚本会检查 Flutter / VS C++ 工作负载 / nuget,自动 `pub get` + `build windows --release`,把 `Release\` 拷成 `grid_app\dist\SCSS-Survey-win64-<日期时间>\`(内附中文《使用说明.txt》)并打同名 zip,最后打开 dist 文件夹。失败会用红字说明原因并停在窗口里等人看。逻辑在 `build_windows.ps1`(UTF-8 BOM,可加 `-SkipPubGet`);`dist/` 已忽略不入 git。
+
 代码同源:`isDesktopPlatform`(lib/services/platform_info.dart)把 Windows 一并当设计端,UI/同步/导出与 macOS 端完全一致。但 **Flutter 不支持交叉编译——必须在 Windows 机器上构建**:
 
 1. 装 Flutter SDK(版本对齐本仓库,见下方工具链表)+ MSVC 工具链:**Build Tools for Visual Studio 2022 即可**(免费无 IDE,~6-7GB;下载页「Tools for Visual Studio」区,直链 aka.ms/vs/17/release/vs_BuildTools.exe),勾「使用 C++ 的桌面开发」工作负载(自带 MSVC v143/Windows SDK/CMake)。完整 VS Community 只在要调试 windows/runner 原生 C++ 时才需要。只装 VS Code 不行(无编译器),MinGW/Clang 不支持。

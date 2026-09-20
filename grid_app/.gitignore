@@ -46,3 +46,6 @@ app.*.map.json
 
 # Flutter golden-test failure artifacts (regenerated on mismatch)
 test/**/failures/
+
+# Windows one-click build output (build_windows.bat)
+/dist/
