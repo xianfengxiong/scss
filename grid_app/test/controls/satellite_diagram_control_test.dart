@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:scss_grid/controls/satellite_diagram_control.dart';
 import 'package:scss_grid/l10n/app_localizations.dart';
 import 'package:scss_grid/model/cell.dart';
+import 'package:scss_grid/model/map_polygon.dart';
 import 'package:scss_grid/model/pin.dart';
 
 const _cell = Cell(
@@ -82,6 +83,59 @@ void main() {
       expect(diagramPins(null), isEmpty);
       expect(diagramPins({'pins': 'nope'}), isEmpty);
       expect(diagramPins({}), isEmpty);
+    });
+
+    test('diagramPolygons parses well-formed, skips malformed/degenerate',
+        () {
+      final v = {
+        'polygons': [
+          {
+            'points': [
+              {'lat': 0, 'lon': 0},
+              {'lat': 0, 'lon': 1},
+              {'lat': 1, 'lon': 1},
+            ],
+            'label': 'Zone',
+            'color': 0x2196F3,
+            'opacity': 0.5,
+          },
+          {
+            'points': [
+              {'lat': 0, 'lon': 0},
+              {'lat': 0, 'lon': 1},
+            ]
+          }, // 2 points: a line, dropped
+          'junk',
+        ],
+      };
+      final ps = diagramPolygons(v);
+      expect(ps.length, 1);
+      expect(ps.first.label, 'Zone');
+      expect(ps.first.color, 0x2196F3);
+      expect(ps.first.opacity, 0.5);
+      expect(ps.first.points.length, 3);
+    });
+
+    test('diagramPolygons on missing/wrong-typed → empty (pre-polygon rows)',
+        () {
+      expect(diagramPolygons({'path': 'x.png', 'pins': []}), isEmpty);
+      expect(diagramPolygons({'polygons': 'nope'}), isEmpty);
+      expect(diagramPolygons(null), isEmpty);
+    });
+
+    test('polygons round-trip through toJson → diagramPolygons unchanged',
+        () {
+      const p = MapPolygon(
+        points: [GeoPoint(1, 2), GeoPoint(1, 3), GeoPoint(2, 3), GeoPoint(2, 2)],
+        label: 'Yard',
+        color: 0x4CAF50,
+        opacity: 0.8,
+      );
+      final back = diagramPolygons({'polygons': [p.toJson()]});
+      expect(back.single.points, p.points);
+      expect(back.single.label, 'Yard');
+      expect(back.single.color, 0x4CAF50);
+      expect(back.single.opacity, 0.8);
     });
 
     test('diagramCenter parses {lat,lon}, else null', () {

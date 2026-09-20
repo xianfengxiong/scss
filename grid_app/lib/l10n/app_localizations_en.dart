@@ -428,6 +428,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pinLabelOptional => 'Label (optional)';
 
   @override
+  String get pinTool => 'Pins';
+
+  @override
+  String get polygonTool => 'Polygon';
+
+  @override
+  String get polygonHint =>
+      'Tap map to add vertices (3+ form a polygon) · Done to finish · tap a polygon to edit.';
+
+  @override
+  String polygonDrawingHint(int n) {
+    return '$n vertices · Undo / Cancel / Done (needs 3+).';
+  }
+
+  @override
+  String get polygonSelectedHint =>
+      'Long-press & drag a vertex to move it · tap elsewhere to finish.';
+
+  @override
+  String get undoPoint => 'Undo point';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get polygonTitle => 'Polygon';
+
+  @override
+  String get fillColor => 'Fill color';
+
+  @override
+  String fillOpacity(int pct) {
+    return 'Fill opacity: $pct%';
+  }
+
+  @override
   String get deviceNameHint => 'Device name';
 
   @override

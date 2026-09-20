@@ -782,6 +782,66 @@ abstract class AppLocalizations {
   /// **'Label (optional)'**
   String get pinLabelOptional;
 
+  /// No description provided for @pinTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Pins'**
+  String get pinTool;
+
+  /// No description provided for @polygonTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Polygon'**
+  String get polygonTool;
+
+  /// No description provided for @polygonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap map to add vertices (3+ form a polygon) · Done to finish · tap a polygon to edit.'**
+  String get polygonHint;
+
+  /// No description provided for @polygonDrawingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} vertices · Undo / Cancel / Done (needs 3+).'**
+  String polygonDrawingHint(int n);
+
+  /// No description provided for @polygonSelectedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press & drag a vertex to move it · tap elsewhere to finish.'**
+  String get polygonSelectedHint;
+
+  /// No description provided for @undoPoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo point'**
+  String get undoPoint;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @polygonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Polygon'**
+  String get polygonTitle;
+
+  /// No description provided for @fillColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill color'**
+  String get fillColor;
+
+  /// No description provided for @fillOpacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill opacity: {pct}%'**
+  String fillOpacity(int pct);
+
   /// No description provided for @deviceNameHint.
   ///
   /// In en, this message translates to:

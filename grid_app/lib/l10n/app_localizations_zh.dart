@@ -419,6 +419,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pinLabelOptional => '标签(可选)';
 
   @override
+  String get pinTool => '图钉';
+
+  @override
+  String get polygonTool => '多边形';
+
+  @override
+  String get polygonHint => '点地图加顶点(3 点起自动成形) · 点「完成」结束 · 点多边形可编辑。';
+
+  @override
+  String polygonDrawingHint(int n) {
+    return '已 $n 个顶点 · 撤销 / 取消 / 完成(至少 3 点)。';
+  }
+
+  @override
+  String get polygonSelectedHint => '长按拖动顶点微调 · 点其他位置完成。';
+
+  @override
+  String get undoPoint => '撤销上一点';
+
+  @override
+  String get done => '完成';
+
+  @override
+  String get polygonTitle => '多边形';
+
+  @override
+  String get fillColor => '填充色';
+
+  @override
+  String fillOpacity(int pct) {
+    return '填充不透明度:$pct%';
+  }
+
+  @override
   String get deviceNameHint => '设备名';
 
   @override

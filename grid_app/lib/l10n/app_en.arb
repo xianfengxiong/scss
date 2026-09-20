@@ -161,6 +161,19 @@
   "pinTitle": "Pin",
   "pinLabelOptional": "Label (optional)",
 
+  "pinTool": "Pins",
+  "polygonTool": "Polygon",
+  "polygonHint": "Tap map to add vertices (3+ form a polygon) · Done to finish · tap a polygon to edit.",
+  "polygonDrawingHint": "{n} vertices · Undo / Cancel / Done (needs 3+).",
+  "@polygonDrawingHint": { "placeholders": { "n": { "type": "int" } } },
+  "polygonSelectedHint": "Long-press & drag a vertex to move it · tap elsewhere to finish.",
+  "undoPoint": "Undo point",
+  "done": "Done",
+  "polygonTitle": "Polygon",
+  "fillColor": "Fill color",
+  "fillOpacity": "Fill opacity: {pct}%",
+  "@fillOpacity": { "placeholders": { "pct": { "type": "int" } } },
+
   "deviceNameHint": "Device name",
 
   "pageIndicator": "{current} / {total}",

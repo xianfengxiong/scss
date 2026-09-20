@@ -8,15 +8,18 @@ import 'package:pdf/widgets.dart' as pw;
 import '../fill/satellite_diagram_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../model/cell.dart';
+import '../model/map_polygon.dart';
 import '../model/pin.dart';
 import '../services/image_service.dart';
 import '../services/location_service.dart';
 import '../services/media_paths.dart';
 import 'control_spec.dart';
 
-/// The screen's return value: updated pins + camera state + the saved PNG path.
+/// The screen's return value: updated pins/polygons + camera state + the
+/// saved snapshot file name.
 typedef SatelliteResult = ({
   List<Pin> pins,
+  List<MapPolygon> polygons,
   LatLng center,
   double zoom,
   String path,
@@ -52,6 +55,19 @@ List<Pin> diagramPins(Object? v) {
     }
   }
   return out;
+}
+
+/// The polygons inside a stored diagram value; malformed or degenerate (<3
+/// points) entries are skipped. One parser — [MapPolygon.tryParse] — so this
+/// can never drift from the model the way the hand-rolled pin parser once
+/// did. Rows written before polygons existed have no key → empty.
+List<MapPolygon> diagramPolygons(Object? v) {
+  final raw = _asMap(v)?['polygons'];
+  if (raw is! List) return const [];
+  return [
+    for (final e in raw)
+      if (MapPolygon.tryParse(e) case final p?) p
+  ];
 }
 
 /// The saved map center, or null if absent/malformed (→ caller seeds via GPS).
@@ -175,6 +191,7 @@ class SatelliteDiagramControl extends ControlSpec {
         image: image,
         path: diagramPath(value),
         pins: diagramPins(value),
+        polygons: diagramPolygons(value),
         center: diagramCenter(value),
         zoom: diagramZoom(value),
         onChanged: onChanged,
@@ -189,6 +206,7 @@ class _SatelliteField extends StatelessWidget {
   final ImageService? image;
   final String? path;
   final List<Pin> pins;
+  final List<MapPolygon> polygons;
   final LatLng? center;
   final double zoom;
   final void Function(Object? value) onChanged;
@@ -198,6 +216,7 @@ class _SatelliteField extends StatelessWidget {
     required this.image,
     required this.path,
     required this.pins,
+    required this.polygons,
     required this.center,
     required this.zoom,
     required this.onChanged,
@@ -210,6 +229,7 @@ class _SatelliteField extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) => SatelliteDiagramScreen(
           initialPins: pins,
+          initialPolygons: polygons,
           initialCenter: center,
           initialZoom: zoom,
           location: location,
@@ -221,6 +241,7 @@ class _SatelliteField extends StatelessWidget {
     onChanged({
       'path': result.path,
       'pins': [for (final p in result.pins) p.toJson()],
+      'polygons': [for (final g in result.polygons) g.toJson()],
       'center': {'lat': result.center.latitude, 'lon': result.center.longitude},
       'zoom': result.zoom,
     });

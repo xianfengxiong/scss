@@ -10,10 +10,12 @@ import 'package:screenshot/screenshot.dart';
 
 import '../controls/satellite_diagram_control.dart';
 import '../l10n/app_localizations.dart';
+import '../model/map_polygon.dart';
 import '../model/pin.dart';
 import '../services/location_service.dart';
 import 'pin_icons.dart';
 import 'pin_label_dialog.dart';
+import 'polygon_edit_dialog.dart';
 
 /// Esri World Imagery — free satellite tiles, no API key (attribution required).
 const String _esriUrl =
@@ -21,13 +23,18 @@ const String _esriUrl =
 
 const LatLng _fallbackCenter = LatLng(40.0759, 20.1389); // Gjirokastër
 
-/// Full-screen satellite map for dropping pins and capturing a screenshot.
-/// Self-contained (no Site/DB): takes initial pins/center/zoom, returns updated
-/// pins + camera state + the saved snapshot file name via [Navigator.pop]. device-only — not
-/// covered by widget tests (flutter_map/screenshot/geolocator platform channels
-/// are unavailable in the unit-test VM).
+/// Which map tap does what: drop a pin, or add a polygon vertex.
+enum _Tool { pin, polygon }
+
+/// Full-screen satellite map for dropping pins, drawing filled polygons
+/// (zones) and capturing a screenshot. Self-contained (no Site/DB): takes
+/// initial pins/polygons/center/zoom, returns the updated set + camera state +
+/// the saved snapshot file name via [Navigator.pop]. device-only — not covered
+/// by widget tests (flutter_map/screenshot/geolocator platform channels are
+/// unavailable in the unit-test VM).
 class SatelliteDiagramScreen extends StatefulWidget {
   final List<Pin> initialPins;
+  final List<MapPolygon> initialPolygons;
   final LatLng? initialCenter;
   final double initialZoom;
   final LocationService? location;
@@ -36,6 +43,7 @@ class SatelliteDiagramScreen extends StatefulWidget {
   const SatelliteDiagramScreen({
     super.key,
     required this.initialPins,
+    this.initialPolygons = const [],
     this.initialCenter,
     this.initialZoom = 17,
     this.location,
@@ -52,8 +60,24 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
   final _mapController = MapController();
   final _mapKey = GlobalKey();
   late List<Pin> _pins;
+  late List<MapPolygon> _polygons;
   bool _saving = false;
   bool _locating = false;
+
+  _Tool _tool = _Tool.pin;
+
+  /// Vertices of the polygon being drawn (polygon tool). Rendered live as a
+  /// dashed outline, filled from 3 points on; committed by Done (or silently
+  /// when switching tool / saving, if it already has 3+ points).
+  List<LatLng> _draft = const [];
+
+  /// Polygon whose vertex handles are shown (after its edit dialog closes) so
+  /// the shape can be fine-tuned by long-press dragging. Edit aid only —
+  /// cleared before capture and by a tap elsewhere.
+  int? _selectedPolygon;
+
+  /// Vertex (of [_selectedPolygon]) being long-press dragged, or null.
+  int? _draggingVertex;
 
   /// After the my-location button centers the map, a pulsing blue dot marks
   /// the position for a few seconds — otherwise it's hard to tell which point
@@ -77,10 +101,14 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
   /// must never reach the snapshot — cleared before capture.
   int? _aiming;
 
+  static final Color _draftColor = polygonColor(MapPolygon.defaultColor);
+  static final _dashed = StrokePattern.dashed(segments: const [8, 6]);
+
   @override
   void initState() {
     super.initState();
     _pins = List.of(widget.initialPins);
+    _polygons = List.of(widget.initialPolygons);
     if (widget.initialCenter == null) _seedFromGps();
   }
 
@@ -130,14 +158,119 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
     });
   }
 
-  void _addPin(LatLng pos) {
-    // In aim mode a map tap just finishes aiming — don't also drop a pin.
+  void _onMapTap(LatLng pos) {
+    // A tap while an edit gizmo is up just dismisses it — no pin, no vertex.
     if (_aiming != null) {
       setState(() => _aiming = null);
       return;
     }
-    setState(
-        () => _pins = [..._pins, Pin(lat: pos.latitude, lon: pos.longitude)]);
+    if (_selectedPolygon != null) {
+      setState(() => _selectedPolygon = null);
+      return;
+    }
+    switch (_tool) {
+      case _Tool.pin:
+        // Pins inside zones are the normal case (a camera within the site
+        // boundary), so a polygon under the finger never blocks a pin.
+        setState(() =>
+            _pins = [..._pins, Pin(lat: pos.latitude, lon: pos.longitude)]);
+      case _Tool.polygon:
+        // Not mid-draw: a tap on an existing polygon edits it. Mid-draw every
+        // tap is a vertex, even over another polygon (nested zones).
+        if (_draft.isEmpty) {
+          final hit = polygonIndexAt(_polygons, pos.latitude, pos.longitude);
+          if (hit != null) {
+            _editPolygon(hit);
+            return;
+          }
+        }
+        setState(() => _draft = [..._draft, pos]);
+    }
+  }
+
+  void _setTool(_Tool tool) {
+    if (tool == _tool) return;
+    setState(() {
+      _commitDraft(); // a 3+-point draft survives the switch; shorter is dropped
+      _selectedPolygon = null;
+      _aiming = null;
+      _tool = tool;
+    });
+  }
+
+  /// Turn the draft into a polygon if it is one (≥3 points), else drop it.
+  /// Mutates state — call inside setState. Returns the new polygon's index.
+  int? _commitDraft() {
+    final pts = _draft;
+    _draft = const [];
+    if (pts.length < MapPolygon.minPoints) return null;
+    _polygons = [
+      ..._polygons,
+      MapPolygon(
+          points: [for (final p in pts) GeoPoint(p.latitude, p.longitude)]),
+    ];
+    return _polygons.length - 1;
+  }
+
+  /// Done: commit the draft and go straight to naming/colouring it
+  /// (Google Earth opens the properties dialog on creation too).
+  Future<void> _finishDraft() async {
+    if (_draft.length < MapPolygon.minPoints) return;
+    int? index;
+    setState(() => index = _commitDraft());
+    if (index case final i?) await _editPolygon(i);
+  }
+
+  void _undoDraftPoint() =>
+      setState(() => _draft = _draft.sublist(0, _draft.length - 1));
+
+  void _cancelDraft() => setState(() => _draft = const []);
+
+  Future<void> _editPolygon(int index) async {
+    final poly = _polygons[index];
+    final result = await showDialog<PolygonEditResult>(
+      context: context,
+      builder: (_) => PolygonEditDialog(
+        initialLabel: poly.label,
+        initialColor: poly.color,
+        initialOpacity: poly.opacity,
+      ),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      if (result.action == 'delete') {
+        _polygons = [..._polygons]..removeAt(index);
+        _selectedPolygon = null;
+        return;
+      }
+      if (result.action == 'ok') {
+        final list = [..._polygons];
+        list[index] = poly.copyWith(
+            label: result.label,
+            color: result.color,
+            opacity: result.opacity);
+        _polygons = list;
+      }
+      // OK or cancel: show the vertex handles so the outline can be
+      // fine-tuned (long-press drag); a tap elsewhere hides them.
+      _selectedPolygon = index;
+    });
+  }
+
+  /// Long-press drag: move vertex [vertex] of polygon [poly] under the finger
+  /// (same global→map-box→LatLng mapping as [_dragPinTo]).
+  void _dragVertexTo(int poly, int vertex, Offset globalPosition) {
+    final box = _mapKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final ll = _mapController.camera
+        .screenOffsetToLatLng(box.globalToLocal(globalPosition));
+    setState(() {
+      final pts = [..._polygons[poly].points];
+      pts[vertex] = GeoPoint(ll.latitude, ll.longitude);
+      final list = [..._polygons];
+      list[poly] = list[poly].copyWith(points: pts);
+      _polygons = list;
+    });
   }
 
   /// Aim-mode drag: point pin [index] at the finger. The heading is the
@@ -204,13 +337,16 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
   }
 
   Future<void> _saveAndExit() async {
-    // The aim handle and the my-location pulse are edit aids — never bake
-    // them into the snapshot.
+    // Edit aids never reach the snapshot: aim handle, my-location pulse,
+    // vertex handles. An unfinished 3+-point outline is kept, not lost.
     _myLocationTimer?.cancel();
     _pulse.stop();
     setState(() {
       _aiming = null;
       _myLocation = null;
+      _commitDraft();
+      _selectedPolygon = null;
+      _draggingVertex = null;
       _saving = true;
     });
     Uint8List? bytes;
@@ -233,8 +369,24 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
     }
     if (!mounted) return;
     final cam = _mapController.camera;
-    Navigator.pop<SatelliteResult>(
-        context, (pins: _pins, center: cam.center, zoom: cam.zoom, path: path));
+    Navigator.pop<SatelliteResult>(context, (
+      pins: _pins,
+      polygons: _polygons,
+      center: cam.center,
+      zoom: cam.zoom,
+      path: path,
+    ));
+  }
+
+  String _hint(AppLocalizations l10n) {
+    if (_aiming != null) return l10n.aimHint;
+    if (_selectedPolygon != null) return l10n.polygonSelectedHint;
+    if (_tool == _Tool.polygon) {
+      return _draft.isEmpty
+          ? l10n.polygonHint
+          : l10n.polygonDrawingHint(_draft.length);
+    }
+    return l10n.mapHint;
   }
 
   @override
@@ -244,6 +396,22 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
       appBar: AppBar(
         title: Text(l10n.satelliteTitle),
         actions: [
+          IconButton(
+            key: const ValueKey('tool-pin'),
+            isSelected: _tool == _Tool.pin,
+            icon: const Icon(Icons.place_outlined),
+            selectedIcon: const Icon(Icons.place),
+            tooltip: l10n.pinTool,
+            onPressed: () => _setTool(_Tool.pin),
+          ),
+          IconButton(
+            key: const ValueKey('tool-polygon'),
+            isSelected: _tool == _Tool.polygon,
+            icon: const Icon(Icons.pentagon_outlined),
+            selectedIcon: const Icon(Icons.pentagon),
+            tooltip: l10n.polygonTool,
+            onPressed: () => _setTool(_Tool.polygon),
+          ),
           _saving
               ? const Padding(
                   padding: EdgeInsets.all(14),
@@ -266,7 +434,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
             color: Colors.black87,
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
             child: Text(
-              _aiming == null ? l10n.mapHint : l10n.aimHint,
+              _hint(l10n),
               style: const TextStyle(color: Colors.white, fontSize: 12),
             ),
           ),
@@ -281,7 +449,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
                     options: MapOptions(
                       initialCenter: widget.initialCenter ?? _fallbackCenter,
                       initialZoom: widget.initialZoom,
-                      onTap: (_, latlng) => _addPin(latlng),
+                      onTap: (_, latlng) => _onMapTap(latlng),
                       onPositionChanged: (camera, _) {
                         if (camera.rotation != _mapRotation) {
                           setState(() => _mapRotation = camera.rotation);
@@ -294,6 +462,63 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
                         userAgentPackageName: 'com.scss.scss',
                         maxNativeZoom: 19,
                       ),
+                      // Zones under the pins: translucent fill, solid outline
+                      // of the same hue, name at the centroid — all part of
+                      // the snapshot. The selected one gets a thicker outline.
+                      if (_polygons.isNotEmpty)
+                        PolygonLayer(
+                          polygons: [
+                            for (int i = 0; i < _polygons.length; i++)
+                              Polygon(
+                                points: [
+                                  for (final g in _polygons[i].points)
+                                    LatLng(g.lat, g.lon)
+                                ],
+                                color: polygonColor(_polygons[i].color)
+                                    .withValues(alpha: _polygons[i].opacity),
+                                borderColor: polygonColor(_polygons[i].color),
+                                borderStrokeWidth:
+                                    _selectedPolygon == i ? 4 : 2,
+                                label: _polygons[i].label.isEmpty
+                                    ? null
+                                    : _polygons[i].label,
+                                labelStyle: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  shadows: [
+                                    Shadow(blurRadius: 4, color: Colors.black)
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      // The in-progress outline: dashed so it reads as a
+                      // draft; a line until the 3rd vertex makes it a region.
+                      if (_draft.length >= MapPolygon.minPoints)
+                        PolygonLayer(
+                          polygons: [
+                            Polygon(
+                              points: _draft,
+                              color: _draftColor.withValues(
+                                  alpha: MapPolygon.defaultOpacity),
+                              borderColor: _draftColor,
+                              borderStrokeWidth: 2,
+                              pattern: _dashed,
+                            ),
+                          ],
+                        )
+                      else if (_draft.length == 2)
+                        PolylineLayer(
+                          polylines: [
+                            Polyline(
+                              points: _draft,
+                              color: _draftColor,
+                              strokeWidth: 2,
+                              pattern: _dashed,
+                            ),
+                          ],
+                        ),
                       MarkerLayer(
                         markers: [
                           for (int i = 0; i < _pins.length; i++)
@@ -424,6 +649,58 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
                             ),
                         ],
                       ),
+                      // Vertex handles (edit-only, cleared before capture):
+                      // passive dots on the draft, draggable ones on the
+                      // selected polygon.
+                      if (_draft.isNotEmpty || _selectedPolygon != null)
+                        MarkerLayer(
+                          markers: [
+                            for (final p in _draft)
+                              Marker(
+                                point: p,
+                                width: 16,
+                                height: 16,
+                                alignment: Alignment.center,
+                                child: IgnorePointer(
+                                  child: _VertexDot(color: _draftColor, size: 12),
+                                ),
+                              ),
+                            if (_selectedPolygon case final si?)
+                              for (int v = 0;
+                                  v < _polygons[si].points.length;
+                                  v++)
+                                Marker(
+                                  point: LatLng(_polygons[si].points[v].lat,
+                                      _polygons[si].points[v].lon),
+                                  width: 32,
+                                  height: 32,
+                                  alignment: Alignment.center,
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    // Swallow taps: a tap on a handle must
+                                    // neither deselect nor add anything.
+                                    onTap: () {},
+                                    onLongPressStart: (_) {
+                                      HapticFeedback.mediumImpact();
+                                      setState(() => _draggingVertex = v);
+                                    },
+                                    onLongPressMoveUpdate: (d) =>
+                                        _dragVertexTo(si, v, d.globalPosition),
+                                    onLongPressEnd: (_) =>
+                                        setState(() => _draggingVertex = null),
+                                    onLongPressCancel: () =>
+                                        setState(() => _draggingVertex = null),
+                                    child: Center(
+                                      child: _VertexDot(
+                                        color: polygonColor(
+                                            _polygons[si].color),
+                                        size: _draggingVertex == v ? 22 : 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                          ],
+                        ),
                     ],
                   ),
                 ),
@@ -444,6 +721,54 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
                     },
                   ),
                 ),
+                // Draft controls (outside the Screenshot subtree). Right
+                // margin clears the my-location FAB.
+                if (_draft.isNotEmpty)
+                  Positioned(
+                    left: 12,
+                    right: 84,
+                    bottom: 12,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Material(
+                        color: Colors.white.withValues(alpha: 0.94),
+                        elevation: 2,
+                        borderRadius: BorderRadius.circular(24),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextButton.icon(
+                                  key: const ValueKey('draft-undo'),
+                                  onPressed: _undoDraftPoint,
+                                  icon: const Icon(Icons.undo, size: 18),
+                                  label: Text(l10n.undoPoint),
+                                ),
+                                TextButton(
+                                  key: const ValueKey('draft-cancel'),
+                                  onPressed: _cancelDraft,
+                                  child: Text(l10n.cancel),
+                                ),
+                                FilledButton.icon(
+                                  key: const ValueKey('draft-done'),
+                                  onPressed:
+                                      _draft.length >= MapPolygon.minPoints
+                                          ? _finishDraft
+                                          : null,
+                                  icon: const Icon(Icons.check, size: 18),
+                                  label: Text(l10n.done),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -465,6 +790,26 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
             ),
     );
   }
+}
+
+/// A polygon vertex handle: white disc with a coloured rim, enlarged while
+/// dragged (same pickup feedback as pins).
+class _VertexDot extends StatelessWidget {
+  final Color color;
+  final double size;
+  const _VertexDot({required this.color, required this.size});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+          border: Border.all(color: color, width: 3),
+          boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 3)],
+        ),
+      );
 }
 
 /// Round compass button: the needle tracks the map rotation (red half =

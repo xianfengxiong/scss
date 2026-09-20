@@ -127,6 +127,17 @@
   "pinTitle": "图钉",
   "pinLabelOptional": "标签(可选)",
 
+  "pinTool": "图钉",
+  "polygonTool": "多边形",
+  "polygonHint": "点地图加顶点(3 点起自动成形) · 点「完成」结束 · 点多边形可编辑。",
+  "polygonDrawingHint": "已 {n} 个顶点 · 撤销 / 取消 / 完成(至少 3 点)。",
+  "polygonSelectedHint": "长按拖动顶点微调 · 点其他位置完成。",
+  "undoPoint": "撤销上一点",
+  "done": "完成",
+  "polygonTitle": "多边形",
+  "fillColor": "填充色",
+  "fillOpacity": "填充不透明度:{pct}%",
+
   "deviceNameHint": "设备名",
 
   "pageIndicator": "{current} / {total}"
