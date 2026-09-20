@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 /// only add. Unknown keys (from a newer peer) fall back to the classic pin.
 ///
 /// 'pin' (neutral default) is a Material icon; 'ptz'/'bullet'/'radar'/'anpr'
-/// are real product photos (user-provided PNGs; bullet/radar de-checkerboarded
-/// by edge flood-fill 2026-08-29; anpr — a white housing on a light checker,
-/// which flood-fill hollowed out — cut out with macOS Vision subject lifting
-/// 2026-09-20, replacing the earlier line-drawn glyph the user found
+/// are real product photos (user-provided PNGs on a baked-in checkerboard).
+/// radar was de-checkerboarded by edge flood-fill (2026-08-29); the white
+/// bullet and anpr housings share the light checker's colour, so flood-fill
+/// hollowed them out — both are cut out with macOS Vision subject lifting
+/// instead (2026-09-20; anpr replaced a line-drawn glyph the user found
 /// "see-through"). All are upright — heading is applied by the caller via
 /// Transform.rotate.
 const pinIconKeys = ['pin', 'bullet', 'ptz', 'anpr', 'radar'];
