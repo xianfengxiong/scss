@@ -137,6 +137,7 @@
   "polygonTitle": "多边形",
   "fillColor": "填充色",
   "fillOpacity": "填充不透明度:{pct}%",
+  "snapshotArea": "快照范围",
 
   "deviceNameHint": "设备名",
 

@@ -453,6 +453,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get snapshotArea => '快照范围';
+
+  @override
   String get deviceNameHint => '设备名';
 
   @override

@@ -842,6 +842,12 @@ abstract class AppLocalizations {
   /// **'Fill opacity: {pct}%'**
   String fillOpacity(int pct);
 
+  /// No description provided for @snapshotArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapshot area'**
+  String get snapshotArea;
+
   /// No description provided for @deviceNameHint.
   ///
   /// In en, this message translates to:

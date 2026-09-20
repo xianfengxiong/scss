@@ -16,6 +16,7 @@ import '../services/location_service.dart';
 import 'pin_icons.dart';
 import 'pin_label_dialog.dart';
 import 'polygon_edit_dialog.dart';
+import 'snapshot_frame.dart';
 
 /// Esri World Imagery — free satellite tiles, no API key (attribution required).
 const String _esriUrl =
@@ -35,6 +36,11 @@ enum _Tool { pin, polygon }
 class SatelliteDiagramScreen extends StatefulWidget {
   final List<Pin> initialPins;
   final List<MapPolygon> initialPolygons;
+
+  /// Width/height of the target cell. When set, a viewfinder frame of that
+  /// proportion is shown and the snapshot is cropped to it, so the picture
+  /// fills the cell instead of being letterboxed. Null → whole viewport.
+  final double? snapshotAspect;
   final LatLng? initialCenter;
   final double initialZoom;
   final LocationService? location;
@@ -44,6 +50,7 @@ class SatelliteDiagramScreen extends StatefulWidget {
     super.key,
     required this.initialPins,
     this.initialPolygons = const [],
+    this.snapshotAspect,
     this.initialCenter,
     this.initialZoom = 17,
     this.location,
@@ -349,8 +356,25 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
     });
     Uint8List? bytes;
     try {
-      bytes = await _screenshotController.capture(
-          delay: const Duration(milliseconds: 250));
+      final aspect = widget.snapshotAspect;
+      final box = _mapKey.currentContext?.findRenderObject() as RenderBox?;
+      if (aspect != null && box != null && box.hasSize) {
+        // Crop to the viewfinder so the snapshot has the cell's proportions.
+        final pr = MediaQuery.devicePixelRatioOf(context);
+        final frame = snapshotFrame(box.size, aspect);
+        final img = await _screenshotController.captureAsUiImage(
+            delay: const Duration(milliseconds: 250), pixelRatio: pr);
+        if (img != null) {
+          try {
+            bytes = await cropImageToPng(img, frame, pr);
+          } finally {
+            img.dispose();
+          }
+        }
+      } else {
+        bytes = await _screenshotController.capture(
+            delay: const Duration(milliseconds: 250));
+      }
     } catch (_) {
       bytes = null;
     }
@@ -709,6 +733,20 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
                     ],
                   ),
                 ),
+                // Viewfinder (outside the Screenshot subtree): dims what the
+                // crop will drop, so what fills the cell is what you see.
+                if (widget.snapshotAspect case final aspect?)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: LayoutBuilder(
+                        builder: (_, c) => CustomPaint(
+                          painter: _FramePainter(
+                              snapshotFrame(c.biggest, aspect),
+                              l10n.snapshotArea),
+                        ),
+                      ),
+                    ),
+                  ),
                 // Compass: outside the Screenshot subtree (edit aid, never in
                 // the snapshot). Tracks the map rotation; tap resets to north.
                 Positioned(
@@ -795,6 +833,45 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
             ),
     );
   }
+}
+
+/// Viewfinder: dim mask outside the snapshot frame, thin white edge, a small
+/// caption at the top-left corner.
+class _FramePainter extends CustomPainter {
+  final Rect frame;
+  final String caption;
+  const _FramePainter(this.frame, this.caption);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final mask = Path()
+      ..addRect(Offset.zero & size)
+      ..addRect(frame)
+      ..fillType = PathFillType.evenOdd;
+    canvas.drawPath(
+        mask, Paint()..color = Colors.black.withValues(alpha: 0.45));
+    canvas.drawRect(
+        frame,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = Colors.white);
+    final tp = TextPainter(
+      text: TextSpan(
+          text: caption,
+          style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              shadows: [Shadow(blurRadius: 3, color: Colors.black)])),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, frame.topLeft + const Offset(6, 4));
+    tp.dispose();
+  }
+
+  @override
+  bool shouldRepaint(_FramePainter old) =>
+      old.frame != frame || old.caption != caption;
 }
 
 /// A polygon vertex handle: white disc with a coloured rim, enlarged while

@@ -173,6 +173,7 @@
   "fillColor": "Fill color",
   "fillOpacity": "Fill opacity: {pct}%",
   "@fillOpacity": { "placeholders": { "pct": { "type": "int" } } },
+  "snapshotArea": "Snapshot area",
 
   "deviceNameHint": "Device name",
 

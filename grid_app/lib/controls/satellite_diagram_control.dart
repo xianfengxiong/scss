@@ -133,10 +133,11 @@ class SatelliteDiagramControl extends ControlSpec {
       // portrait capture in a wide cell); the parent SizedBox then pins that box
       // top-left. Wrap in pw.Center so the image centers in the cell, matching
       // the fill thumbnail (Flutter's BoxFit.contain centers by default).
-      img = pw.Center(
-          child: pw.Image(pw.MemoryImage(v), fit: pw.BoxFit.contain));
+      img =
+          pw.Center(child: pw.Image(pw.MemoryImage(v), fit: pw.BoxFit.contain));
     } catch (e) {
-      debugPrint('[SatelliteDiagramControl] paintPdf: corrupt image bytes — $e');
+      debugPrint(
+          '[SatelliteDiagramControl] paintPdf: corrupt image bytes — $e');
       return pw.SizedBox();
     }
     final caption = (cell.props['caption'] as String?)?.trim() ?? '';
@@ -222,7 +223,9 @@ class _SatelliteField extends StatelessWidget {
     required this.onChanged,
   });
 
-  Future<void> _openMap(BuildContext context) async {
+  /// [aspect] is the cell's width/height; the map crops its snapshot to that
+  /// proportion so the picture fills the cell (null → uncropped viewport).
+  Future<void> _openMap(BuildContext context, double? aspect) async {
     final svc = image;
     if (svc == null) return; // tests / non-device no-op
     final result = await Navigator.of(context).push<SatelliteResult>(
@@ -230,6 +233,7 @@ class _SatelliteField extends StatelessWidget {
         builder: (_) => SatelliteDiagramScreen(
           initialPins: pins,
           initialPolygons: polygons,
+          snapshotAspect: aspect,
           initialCenter: center,
           initialZoom: zoom,
           location: location,
@@ -248,7 +252,14 @@ class _SatelliteField extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => LayoutBuilder(builder: _build);
+
+  Widget _build(BuildContext context, BoxConstraints c) {
+    // The cell box is finite in the fill canvas (and the PDF shares its
+    // geometry); unbounded only in bare widget tests → no crop.
+    final aspect = c.hasBoundedWidth && c.hasBoundedHeight && c.maxHeight > 0
+        ? c.maxWidth / c.maxHeight
+        : null;
     final p = path;
     if (p != null && p.isNotEmpty) {
       return Stack(
@@ -259,8 +270,9 @@ class _SatelliteField extends StatelessWidget {
           // the PDF) so every pin stays visible even when the capture's aspect
           // ratio differs from the cell — may letterbox, but never crops a pin.
           GestureDetector(
-            onTap: () => _openMap(context),
-            child: Image.file(File(MediaPaths.resolve(p)), fit: BoxFit.contain,
+            onTap: () => _openMap(context, aspect),
+            child: Image.file(File(MediaPaths.resolve(p)),
+                fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) =>
                     const Center(child: Icon(Icons.broken_image, size: 16))),
           ),
@@ -286,7 +298,7 @@ class _SatelliteField extends StatelessWidget {
         iconSize: 20,
         tooltip: AppLocalizations.of(context)!.openMap,
         icon: const Icon(Icons.add_location_alt_outlined),
-        onPressed: () => _openMap(context),
+        onPressed: () => _openMap(context, aspect),
       ),
     );
   }

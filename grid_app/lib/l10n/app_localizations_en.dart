@@ -464,6 +464,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get snapshotArea => 'Snapshot area';
+
+  @override
   String get deviceNameHint => 'Device name';
 
   @override
