@@ -872,6 +872,24 @@ abstract class AppLocalizations {
   /// **'Go'**
   String get goTo;
 
+  /// No description provided for @dataDirNoticeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Data folder'**
+  String get dataDirNoticeTitle;
+
+  /// No description provided for @dataDirNoticeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The portable data folder next to the program is not writable:\n{portable}\n\nYour data is stored here instead:\n{actual}\n\nTo keep data with the program, move its folder somewhere writable (e.g. Desktop or D:) and restart.'**
+  String dataDirNoticeBody(String portable, String actual);
+
+  /// No description provided for @copyPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy path'**
+  String get copyPath;
+
   /// No description provided for @deviceNameHint.
   ///
   /// In en, this message translates to:

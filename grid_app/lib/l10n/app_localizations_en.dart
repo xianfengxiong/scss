@@ -480,6 +480,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goTo => 'Go';
 
   @override
+  String get dataDirNoticeTitle => 'Data folder';
+
+  @override
+  String dataDirNoticeBody(String portable, String actual) {
+    return 'The portable data folder next to the program is not writable:\n$portable\n\nYour data is stored here instead:\n$actual\n\nTo keep data with the program, move its folder somewhere writable (e.g. Desktop or D:) and restart.';
+  }
+
+  @override
+  String get copyPath => 'Copy path';
+
+  @override
   String get deviceNameHint => 'Device name';
 
   @override

@@ -38,7 +38,7 @@ flutter run -d windows            # 开发调试
 
 - **交付物**:`Release\` 整个目录就是免安装绿色版(scss_grid.exe + data\ + 若干 dll),整目录拷贝即可在别的 Windows 上运行;单拷 exe 跑不起来。窗口标题/产品名为 SCSS Survey。
 - **防火墙**:首次打开「同步」页(监听 17423)Windows 会弹防火墙授权,勾选**专用网络**允许;错过弹窗手机就连不上,去「Windows 安全中心→防火墙→允许应用通过防火墙」补勾 scss_grid。
-- **数据目录**:`%APPDATA%\com.example\scss_grid\`(scss_grid.sqlite + survey_images\)。Windows 走 ApplicationSupport 而非 Documents(lib/services/app_dirs.dart)——path_provider 在 Windows 的 Documents 是用户真实「文档」目录,不该往里倒库文件;macOS/Android 数据位置不变。
+- **数据目录(便携模式,2026-09-20)**:优先用 exe 旁的 `userdata\`(scss_grid.sqlite + survey_images\),整个 `Release\` 目录拷走=程序+数据一起走,备份即复制文件夹(不能叫 `data\`,那是 Flutter 自己的资源目录)。exe 所在目录不可写(装进了 Program Files)时自动退回 `%APPDATA%\com.example\scss_grid\`,并在每次启动弹「数据目录提示」写明两处路径、可一键复制;想恢复便携模式把程序文件夹挪到可写位置重启即可。逻辑在 lib/services/app_dirs.dart(Windows 走 ApplicationSupport 兜底而非 Documents——path_provider 在 Windows 的 Documents 是用户真实「文档」目录,不该往里倒库文件);macOS(沙箱容器)/Android(应用私有)数据位置不变。
 - **图片压缩**:flutter_image_compress 无 Windows 实现,image_service 已兜底——压缩不可用时直接存原图(Windows 上填写拍照的图片会偏大,同步与 PDF 不受影响);卫星截图同理:手机端 `saveSnapshot` 把截图 PNG 转 JPEG q80(约 1-3MB→几百 KB),Windows 上编码器不可用则保留 PNG,读取侧不认扩展名,两种都能显示/入 PDF/同步。
 - **相机**:桌面 image_picker 无相机实现(macOS 同),图片控件走「相册」= 文件选择器。
 - **中文系统编码坑**:系统代码页 936(GBK)下 MSVC 编插件源码报 C4819(被 /WX 升为 C2220「警告被视为错误」)。已在 windows/CMakeLists.txt 顶层加 `/utf-8` 修复(对 runner+全部插件生效);别去改源文件编码,也别关系统的 UTF-8 beta 选项来碰运气。

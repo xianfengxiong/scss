@@ -468,6 +468,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get goTo => '定位';
 
   @override
+  String get dataDirNoticeTitle => '数据目录提示';
+
+  @override
+  String dataDirNoticeBody(String portable, String actual) {
+    return '程序旁的便携数据目录不可写:\n$portable\n\n数据实际保存在:\n$actual\n\n如需数据随程序一起走,请把程序文件夹放到可写位置(如桌面或 D 盘)后重新启动。';
+  }
+
+  @override
+  String get copyPath => '复制路径';
+
+  @override
   String get deviceNameHint => '设备名';
 
   @override

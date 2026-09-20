@@ -179,6 +179,11 @@
   "coordinatesInvalid": "Enter \"latitude, longitude\" in decimal degrees or DMS",
   "goTo": "Go",
 
+  "dataDirNoticeTitle": "Data folder",
+  "dataDirNoticeBody": "The portable data folder next to the program is not writable:\n{portable}\n\nYour data is stored here instead:\n{actual}\n\nTo keep data with the program, move its folder somewhere writable (e.g. Desktop or D:) and restart.",
+  "@dataDirNoticeBody": { "placeholders": { "portable": { "type": "String" }, "actual": { "type": "String" } } },
+  "copyPath": "Copy path",
+
   "deviceNameHint": "Device name",
 
   "pageIndicator": "{current} / {total}",
