@@ -23,7 +23,7 @@ const LatLng _fallbackCenter = LatLng(40.0759, 20.1389); // Gjirokastër
 
 /// Full-screen satellite map for dropping pins and capturing a screenshot.
 /// Self-contained (no Site/DB): takes initial pins/center/zoom, returns updated
-/// pins + camera state + saved PNG path via [Navigator.pop]. device-only — not
+/// pins + camera state + the saved snapshot file name via [Navigator.pop]. device-only — not
 /// covered by widget tests (flutter_map/screenshot/geolocator platform channels
 /// are unavailable in the unit-test VM).
 class SatelliteDiagramScreen extends StatefulWidget {
@@ -31,7 +31,7 @@ class SatelliteDiagramScreen extends StatefulWidget {
   final LatLng? initialCenter;
   final double initialZoom;
   final LocationService? location;
-  final Future<String> Function(Uint8List bytes) saveBytes;
+  final Future<String> Function(Uint8List bytes) saveSnapshot;
 
   const SatelliteDiagramScreen({
     super.key,
@@ -39,7 +39,7 @@ class SatelliteDiagramScreen extends StatefulWidget {
     this.initialCenter,
     this.initialZoom = 17,
     this.location,
-    required this.saveBytes,
+    required this.saveSnapshot,
   });
 
   @override
@@ -226,7 +226,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
     }
     final String path;
     try {
-      path = await widget.saveBytes(bytes);
+      path = await widget.saveSnapshot(bytes);
     } catch (_) {
       if (mounted) setState(() => _saving = false);
       return;
@@ -449,7 +449,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
           ),
         ],
       ),
-      // Outside the Screenshot subtree, so the captured PNG never shows it.
+      // Outside the Screenshot subtree, so the captured snapshot never shows it.
       floatingActionButton: widget.location == null
           ? null
           : FloatingActionButton(

@@ -81,7 +81,7 @@ class SatelliteDiagramControl extends ControlSpec {
   final LocationService? location;
 
   /// Injected so the captured screenshot can be persisted via [ImageService
-  /// .saveBytes]. Null → opening the map is a no-op (tests / non-device).
+  /// .saveSnapshot]. Null → opening the map is a no-op (tests / non-device).
   final ImageService? image;
 
   SatelliteDiagramControl({this.location, this.image});
@@ -213,7 +213,7 @@ class _SatelliteField extends StatelessWidget {
           initialCenter: center,
           initialZoom: zoom,
           location: location,
-          saveBytes: (bytes) => svc.saveBytes(bytes),
+          saveSnapshot: svc.saveSnapshot,
         ),
       ),
     );
