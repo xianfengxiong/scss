@@ -246,9 +246,7 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
       if (result.action == 'ok') {
         final list = [..._polygons];
         list[index] = poly.copyWith(
-            label: result.label,
-            color: result.color,
-            opacity: result.opacity);
+            label: result.label, color: result.color, opacity: result.opacity);
         _polygons = list;
       }
       // OK or cancel: show the vertex handles so the outline can be
@@ -532,50 +530,56 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
                               // before, leaving the tip ~24px above the tapped
                               // coordinate — the offset seen on device.
                               alignment: Alignment.topCenter,
-                              child: GestureDetector(
-                                // Opaque: the whole marker box is tappable and the tap
-                                // is consumed, so selecting a pin can't also drop a new
-                                // one on the map below.
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () => _editPin(i),
-                                // Long-press then drag moves the pin; winning the
-                                // long-press arena keeps the map from panning.
-                                onLongPressStart: (_) {
-                                  HapticFeedback.mediumImpact();
-                                  setState(() => _dragging = i);
-                                },
-                                onLongPressMoveUpdate: (d) =>
-                                    _dragPinTo(i, d.globalPosition),
-                                onLongPressEnd: (_) =>
-                                    setState(() => _dragging = null),
-                                onLongPressCancel: () =>
-                                    setState(() => _dragging = null),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    if (_pins[i].label.isNotEmpty)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 4),
-                                        color: Colors.white70,
-                                        child: Text(_pins[i].label,
-                                            style:
-                                                const TextStyle(fontSize: 10)),
+                              // Polygon tool: pins are display-only. Their 120×60
+                              // hit boxes otherwise swallow vertex taps near a pin
+                              // and open the pin dialog instead (seen on device).
+                              child: IgnorePointer(
+                                ignoring: _tool == _Tool.polygon,
+                                child: GestureDetector(
+                                  // Opaque: the whole marker box is tappable and the tap
+                                  // is consumed, so selecting a pin can't also drop a new
+                                  // one on the map below.
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => _editPin(i),
+                                  // Long-press then drag moves the pin; winning the
+                                  // long-press arena keeps the map from panning.
+                                  onLongPressStart: (_) {
+                                    HapticFeedback.mediumImpact();
+                                    setState(() => _dragging = i);
+                                  },
+                                  onLongPressMoveUpdate: (d) =>
+                                      _dragPinTo(i, d.globalPosition),
+                                  onLongPressEnd: (_) =>
+                                      setState(() => _dragging = null),
+                                  onLongPressCancel: () =>
+                                      setState(() => _dragging = null),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      if (_pins[i].label.isNotEmpty)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 4),
+                                          color: Colors.white70,
+                                          child: Text(_pins[i].label,
+                                              style: const TextStyle(
+                                                  fontSize: 10)),
+                                        ),
+                                      // Directional icons rotate with the aim handle
+                                      // so the glyph itself shows the heading; the
+                                      // classic pin and the omnidirectional PTZ stay
+                                      // upright (pinRotates). The dragged pin renders
+                                      // enlarged as pickup feedback.
+                                      Transform.rotate(
+                                        angle: pinRotates(_pins[i].icon)
+                                            ? _pins[i].rotation * math.pi / 180
+                                            : 0,
+                                        child: pinGlyph(_pins[i].icon,
+                                            color: Colors.red,
+                                            size: _dragging == i ? 44 : 36),
                                       ),
-                                    // Directional icons rotate with the aim handle
-                                    // so the glyph itself shows the heading; the
-                                    // classic pin and the omnidirectional PTZ stay
-                                    // upright (pinRotates). The dragged pin renders
-                                    // enlarged as pickup feedback.
-                                    Transform.rotate(
-                                      angle: pinRotates(_pins[i].icon)
-                                          ? _pins[i].rotation * math.pi / 180
-                                          : 0,
-                                      child: pinGlyph(_pins[i].icon,
-                                          color: Colors.red,
-                                          size: _dragging == i ? 44 : 36),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -662,7 +666,8 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
                                 height: 16,
                                 alignment: Alignment.center,
                                 child: IgnorePointer(
-                                  child: _VertexDot(color: _draftColor, size: 12),
+                                  child:
+                                      _VertexDot(color: _draftColor, size: 12),
                                 ),
                               ),
                             if (_selectedPolygon case final si?)
@@ -692,8 +697,8 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
                                         setState(() => _draggingVertex = null),
                                     child: Center(
                                       child: _VertexDot(
-                                        color: polygonColor(
-                                            _polygons[si].color),
+                                        color:
+                                            polygonColor(_polygons[si].color),
                                         size: _draggingVertex == v ? 22 : 16,
                                       ),
                                     ),
