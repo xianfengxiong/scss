@@ -8,3 +8,6 @@ GeneratedPluginRegistrant.java
 
 # release keystore/key.properties 有意纳入 git 随仓库备份(远端为 GitHub 私有仓库,保持 Private);
 # 若仓库转公开,必须先把它们移出 git 历史并换签名 keystore(见 grid_app/BUILD_NOTES.md)。
+
+# Kotlin Gradle plugin session files (Kotlin 2.x)
+.kotlin/
