@@ -467,6 +467,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get snapshotArea => 'Snapshot area';
 
   @override
+  String get goToCoordinates => 'Go to coordinates';
+
+  @override
+  String get coordinatesLabel => 'Latitude, longitude';
+
+  @override
+  String get coordinatesInvalid =>
+      'Enter \"latitude, longitude\" in decimal degrees or DMS';
+
+  @override
+  String get goTo => 'Go';
+
+  @override
   String get deviceNameHint => 'Device name';
 
   @override

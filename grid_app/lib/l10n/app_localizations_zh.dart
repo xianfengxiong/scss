@@ -456,6 +456,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get snapshotArea => '快照范围';
 
   @override
+  String get goToCoordinates => '输入经纬度定位';
+
+  @override
+  String get coordinatesLabel => '纬度, 经度';
+
+  @override
+  String get coordinatesInvalid => '格式无效:请输入「纬度, 经度」,十进制度或度分秒';
+
+  @override
+  String get goTo => '定位';
+
+  @override
   String get deviceNameHint => '设备名';
 
   @override

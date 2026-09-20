@@ -138,6 +138,10 @@
   "fillColor": "填充色",
   "fillOpacity": "填充不透明度:{pct}%",
   "snapshotArea": "快照范围",
+  "goToCoordinates": "输入经纬度定位",
+  "coordinatesLabel": "纬度, 经度",
+  "coordinatesInvalid": "格式无效:请输入「纬度, 经度」,十进制度或度分秒",
+  "goTo": "定位",
 
   "deviceNameHint": "设备名",
 

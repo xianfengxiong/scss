@@ -13,6 +13,7 @@ import '../l10n/app_localizations.dart';
 import '../model/map_polygon.dart';
 import '../model/pin.dart';
 import '../services/location_service.dart';
+import 'goto_coordinate_dialog.dart';
 import 'pin_icons.dart';
 import 'pin_label_dialog.dart';
 import 'polygon_edit_dialog.dart';
@@ -154,15 +155,32 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
     }
     final here = LatLng(res.lat!, res.lon!);
     _mapController.move(here, _mapController.camera.zoom);
-    // Pulse a blue dot on the position for 3 s so it's findable on imagery.
+    _pulseAt(here);
+  }
+
+  /// Pulse a blue dot at [pos] for 3 s so the spot is findable on imagery.
+  void _pulseAt(LatLng pos) {
     _pulse.repeat(reverse: true);
-    setState(() => _myLocation = here);
+    setState(() => _myLocation = pos);
     _myLocationTimer?.cancel();
     _myLocationTimer = Timer(const Duration(seconds: 3), () {
       if (!mounted) return;
       _pulse.stop();
       setState(() => _myLocation = null);
     });
+  }
+
+  /// Typed coordinates: jump there (zooming in if the map is zoomed out)
+  /// and pulse the spot — editing away from the site, where GPS is no help.
+  Future<void> _goToCoordinate() async {
+    final cam = _mapController.camera;
+    final target = await showDialog<LatLng>(
+      context: context,
+      builder: (_) => GoToCoordinateDialog(initial: cam.center),
+    );
+    if (target == null || !mounted) return;
+    _mapController.move(target, math.max(cam.zoom, 16));
+    _pulseAt(target);
   }
 
   void _onMapTap(LatLng pos) {
@@ -817,11 +835,24 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
           ),
         ],
       ),
-      // Outside the Screenshot subtree, so the captured snapshot never shows it.
-      floatingActionButton: widget.location == null
-          ? null
-          : FloatingActionButton(
+      // Outside the Screenshot subtree, so the captured snapshot never shows
+      // them. Coordinates entry always; GPS only where a LocationService exists.
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.small(
+            key: const ValueKey('goto-coordinates'),
+            heroTag: 'goto-coordinates',
+            tooltip: l10n.goToCoordinates,
+            onPressed: _goToCoordinate,
+            child: const Icon(Icons.travel_explore),
+          ),
+          if (widget.location != null) ...[
+            const SizedBox(height: 12),
+            FloatingActionButton(
               key: const ValueKey('my-location'),
+              heroTag: 'my-location',
               tooltip: l10n.myLocation,
               onPressed: _goToMyLocation,
               child: _locating
@@ -831,6 +862,9 @@ class _SatelliteDiagramScreenState extends State<SatelliteDiagramScreen>
                       child: CircularProgressIndicator(strokeWidth: 2.5))
                   : const Icon(Icons.my_location),
             ),
+          ],
+        ],
+      ),
     );
   }
 }

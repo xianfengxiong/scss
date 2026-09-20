@@ -848,6 +848,30 @@ abstract class AppLocalizations {
   /// **'Snapshot area'**
   String get snapshotArea;
 
+  /// No description provided for @goToCoordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to coordinates'**
+  String get goToCoordinates;
+
+  /// No description provided for @coordinatesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Latitude, longitude'**
+  String get coordinatesLabel;
+
+  /// No description provided for @coordinatesInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter \"latitude, longitude\" in decimal degrees or DMS'**
+  String get coordinatesInvalid;
+
+  /// No description provided for @goTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Go'**
+  String get goTo;
+
   /// No description provided for @deviceNameHint.
   ///
   /// In en, this message translates to:
